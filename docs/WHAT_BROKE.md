@@ -1,10 +1,10 @@
-# PayBack AI — "What Broke & How It Was Fixed"
+# RecoverFlow AI — "What Broke & How It Was Fixed"
 
 > **Submission Document**: Razorpay AI Buildathon · Track 3: AI Revenue Recovery  
 > **Repository**: [https://github.com/skmdshariff143-ai/recoverflow-ai](https://github.com/skmdshariff143-ai/recoverflow-ai)  
-> **Live URL**: [https://recoverflow-ai-kohl.vercel.app](https://recoverflow-ai-kohl.vercel.app)
+> **Live Production URL**: [https://recoverflow-ai-kohl.vercel.app](https://recoverflow-ai-kohl.vercel.app)
 
-This document provides transparent, specific accounts of real technical obstacles encountered during the architecture, implementation, and deployment of **PayBack AI** across Milestones 1 through 5, detailing root causes, diagnoses, fixes, and regression prevention.
+This document provides transparent, specific accounts of real technical obstacles encountered during the architecture, implementation, and deployment of **RecoverFlow AI**, detailing root causes, diagnoses, fixes, and regression prevention.
 
 ---
 
@@ -66,8 +66,39 @@ This document provides transparent, specific accounts of real technical obstacle
     payment?: Partial<FailedPayment>;
     score?: Partial<PaymentScore>;
     status?: PipelineItem['status'];
-    // ...
   }
   ```
 - **Test Preventing Regression**:  
   `src/lib/engine/__tests__/executeIntervention.test.ts` (6 unit tests verifying deterministic execution and safety halts).
+
+---
+
+### Incident 5: Feature Extraction Timestamp NaN Guard
+
+- **What Broke**:  
+  When testing synthetic mock payments with partial schemas (e.g. having `created_at` but not `failure_timestamp`), `Date.parse(payment.failure_timestamp)` evaluated to `NaN`, which propagated through exponential recency decay calculations and caused `probabilityToBps` to throw a `FinancialValidationError: Invalid probability value: NaN`.
+- **How It Was Diagnosed**:  
+  `extractFeatureVector` relied solely on `payment.failure_timestamp`. If an upstream caller passed a record with `created_at` or omitted timestamps, arithmetic difference operations produced `NaN`.
+- **How It Was Fixed**:  
+  Added defensive timestamp extraction in `trainModel.ts`:
+  ```typescript
+  const tsStr = payment.failure_timestamp ?? payment.created_at;
+  const failureTime = tsStr ? new Date(tsStr).getTime() : refDate.getTime();
+  const diffDays = isNaN(failureTime) ? 0 : Math.max(0, (refDate.getTime() - failureTime) / (1000 * 60 * 60 * 24));
+  const recencyDecay = Math.exp(-diffDays / 14);
+  ```
+- **Test Preventing Regression**:  
+  `src/lib/engine/__tests__/closedLoopProductFlow.test.ts` tests end-to-end scoring, approval gating, and execution on partial/enterprise records without NaN exceptions.
+
+---
+
+### Incident 6: Hash Chain Tampering at Specific Index Detection
+
+- **What Broke**:  
+  Initial hash-chain verification only checked `latestHash === expected`. If a record in the middle was mutated, the verification reported a generic failure without identifying the compromised block index.
+- **How It Was Diagnosed**:  
+  Auditing requirements for enterprise banking ledgers require pin-pointing the exact record index where a hash break or payload mutation occurred.
+- **How It Was Fixed**:  
+  Implemented `verifyLedgerIntegrity()` in `hashChainLedger.ts` which iterates through the entire chain, recomputing SHA-256 digests over canonical JSON payloads and reporting `tamperedIndex` alongside detailed error descriptions.
+- **Test Preventing Regression**:  
+  `src/lib/engine/__tests__/hashChainLedger.test.ts` explicitly asserts `tamperedIndex: 1` when mutating, deleting, reordering, or inserting blocks.
