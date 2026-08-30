@@ -146,6 +146,26 @@ export const EvidenceClassSchema = z.enum([
 
 export type EvidenceClass = z.infer<typeof EvidenceClassSchema>;
 
+/**
+ * Thrown when a simulator reference is structurally invalid, truncated, tampered,
+ * or contains illegal field values. This is a technical input error — not a
+ * legitimate failed recovery outcome. The HTTP layer should return 422, not 200.
+ */
+export class InvalidSimulatorReferenceError extends Error {
+  readonly errorCode = 'INVALID_SIMULATOR_REFERENCE' as const;
+  readonly evidenceClass = 'UNVERIFIED' as const;
+  readonly liveSettledAmountPaise = 0;
+  readonly syntheticOutcomeAmountPaise = 0;
+
+  constructor(
+    public readonly reference: string,
+    public readonly reason: string,
+  ) {
+    super(`Invalid simulator reference: ${reason}`);
+    this.name = 'InvalidSimulatorReferenceError';
+  }
+}
+
 export const RecoveryExecutionResultSchema = z.object({
   success: z.boolean(),
   transactionReference: z.string(),
@@ -257,22 +277,35 @@ export class DeterministicSimulatorAdapter implements RecoveryExecutionAdapter {
       };
     }
 
-    // 2. Stateless reconstruction from checksummed reference (cross-serverless resilience)
+    // 2. Guard: reject oversized references before regex parsing
+    if (transactionReference.length > 512) {
+      throw new InvalidSimulatorReferenceError(
+        transactionReference.slice(0, 64) + '…',
+        'Reference exceeds maximum permitted length (512 characters).',
+      );
+    }
+
+    // 3. Guard: non-simulator references that weren't in the process-local cache
+    if (!transactionReference.startsWith('sim_txn_')) {
+      throw new InvalidSimulatorReferenceError(
+        transactionReference,
+        'Reference is structurally invalid, truncated, or not a simulator reference.',
+      );
+    }
+
+    // 4. Stateless reconstruction from checksummed reference (cross-serverless resilience)
     const parsed = parseStatelessSimulatorReference(transactionReference);
-    if (!parsed || !parsed.valid) {
-      return {
-        status: 'failed',
-        settledAmountPaise: 0,
-        source: 'simulator_stateless_receipt',
-        timestamp: new Date().toISOString(),
-        evidenceClass: 'SYNTHETIC',
-        liveSettledAmountPaise: 0,
-        syntheticOutcomeAmountPaise: 0,
-        verifiedSyntheticRecoveredPaise: 0,
-        provenanceNotice: parsed && !parsed.valid
-          ? 'Deterministic simulated transaction reference failed checksum verification (tampered).'
-          : 'Deterministic simulated transaction reference invalid or not found.',
-      };
+    if (parsed && !parsed.valid) {
+      throw new InvalidSimulatorReferenceError(
+        transactionReference,
+        'Checksum verification failed (reference tampered or corrupted).',
+      );
+    }
+    if (!parsed) {
+      throw new InvalidSimulatorReferenceError(
+        transactionReference,
+        'Reference is structurally invalid, truncated, or not a simulator reference.',
+      );
     }
 
     const isSuccess = parsed.outcomeCode === 'cap';

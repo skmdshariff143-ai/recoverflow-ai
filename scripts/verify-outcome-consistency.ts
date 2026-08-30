@@ -1,4 +1,4 @@
-﻿/**
+/**
  * RecoverFlow AI — Cross-Request Outcome Consistency Verification Script.
  *
  * Verifies that execution and status polling endpoints return 100% consistent
@@ -127,13 +127,14 @@ async function runConsistencyVerification() {
         q.evidenceClass === 'SYNTHETIC',
     );
 
-    // 5. Tamper Test: Forged reference with altered amount must fail closed
+    // 5. Tamper Test: Forged reference with altered amount must return HTTP 422 (technical error, not business outcome)
     const tamperedRef = ref.replace(`_${amountPaise}_`, '_99999999_');
     const tamperRes = await fetch(`${baseUrl}/api/recovery/status/${tamperedRef}`);
     const tamperData = await tamperRes.json();
     const tamperPassed =
-      tamperData.status === 'failed' &&
-      tamperData.settledAmountPaise === 0 &&
+      tamperRes.status === 422 &&
+      tamperData.errorCode === 'INVALID_SIMULATOR_REFERENCE' &&
+      tamperData.evidenceClass === 'UNVERIFIED' &&
       tamperData.syntheticOutcomeAmountPaise === 0 &&
       tamperData.liveSettledAmountPaise === 0;
 

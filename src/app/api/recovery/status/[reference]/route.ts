@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   RazorpayTestModeAdapter,
   globalSimulatorAdapter,
+  InvalidSimulatorReferenceError,
 } from '@/lib/adapters/recoveryAdapter';
 
 export async function GET(
@@ -61,6 +62,22 @@ export async function GET(
         'Deterministic synthetic evaluation outcome; not live merchant settlement.',
     });
   } catch (err: unknown) {
+    // Invalid or tampered simulator reference — return HTTP 422 with technical error,
+    // not a business outcome. This is distinct from a legitimate failed recovery.
+    if (err instanceof InvalidSimulatorReferenceError) {
+      return NextResponse.json(
+        {
+          error: err.message,
+          errorCode: err.errorCode,
+          reference: err.reference,
+          reason: err.reason,
+          evidenceClass: err.evidenceClass,
+          liveSettledAmountPaise: err.liveSettledAmountPaise,
+          syntheticOutcomeAmountPaise: err.syntheticOutcomeAmountPaise,
+        },
+        { status: 422 },
+      );
+    }
     return NextResponse.json(
       { error: err instanceof Error ? err.message : 'Failed to query status' },
       { status: 500 },

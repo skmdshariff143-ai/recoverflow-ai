@@ -7,6 +7,8 @@ import {
   DeterministicSimulatorAdapter,
   RazorpayTestModeAdapter,
   AdapterTypeSchema,
+  InvalidSimulatorReferenceError,
+  generateStatelessSimulatorReference,
   type RecoveryExecutionRequest,
 } from '../recoveryAdapter';
 import { idempotencyStore } from '@/lib/server/idempotencyStore';
@@ -110,20 +112,20 @@ describe('Recovery Execution Adapters & Idempotency Store', () => {
       );
     });
 
-    it('fails closed and rejects tampered transaction references with forged amounts or checksums', async () => {
+    it('throws InvalidSimulatorReferenceError (not a business outcome) for tampered checksum', async () => {
       const result = await adapter.execute(validRequest);
 
-      // Tamper: alter amount or checksum
+      // Tamper: alter amount, which breaks the checksum
       const tamperedRef = result.transactionReference.replace('500000', '99999999');
       const freshIsolatedAdapter = new DeterministicSimulatorAdapter();
-      const query = await freshIsolatedAdapter.getStatus(tamperedRef);
 
-      expect(query.status).toBe('failed');
-      expect(query.settledAmountPaise).toBe(0);
-      expect(query.liveSettledAmountPaise).toBe(0);
-      expect(query.syntheticOutcomeAmountPaise).toBe(0);
-      expect(query.verifiedSyntheticRecoveredPaise).toBe(0);
-      expect(query.provenanceNotice).toContain('tampered');
+      await expect(freshIsolatedAdapter.getStatus(tamperedRef)).rejects.toThrow(InvalidSimulatorReferenceError);
+      await expect(freshIsolatedAdapter.getStatus(tamperedRef)).rejects.toMatchObject({
+        errorCode: 'INVALID_SIMULATOR_REFERENCE',
+        evidenceClass: 'UNVERIFIED',
+        liveSettledAmountPaise: 0,
+        syntheticOutcomeAmountPaise: 0,
+      });
     });
 
     it('handles 25 concurrent parallel status requests for the same reference and returns identical results across all 25', async () => {
@@ -144,13 +146,134 @@ describe('Recovery Execution Adapters & Idempotency Store', () => {
       }
     });
 
-    it('getStatus returns failed with zero paise for unknown references', async () => {
-      const query = await adapter.getStatus('unknown_ref_999');
-      expect(query.status).toBe('failed');
-      expect(query.settledAmountPaise).toBe(0);
-      expect(query.liveSettledAmountPaise).toBe(0);
-      expect(query.syntheticOutcomeAmountPaise).toBe(0);
-      expect(query.verifiedSyntheticRecoveredPaise).toBe(0);
+    it('throws InvalidSimulatorReferenceError for unknown non-simulator references', async () => {
+      await expect(adapter.getStatus('unknown_ref_999')).rejects.toThrow(InvalidSimulatorReferenceError);
+      await expect(adapter.getStatus('unknown_ref_999')).rejects.toMatchObject({
+        errorCode: 'INVALID_SIMULATOR_REFERENCE',
+        evidenceClass: 'UNVERIFIED',
+        liveSettledAmountPaise: 0,
+        syntheticOutcomeAmountPaise: 0,
+      });
+    });
+  });
+
+  describe('Invalid Simulator Reference Handling (Technical Error, Not Business Outcome)', () => {
+    const adapter = new DeterministicSimulatorAdapter();
+
+    it('rejects modified checksum with InvalidSimulatorReferenceError', async () => {
+      // Valid reference with last hex char changed
+      const validRef = generateStatelessSimulatorReference('pay_chk_001', 1, 'retry', 500000, 'cap');
+      const tampered = validRef.slice(0, -1) + (validRef.endsWith('0') ? '1' : '0');
+
+      await expect(adapter.getStatus(tampered)).rejects.toThrow(InvalidSimulatorReferenceError);
+      await expect(adapter.getStatus(tampered)).rejects.toMatchObject({
+        errorCode: 'INVALID_SIMULATOR_REFERENCE',
+        evidenceClass: 'UNVERIFIED',
+        liveSettledAmountPaise: 0,
+        syntheticOutcomeAmountPaise: 0,
+      });
+    });
+
+    it('rejects truncated reference with InvalidSimulatorReferenceError', async () => {
+      const validRef = generateStatelessSimulatorReference('pay_trunc_001', 1, 'retry', 500000, 'cap');
+      const truncated = validRef.slice(0, Math.floor(validRef.length / 2));
+
+      await expect(adapter.getStatus(truncated)).rejects.toThrow(InvalidSimulatorReferenceError);
+      await expect(adapter.getStatus(truncated)).rejects.toMatchObject({
+        errorCode: 'INVALID_SIMULATOR_REFERENCE',
+        evidenceClass: 'UNVERIFIED',
+      });
+    });
+
+    it('rejects reference with invalid (swapped) amount with InvalidSimulatorReferenceError', async () => {
+      // Build a structurally valid reference but with the amount field altered (breaks checksum)
+      const validRef = generateStatelessSimulatorReference('pay_amt_001', 1, 'retry', 500000, 'cap');
+      const invalidAmountRef = validRef.replace('_500000_', '_999_');
+
+      await expect(adapter.getStatus(invalidAmountRef)).rejects.toThrow(InvalidSimulatorReferenceError);
+      await expect(adapter.getStatus(invalidAmountRef)).rejects.toMatchObject({
+        errorCode: 'INVALID_SIMULATOR_REFERENCE',
+        evidenceClass: 'UNVERIFIED',
+        syntheticOutcomeAmountPaise: 0,
+      });
+    });
+
+    it('rejects reference with negative amount encoding attempt', async () => {
+      // Attempt to inject negative amount — regex anchors block this
+      const negativeRef = 'sim_txn_pay_neg_001_c1_retry_-500000_cap_aabbccddeeff';
+
+      await expect(adapter.getStatus(negativeRef)).rejects.toThrow(InvalidSimulatorReferenceError);
+      await expect(adapter.getStatus(negativeRef)).rejects.toMatchObject({
+        errorCode: 'INVALID_SIMULATOR_REFERENCE',
+        evidenceClass: 'UNVERIFIED',
+      });
+    });
+
+    it('rejects reference with unsupported outcome marker', async () => {
+      // Outcome 'xyz' is not cap|lnk|fal so regex won't match
+      const unsupportedRef = 'sim_txn_pay_out_001_c1_retry_500000_xyz_aabbccddeeff';
+
+      await expect(adapter.getStatus(unsupportedRef)).rejects.toThrow(InvalidSimulatorReferenceError);
+      await expect(adapter.getStatus(unsupportedRef)).rejects.toMatchObject({
+        errorCode: 'INVALID_SIMULATOR_REFERENCE',
+        evidenceClass: 'UNVERIFIED',
+      });
+    });
+
+    it('rejects oversized reference (>512 chars) with InvalidSimulatorReferenceError', async () => {
+      const oversizedRef = 'sim_txn_' + 'a'.repeat(600) + '_c1_retry_500000_cap_aabbccddeeff';
+
+      await expect(adapter.getStatus(oversizedRef)).rejects.toThrow(InvalidSimulatorReferenceError);
+      try {
+        await adapter.getStatus(oversizedRef);
+      } catch (e) {
+        expect(e).toBeInstanceOf(InvalidSimulatorReferenceError);
+        expect((e as InvalidSimulatorReferenceError).reason).toContain('maximum permitted length');
+      }
+    });
+
+    it('rejects reference with encoded injection characters', async () => {
+      const injectionRef = 'sim_txn_pay%3Cscript%3Ealert(1)%3C/script%3E_c1_retry_500000_cap_aabbccddeeff';
+
+      await expect(adapter.getStatus(injectionRef)).rejects.toThrow(InvalidSimulatorReferenceError);
+      await expect(adapter.getStatus(injectionRef)).rejects.toMatchObject({
+        errorCode: 'INVALID_SIMULATOR_REFERENCE',
+        evidenceClass: 'UNVERIFIED',
+      });
+    });
+
+    it('returns a legitimate failed synthetic outcome (not an error) for a valid fal-outcome reference', async () => {
+      // Generate a valid reference with outcomeCode 'fal' (genuine failed recovery)
+      const failedRef = generateStatelessSimulatorReference('pay_legit_fail_001', 1, 'retry', 500000, 'fal');
+
+      // This should NOT throw — it is a valid reference encoding a genuine failed outcome
+      const result = await adapter.getStatus(failedRef);
+      expect(result.status).toBe('failed');
+      expect(result.evidenceClass).toBe('SYNTHETIC');
+      expect(result.liveSettledAmountPaise).toBe(0);
+      expect(result.syntheticOutcomeAmountPaise).toBe(0);
+    });
+
+    it('clearly distinguishes invalid reference (technical error) from valid failed outcome (business result)', async () => {
+      // 1. Valid reference encoding a genuine "failed" recovery
+      const validFailedRef = generateStatelessSimulatorReference('pay_dist_001', 1, 'retry', 500000, 'fal');
+      const validResult = await adapter.getStatus(validFailedRef);
+      expect(validResult.status).toBe('failed');
+      expect(validResult.evidenceClass).toBe('SYNTHETIC'); // Business outcome — real evidence class
+      expect(validResult.source).toBe('simulator_stateless_receipt');
+
+      // 2. Invalid/tampered reference — must throw, not return a business outcome
+      const tamperedRef = validFailedRef.slice(0, -1) + (validFailedRef.endsWith('0') ? '1' : '0');
+      let threwError = false;
+      try {
+        await adapter.getStatus(tamperedRef);
+      } catch (e) {
+        threwError = true;
+        expect(e).toBeInstanceOf(InvalidSimulatorReferenceError);
+        expect((e as InvalidSimulatorReferenceError).evidenceClass).toBe('UNVERIFIED');
+        expect((e as InvalidSimulatorReferenceError).errorCode).toBe('INVALID_SIMULATOR_REFERENCE');
+      }
+      expect(threwError).toBe(true); // Must throw, never silently return
     });
   });
 
