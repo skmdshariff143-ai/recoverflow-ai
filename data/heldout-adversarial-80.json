@@ -613,7 +613,7 @@
       "end": 12,
       "timezone": "Europe/London"
     },
-    "invoice_value_tier": "standard",
+    "invoice_value_tier": "high_value",
     "raw_gateway_error": "E_MANDATE_INVALID: e-NACH mandate ID mndt_8371 not found or revoked",
     "customer_payment_history": {
       "on_time_payment_rate": 0.68,
@@ -622,8 +622,7 @@
       "total_transactions": 54,
       "past_recovery_successes": 5,
       "past_recovery_failures": 3
-    },
-    "customer_tier": "enterprise"
+    }
   },
   {
     "payment_id": "pay_00026",
@@ -639,7 +638,7 @@
       "end": 7,
       "timezone": "Asia/Tokyo"
     },
-    "invoice_value_tier": "standard",
+    "invoice_value_tier": "high_value",
     "raw_gateway_error": "ERR_EXP: Instrument validity period has lapsed",
     "customer_payment_history": {
       "on_time_payment_rate": 0.81,
@@ -648,8 +647,7 @@
       "total_transactions": 27,
       "past_recovery_successes": 5,
       "past_recovery_failures": 0
-    },
-    "customer_tier": "enterprise"
+    }
   },
   {
     "payment_id": "pay_00059",
@@ -665,7 +663,7 @@
       "end": 18,
       "timezone": "Europe/London"
     },
-    "invoice_value_tier": "standard",
+    "invoice_value_tier": "high_value",
     "raw_gateway_error": "ERR_RATE_LIMIT: Gateway rate limit hit — retry after 60s",
     "customer_payment_history": {
       "on_time_payment_rate": 0.73,
@@ -674,8 +672,7 @@
       "total_transactions": 38,
       "past_recovery_successes": 6,
       "past_recovery_failures": 0
-    },
-    "customer_tier": "enterprise"
+    }
   },
   {
     "payment_id": "pay_00011",
@@ -691,7 +688,7 @@
       "end": 10,
       "timezone": "America/New_York"
     },
-    "invoice_value_tier": "standard",
+    "invoice_value_tier": "high_value",
     "raw_gateway_error": "E_BANK_TIMEOUT: Issuing bank did not respond within 30s",
     "customer_payment_history": {
       "on_time_payment_rate": 0.74,
@@ -700,8 +697,7 @@
       "total_transactions": 28,
       "past_recovery_successes": 1,
       "past_recovery_failures": 0
-    },
-    "customer_tier": "enterprise"
+    }
   },
   {
     "payment_id": "pay_00013",
@@ -717,7 +713,7 @@
       "end": 8,
       "timezone": "America/Los_Angeles"
     },
-    "invoice_value_tier": "standard",
+    "invoice_value_tier": "high_value",
     "raw_gateway_error": "ERR_CONN_REFUSED: TCP connection to bank gateway refused",
     "customer_payment_history": {
       "on_time_payment_rate": 0.94,
@@ -726,8 +722,7 @@
       "total_transactions": 81,
       "past_recovery_successes": 0,
       "past_recovery_failures": 5
-    },
-    "customer_tier": "enterprise"
+    }
   },
   {
     "payment_id": "pay_00066",
@@ -743,7 +738,7 @@
       "end": 21,
       "timezone": "Asia/Singapore"
     },
-    "invoice_value_tier": "standard",
+    "invoice_value_tier": "high_value",
     "raw_gateway_error": "ACCOUNT_TERMINATED: Bank account closed — no recovery possible",
     "customer_payment_history": {
       "on_time_payment_rate": 0.45,
@@ -752,8 +747,7 @@
       "total_transactions": 52,
       "past_recovery_successes": 9,
       "past_recovery_failures": 5
-    },
-    "customer_tier": "enterprise"
+    }
   },
   {
     "payment_id": "pay_00008",
@@ -778,8 +772,7 @@
       "total_transactions": 98,
       "past_recovery_successes": 19,
       "past_recovery_failures": 2
-    },
-    "customer_tier": "enterprise"
+    }
   },
   {
     "payment_id": "pay_00078",
@@ -795,7 +788,7 @@
       "end": 23,
       "timezone": "Europe/Berlin"
     },
-    "invoice_value_tier": "standard",
+    "invoice_value_tier": "high_value",
     "raw_gateway_error": "E_PTP_BROKEN: Customer missed promised payment date 2024-06-01",
     "customer_payment_history": {
       "on_time_payment_rate": 0.34,
@@ -804,8 +797,7 @@
       "total_transactions": 44,
       "past_recovery_successes": 0,
       "past_recovery_failures": 3
-    },
-    "customer_tier": "enterprise"
+    }
   },
   {
     "payment_id": "pay_00017",
@@ -817,8 +809,9 @@
     "attempt_count": 0,
     "opt_out": false,
     "quiet_hours_window": {
-      "start_hour": 22,
-      "end_hour": 8
+      "start": 22,
+      "end": 8,
+      "timezone": "Asia/Kolkata"
     },
     "invoice_value_tier": "standard",
     "raw_gateway_error": "OTP_EXPIRED: One-time password expired before confirmation",
@@ -829,8 +822,7 @@
       "total_transactions": 32,
       "past_recovery_successes": 4,
       "past_recovery_failures": 1
-    },
-    "customer_timezone": "Asia/Kolkata"
+    }
   },
   {
     "payment_id": "pay_00037",
@@ -842,8 +834,9 @@
     "attempt_count": 1,
     "opt_out": false,
     "quiet_hours_window": {
-      "start_hour": 22,
-      "end_hour": 8
+      "start": 22,
+      "end": 8,
+      "timezone": "Asia/Kolkata"
     },
     "invoice_value_tier": "standard",
     "raw_gateway_error": "ERR_MANDATE: Mandate amount ceiling exceeded",
@@ -854,8 +847,7 @@
       "total_transactions": 30,
       "past_recovery_successes": 1,
       "past_recovery_failures": 2
-    },
-    "customer_timezone": "Asia/Kolkata"
+    }
   },
   {
     "payment_id": "pay_00023",
@@ -867,8 +859,9 @@
     "attempt_count": 2,
     "opt_out": false,
     "quiet_hours_window": {
-      "start_hour": 22,
-      "end_hour": 8
+      "start": 22,
+      "end": 8,
+      "timezone": "Asia/Kolkata"
     },
     "invoice_value_tier": "standard",
     "raw_gateway_error": "E_3DS_FAIL: 3D-Secure authentication was rejected by cardholder",
@@ -879,8 +872,7 @@
       "total_transactions": 8,
       "past_recovery_successes": 1,
       "past_recovery_failures": 0
-    },
-    "customer_timezone": "Asia/Kolkata"
+    }
   },
   {
     "payment_id": "pay_00046",
@@ -892,8 +884,9 @@
     "attempt_count": 2,
     "opt_out": false,
     "quiet_hours_window": {
-      "start_hour": 22,
-      "end_hour": 8
+      "start": 22,
+      "end": 8,
+      "timezone": "Asia/Kolkata"
     },
     "invoice_value_tier": "standard",
     "raw_gateway_error": "ERR_REPEAT: Repeated submission within dedup window (5 min)",
@@ -904,8 +897,7 @@
       "total_transactions": 27,
       "past_recovery_successes": 4,
       "past_recovery_failures": 1
-    },
-    "customer_timezone": "Asia/Kolkata"
+    }
   },
   {
     "payment_id": "pay_00060",
@@ -917,8 +909,9 @@
     "attempt_count": 2,
     "opt_out": false,
     "quiet_hours_window": {
-      "start_hour": 22,
-      "end_hour": 8
+      "start": 22,
+      "end": 8,
+      "timezone": "Asia/Kolkata"
     },
     "invoice_value_tier": "standard",
     "raw_gateway_error": "E_GW_DEGRADED: Gateway response time exceeded 10s SLA threshold",
@@ -929,8 +922,7 @@
       "total_transactions": 83,
       "past_recovery_successes": 1,
       "past_recovery_failures": 6
-    },
-    "customer_timezone": "Asia/Kolkata"
+    }
   },
   {
     "payment_id": "pay_00055",
@@ -942,8 +934,9 @@
     "attempt_count": 1,
     "opt_out": false,
     "quiet_hours_window": {
-      "start_hour": 22,
-      "end_hour": 8
+      "start": 22,
+      "end": 8,
+      "timezone": "Asia/Kolkata"
     },
     "invoice_value_tier": "standard",
     "raw_gateway_error": "E_CUST_CANCEL: Customer initiated cancellation during checkout",
@@ -954,8 +947,7 @@
       "total_transactions": 94,
       "past_recovery_successes": 16,
       "past_recovery_failures": 8
-    },
-    "customer_timezone": "Asia/Kolkata"
+    }
   },
   {
     "payment_id": "pay_00019",
@@ -967,8 +959,9 @@
     "attempt_count": 2,
     "opt_out": false,
     "quiet_hours_window": {
-      "start_hour": 22,
-      "end_hour": 8
+      "start": 22,
+      "end": 8,
+      "timezone": "Asia/Kolkata"
     },
     "invoice_value_tier": "high_value",
     "raw_gateway_error": "E_3DS_FAIL: 3D-Secure authentication was rejected by cardholder",
@@ -979,8 +972,7 @@
       "total_transactions": 13,
       "past_recovery_successes": 2,
       "past_recovery_failures": 1
-    },
-    "customer_timezone": "Asia/Kolkata"
+    }
   },
   {
     "payment_id": "pay_00039",
@@ -992,8 +984,9 @@
     "attempt_count": 0,
     "opt_out": false,
     "quiet_hours_window": {
-      "start_hour": 22,
-      "end_hour": 8
+      "start": 22,
+      "end": 8,
+      "timezone": "Asia/Kolkata"
     },
     "invoice_value_tier": "standard",
     "raw_gateway_error": "ERR_MANDATE: Mandate amount ceiling exceeded",
@@ -1004,8 +997,7 @@
       "total_transactions": 81,
       "past_recovery_successes": 12,
       "past_recovery_failures": 5
-    },
-    "customer_timezone": "Asia/Kolkata"
+    }
   },
   {
     "payment_id": "pay_00029",
