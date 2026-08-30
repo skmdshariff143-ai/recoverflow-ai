@@ -104,7 +104,7 @@ export function parseStatelessSimulatorReference(ref: string): ParsedStatelessSi
 
 // ─── Zod Schemas for Validation ──────────────────────────────────────
 
-export const AdapterTypeSchema = z.enum(['simulator', 'razorpay_test_mode']);
+export const AdapterTypeSchema = z.enum(['simulator', 'deterministic_simulator', 'razorpay_test_mode']);
 export type AdapterType = z.infer<typeof AdapterTypeSchema>;
 
 export const RecoveryExecutionRequestSchema = z.object({

@@ -33,6 +33,7 @@ describe('Recovery Execution Adapters & Idempotency Store', () => {
   describe('Adapter Boundary & Schema Validation', () => {
     it('validates known adapters and rejects unknown adapter identifiers', () => {
       expect(AdapterTypeSchema.safeParse('simulator').success).toBe(true);
+      expect(AdapterTypeSchema.safeParse('deterministic_simulator').success).toBe(true);
       expect(AdapterTypeSchema.safeParse('razorpay_test_mode').success).toBe(true);
       expect(AdapterTypeSchema.safeParse('live_production_gateway').success).toBe(false);
       expect(AdapterTypeSchema.safeParse('stripe_adapter').success).toBe(false);
