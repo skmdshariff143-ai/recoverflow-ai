@@ -2,10 +2,10 @@
  * PayBack AI — Pipeline domain types.
  *
  * Types for safety filtering, approval gating, quiet-hours scheduling,
- * ranking, budget allocation, and batch pipeline summaries.
+ * ranking, budget allocation, test-mode execution, and calibration analysis.
  */
 
-import type { FailedPayment } from './payment';
+import type { FailedPayment, FailureCategory } from './payment';
 import type { PaymentScore } from '@/lib/engine/scoreRecovery';
 
 // ─── Status Enums ───────────────────────────────────────────────────
@@ -19,10 +19,21 @@ export const PIPELINE_STATUSES = [
 
 export type PipelineItemStatus = (typeof PIPELINE_STATUSES)[number];
 
+export const EXECUTION_STATUSES = [
+  'recovered',
+  'retry_scheduled',
+  'stopped',
+  'deferred',
+  'pending_approval',
+] as const;
+
+export type ExecutionStatus = (typeof EXECUTION_STATUSES)[number];
+
 export const STOP_REASONS = [
   'customer_opted_out',
   'non_recoverable_category',
   'max_attempts_exceeded',
+  'dispute_or_cancellation_signaled',
 ] as const;
 
 export type StopReason = (typeof STOP_REASONS)[number];
@@ -57,7 +68,52 @@ export interface PipelineItem {
   rank?: number;
 }
 
-// ─── Pipeline Configuration ─────────────────────────────────────────
+/**
+ * An executed payment record with simulated recovery outcomes.
+ */
+export interface ExecutedItem extends PipelineItem {
+  execution_status: ExecutionStatus;
+  final_attempt_count: number;
+  recovered_amount: number;
+  simulated_outcome_detail: string;
+  dispute_signaled?: boolean;
+}
+
+// ─── Calibration Domain Types ───────────────────────────────────────
+
+export interface CategoryCalibrationMetric {
+  category: FailureCategory;
+  budgeted_count: number;
+  recovered_count: number;
+  predicted_recovery_rate: number;
+  actual_recovery_rate: number;
+  calibration_error: number;
+  expected_value: number;
+  recovered_amount: number;
+}
+
+export interface BinnedCalibrationMetric {
+  bin_index: number;
+  bin_label: string;
+  min_prob: number;
+  max_prob: number;
+  sample_count: number;
+  avg_predicted_prob: number;
+  actual_recovery_rate: number;
+  calibration_error: number;
+}
+
+export interface CalibrationReport {
+  overall_predicted_rate: number;
+  overall_actual_rate: number;
+  overall_calibration_error: number;
+  brier_score: number;
+  mean_category_calibration_error: number;
+  category_metrics: CategoryCalibrationMetric[];
+  binned_metrics: BinnedCalibrationMetric[];
+}
+
+// ─── Pipeline Configuration & Summaries ─────────────────────────────
 
 export interface PipelineOptions {
   /** Maximum number of contact slots to allocate per cycle. Default: 40. */
@@ -66,38 +122,37 @@ export interface PipelineOptions {
   referenceDate?: Date;
   /** Whether to simulate auto-approval for high EV high-value invoices. Default: true. */
   autoApproveHighValueWithHighEV?: boolean;
+  /** Seed for deterministic stochastic simulation. Default: 42. */
+  simulationSeed?: number;
+  /** Simulated dispute/cancellation probability rate on budgeted items. Default: 0.03. */
+  disputeRate?: number;
 }
 
-// ─── Batch Pipeline Summary ─────────────────────────────────────────
-
 export interface BatchPipelineSummary {
-  /** Total payments processed in the batch. */
   total_payments: number;
-  /** Total revenue at risk in minor units (paise/cents). */
   total_revenue_at_risk: number;
-  /** Configured budget capacity (slots). */
   budget_limit: number;
 
-  /** Number of items successfully budgeted for recovery. */
   budgeted_count: number;
-  /** Total expected recovered revenue from budgeted items. */
   budgeted_expected_value: number;
 
-  /** Number of items deferred due to budget capacity constraints. */
   deferred_count: number;
-  /** Expected revenue left on the table from deferred items. */
   deferred_expected_value: number;
 
-  /** Number of high-value items held pending human approval. */
   pending_approval_count: number;
-  /** Expected value tied up in pending approval queue. */
   pending_approval_expected_value: number;
 
-  /** Number of items stopped by safety rules. */
   stopped_count: number;
-  /** Breakdown of stopped items by specific safety rule. */
   stopped_by_reason: Record<StopReason, number>;
 
-  /** Full array of processed pipeline items. */
   items: PipelineItem[];
+}
+
+export interface BatchExecutionResult {
+  summary: BatchPipelineSummary;
+  total_revenue_at_risk: number;
+  total_revenue_recovered: number;
+  overall_recovery_rate: number;
+  executed_items: ExecutedItem[];
+  calibration: CalibrationReport;
 }

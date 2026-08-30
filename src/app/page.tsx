@@ -32,11 +32,11 @@ export default function Home() {
                 Safety Rules (opt-out, attempt cap, approval gate, quiet hours)
               </span>
             </li>
-            <li className="flex items-start gap-2 text-gray-400">
-              <span>○</span>
+            <li className="flex items-start gap-2">
+              <span className="text-green-600 font-bold">✓</span>
               <span>
-                <strong>Milestone 4</strong> — Test-Mode Execution +
-                Calibration
+                <strong>Milestone 4</strong> — Test-Mode Execution &amp;
+                Calibration Engine (simulated recovery, Brier score, reliability bins)
               </span>
             </li>
             <li className="flex items-start gap-2 text-gray-400">

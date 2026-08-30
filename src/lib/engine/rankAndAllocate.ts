@@ -145,6 +145,7 @@ export function processRecoveryPipeline(
     customer_opted_out: 0,
     non_recoverable_category: 0,
     max_attempts_exceeded: 0,
+    dispute_or_cancellation_signaled: 0,
   };
 
   for (const item of stoppedItems) {

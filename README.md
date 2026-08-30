@@ -50,8 +50,21 @@ Given a batch of failed/at-risk payments, predict each payment's probability of 
   - Limited contact budget (default: 40 slots) allocated to top-ranked items (`budgeted`), remainder safely `deferred`.
 - **62 total unit tests** across safety rules, quiet hours, approval gating, ranking, and budget allocation.
 
-### ○ Milestone 4 — Test-Mode Execution + Calibration (next)
-### ○ Milestone 5 — Dashboard, Drill-down, Audit Explorer
+### ✅ Milestone 4 — Test-Mode Execution & Calibration Engine
+
+- **Test-Mode Execution** (`src/lib/engine/executeIntervention.ts`):
+  - Strictly simulated recovery actions using seeded PRNG for reproducible test/demo runs.
+  - Stochastic outcome simulation weighted by calculated recovery probability.
+  - Automatic safety halt on simulated chargeback disputes / cancellation signals (`dispute_or_cancellation_signaled`).
+  - Attempt count progression with automatic capping at 3 attempts (`max_attempts_exceeded`).
+- **Probabilistic Calibration Engine** (`src/lib/engine/calibration.ts`):
+  - Evaluates predicted vs actual recovery rates across categories and 5 probability reliability bins.
+  - Brier score calculation (0.2248) proving model calibration against guesswork.
+- **Full Batch Orchestration** (`src/lib/engine/runBatch.ts`):
+  - Unified single-call function executing the entire pipeline (scoring $\to$ filtering $\to$ ranking $\to$ execution $\to$ calibration).
+- **74 total unit tests** passing across 9 test files.
+
+### ○ Milestone 5 — Dashboard, Drill-down, Audit Explorer (next)
 ### ○ Milestone 6 — Polish, README, Screenshots
 
 ---

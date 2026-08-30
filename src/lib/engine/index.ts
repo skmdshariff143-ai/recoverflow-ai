@@ -38,3 +38,13 @@ export {
   processRecoveryPipeline,
   DEFAULT_RECOVERY_BUDGET,
 } from './rankAndAllocate';
+
+export {
+  executeBatchInterventions,
+  DEFAULT_SIMULATION_SEED,
+  DEFAULT_DISPUTE_RATE,
+} from './executeIntervention';
+
+export { computeCalibrationReport } from './calibration';
+
+export { runRecoveryBatch } from './runBatch';
