@@ -61,7 +61,9 @@ export const RecoveryExecutionResultSchema = z.object({
   success: z.boolean(),
   transactionReference: z.string(),
   adapterUsed: z.enum(['deterministic_simulator', 'razorpay_test_mode']),
+  /** @deprecated Legacy field. Use liveSettledAmountPaise or syntheticOutcomeAmountPaise instead. Never use as live settlement proof for simulator results. */
   settledAmountPaise: z.number().int().nonnegative(),
+  /** @deprecated Legacy field. Use executionStatus and outcomeStatus instead. */
   status: LinkStatusSchema,
   latencyMs: z.number().nonnegative(),
   timestamp: z.string(),
@@ -72,22 +74,26 @@ export const RecoveryExecutionResultSchema = z.object({
   executionStatus: z.enum(['executed', 'scheduled', 'failed', 'link_created']).default('executed'),
   outcomeStatus: z.enum(['synthetic_captured', 'synthetic_not_recovered', 'live_test_mode_created', 'unverified']).default('synthetic_captured'),
   evidenceClass: EvidenceClassSchema.default('SYNTHETIC'),
+  syntheticOutcomeAmountPaise: z.number().int().nonnegative().default(0),
   verifiedSyntheticRecoveredPaise: z.number().int().nonnegative().default(0),
   liveSettledAmountPaise: z.number().int().nonnegative().default(0),
   providerReference: z.string().optional(),
-  provenanceNotice: z.string().default('Recovered amount shown here is a deterministic synthetic outcome used for evaluation. It is not live merchant settlement.'),
+  provenanceNotice: z.string().default('Deterministic synthetic evaluation outcome; not live merchant settlement.'),
 });
 
 export type RecoveryExecutionResult = z.infer<typeof RecoveryExecutionResultSchema>;
 
 export interface StatusQueryResult {
+  /** @deprecated Legacy field. Use outcomeStatus instead. */
   status: LinkStatus;
+  /** @deprecated Legacy field. Use liveSettledAmountPaise or syntheticOutcomeAmountPaise instead. */
   settledAmountPaise: number;
   razorpayStatusRaw?: string;
   source: 'simulator_memory' | 'razorpay_test_api';
   timestamp: string;
   evidenceClass?: EvidenceClass;
   liveSettledAmountPaise?: number;
+  syntheticOutcomeAmountPaise?: number;
   verifiedSyntheticRecoveredPaise?: number;
   provenanceNotice?: string;
 }
@@ -126,10 +132,11 @@ export class DeterministicSimulatorAdapter implements RecoveryExecutionAdapter {
       executionStatus: isSuccess ? 'executed' : 'link_created',
       outcomeStatus: isSuccess ? 'synthetic_captured' : 'synthetic_not_recovered',
       evidenceClass: 'SYNTHETIC',
+      syntheticOutcomeAmountPaise: isSuccess ? validated.amountPaise : 0,
       verifiedSyntheticRecoveredPaise: isSuccess ? validated.amountPaise : 0,
       liveSettledAmountPaise: 0, // Invariant: Exactly 0 real/live merchant settlement
       providerReference: ref,
-      provenanceNotice: 'Recovered amount shown here is a deterministic synthetic outcome used for evaluation. It is not live merchant settlement. Payment link creation counts as ₹0.00 recovered until verified settlement.',
+      provenanceNotice: 'Deterministic synthetic evaluation outcome; not live merchant settlement.',
     };
 
     this.transactionStore.set(ref, result);
@@ -146,8 +153,9 @@ export class DeterministicSimulatorAdapter implements RecoveryExecutionAdapter {
         timestamp: new Date().toISOString(),
         evidenceClass: 'SYNTHETIC',
         liveSettledAmountPaise: 0,
+        syntheticOutcomeAmountPaise: 0,
         verifiedSyntheticRecoveredPaise: 0,
-        provenanceNotice: 'Deterministic simulated transaction reference not found.',
+        provenanceNotice: 'Deterministic synthetic evaluation outcome; not live merchant settlement.',
       };
     }
 
@@ -158,6 +166,7 @@ export class DeterministicSimulatorAdapter implements RecoveryExecutionAdapter {
       timestamp: new Date().toISOString(),
       evidenceClass: 'SYNTHETIC',
       liveSettledAmountPaise: 0,
+      syntheticOutcomeAmountPaise: existing.syntheticOutcomeAmountPaise ?? existing.verifiedSyntheticRecoveredPaise,
       verifiedSyntheticRecoveredPaise: existing.verifiedSyntheticRecoveredPaise,
       provenanceNotice: existing.provenanceNotice,
     };
@@ -222,6 +231,7 @@ export class RazorpayTestModeAdapter implements RecoveryExecutionAdapter {
         executionStatus: 'failed',
         outcomeStatus: 'unverified',
         evidenceClass: 'FALLBACK',
+        syntheticOutcomeAmountPaise: 0,
         verifiedSyntheticRecoveredPaise: 0,
         liveSettledAmountPaise: 0,
         providerReference: undefined,
@@ -288,6 +298,7 @@ export class RazorpayTestModeAdapter implements RecoveryExecutionAdapter {
           executionStatus: 'failed',
           outcomeStatus: 'unverified',
           evidenceClass: 'LIVE_TEST_MODE',
+          syntheticOutcomeAmountPaise: 0,
           verifiedSyntheticRecoveredPaise: 0,
           liveSettledAmountPaise: 0,
           providerReference: `rzp_err_${validated.paymentId}`,
@@ -309,6 +320,7 @@ export class RazorpayTestModeAdapter implements RecoveryExecutionAdapter {
         executionStatus: 'link_created',
         outcomeStatus: 'live_test_mode_created',
         evidenceClass: 'LIVE_TEST_MODE',
+        syntheticOutcomeAmountPaise: 0,
         verifiedSyntheticRecoveredPaise: 0,
         liveSettledAmountPaise: 0,
         providerReference: data.id,
@@ -329,6 +341,7 @@ export class RazorpayTestModeAdapter implements RecoveryExecutionAdapter {
         executionStatus: 'failed',
         outcomeStatus: 'unverified',
         evidenceClass: 'LIVE_TEST_MODE',
+        syntheticOutcomeAmountPaise: 0,
         verifiedSyntheticRecoveredPaise: 0,
         liveSettledAmountPaise: 0,
         providerReference: undefined,

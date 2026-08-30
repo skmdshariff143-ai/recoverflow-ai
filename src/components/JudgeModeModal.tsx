@@ -74,7 +74,7 @@ export const JUDGE_STEPS: StepContent[] = [
       'RecoverFlow AI ingests failed payment records and immediately computes revenue exposure in strict integer paise. Each invoice is mapped with customer history, tenure, and prior attempts.',
     technicalDetails: [
       'Ingests 100 failed transactions totaling ₹6,87,694.53 (68,769,453 paise).',
-      'Guarantees zero floating-point arithmetic throughout the entire lifecycle.',
+      'All monetary accounting uses integer paise. Expected-value calculations convert probability scores to integer basis points before applying them to money.',
       'Parses raw gateway strings, error codes, and customer communication preferences.',
     ],
     recommendedAction: {
@@ -191,7 +191,7 @@ export const JUDGE_STEPS: StepContent[] = [
     technicalDetails: [
       'Equation 1: Gross at Risk = Halted + Review + Deferred + In-Flight + Recovered.',
       'Equation 2: Remaining Exposure = Halted + Review + Deferred + In-Flight.',
-      'All amounts verified in integer paise with zero floating-point accumulation error.',
+      'All monetary accounting uses integer paise. Expected-value calculations convert probability scores to integer basis points before applying them to money.',
     ],
     recommendedAction: {
       label: 'View Reconciled Waterfall',

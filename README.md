@@ -14,7 +14,7 @@
 Most automated payment recovery systems rely on **blind rule cascades** (e.g. "retry all failed charges after 4 hours, then again after 24 hours"). In high-volume commerce, this wastes gateway fees and retry bandwidth on hopeless failures (closed accounts, hard cancellations), annoys reliable customers with aggressive reminders during temporary bank downtime, and fails to prioritize high-value enterprise invoices.
 
 **RecoverFlow AI** transforms revenue recovery into a **bounded, explainable closed-loop orchestration engine**:
-1. **Integer-Paise Financial Precision**: Eliminates floating-point money drift and enforces currency segregation.
+1. **Integer-Paise Financial Precision**: All monetary accounting uses integer paise. Expected-value calculations convert probability scores to integer basis points before applying them to money.
 2. **Deterministic & Calibrated Scoring**: Evaluates 6 transparent behavioral signals to predict recovery probability and Expected Value ($\text{EV}_{\text{paise}} = \text{round}(\text{amountPaise} \times \text{bps} / 10000)$).
 3. **Independent Frozen Evaluation**: Completely decouples ground-truth outcomes from predicted probabilities to eliminate circular evaluation bias.
 4. **Closed-Loop Multi-Cycle State Machine**: Manages payments across `DETECTED` $\to$ `DIAGNOSED` $\to$ `SCHEDULED` $\to$ `EXECUTING` $\to$ `OUTCOME_OBSERVED` $\to$ `RECOVERED` / `STOPPED` with quiet-hours scheduling.

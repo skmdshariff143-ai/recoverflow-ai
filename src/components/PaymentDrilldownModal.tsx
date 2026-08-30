@@ -98,6 +98,8 @@ export function PaymentDrilldownModal({
   const [outcomeResult, setOutcomeResult] = useState<{
     status: string;
     settledAmountPaise: number;
+    syntheticOutcomeAmountPaise?: number;
+    evidenceClass?: string;
     source: string;
     timestamp: string;
   } | null>(null);
@@ -202,7 +204,9 @@ export function PaymentDrilldownModal({
         const data = await res.json();
         setOutcomeResult({
           status: data.status,
-          settledAmountPaise: data.settledAmountPaise ?? 0,
+          settledAmountPaise: data.liveSettledAmountPaise ?? 0,
+          syntheticOutcomeAmountPaise: data.syntheticOutcomeAmountPaise ?? data.settledAmountPaise ?? 0,
+          evidenceClass: data.evidenceClass ?? 'SYNTHETIC',
           source: data.source ?? 'simulator_memory',
           timestamp: data.timestamp ?? new Date().toISOString(),
         });
@@ -210,6 +214,8 @@ export function PaymentDrilldownModal({
         setOutcomeResult({
           status: 'pending',
           settledAmountPaise: 0,
+          syntheticOutcomeAmountPaise: 0,
+          evidenceClass: 'SYNTHETIC',
           source: 'deterministic_simulator_fallback',
           timestamp: new Date().toISOString(),
         });
@@ -218,6 +224,8 @@ export function PaymentDrilldownModal({
       setOutcomeResult({
         status: 'pending',
         settledAmountPaise: 0,
+        syntheticOutcomeAmountPaise: 0,
+        evidenceClass: 'SYNTHETIC',
         source: 'deterministic_simulator_fallback',
         timestamp: new Date().toISOString(),
       });
@@ -581,10 +589,17 @@ export function PaymentDrilldownModal({
                   <span className="font-bold text-white uppercase">{outcomeResult.status}</span>
                 </div>
                 <div className="flex justify-between text-slate-300">
-                  <span>Verified Settlement:</span>
-                  <span className="font-bold text-emerald-300">
-                    {formatPaiseToINR(outcomeResult.settledAmountPaise, true)}
+                  <span>Outcome Amount:</span>
+                  <span className="font-bold text-emerald-300 flex items-center gap-1.5">
+                    {formatPaiseToINR(outcomeResult.syntheticOutcomeAmountPaise ?? outcomeResult.settledAmountPaise, true)}
+                    <span className="text-[9px] font-mono px-1 py-0.2 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded">
+                      {outcomeResult.evidenceClass ?? 'SYNTHETIC'}
+                    </span>
                   </span>
+                </div>
+                <div className="flex justify-between text-slate-400 text-[10px]">
+                  <span>Live Settled Amount:</span>
+                  <span>{formatPaiseToINR(outcomeResult.settledAmountPaise, true)}</span>
                 </div>
                 <div className="flex justify-between text-slate-400 text-[10px]">
                   <span>Telemetry Source:</span>

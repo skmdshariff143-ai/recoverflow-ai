@@ -23,7 +23,7 @@ Recovery resources (limited retry slots and contact bandwidth) are allocated str
 
 ## 2. Integer-Paise Financial Math & Invariants
 
-To prevent floating-point rounding errors and precision drift across financial aggregations:
+All monetary accounting uses integer paise. Expected-value calculations convert probability scores to integer basis points before applying them to money:
 - All monetary values are represented strictly as **integer paise** ($1\text{ INR} = 100\text{ Paise}$).
 - Probabilities are normalized into integer **basis points** ($100\% = 10,000\text{ bps}$).
 - Expected Value calculation:

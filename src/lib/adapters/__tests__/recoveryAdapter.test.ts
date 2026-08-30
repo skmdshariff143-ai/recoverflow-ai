@@ -47,16 +47,19 @@ describe('Recovery Execution Adapters & Idempotency Store', () => {
 
       expect(result.success).toBe(true);
       expect(result.adapterUsed).toBe('deterministic_simulator');
-      expect(result.settledAmountPaise).toBe(500_000);
-      expect(result.status).toBe('captured');
       expect(result.transactionReference).toContain('sim_txn_');
       expect(result.paymentLinkUrl).toBeUndefined(); // Invariant: no fake URLs
-      // Phase 2 Invariants:
+
+      // Explicit Simulator Integrity Invariants:
       expect(result.evidenceClass).toBe('SYNTHETIC');
       expect(result.outcomeStatus).toBe('synthetic_captured');
-      expect(result.liveSettledAmountPaise).toBe(0);
+      expect(result.outcomeStatus).not.toBe('captured'); // Cannot be presented as live captured
+      expect(result.liveSettledAmountPaise).toBe(0); // Simulator live settled amount is strictly zero
+      expect(result.syntheticOutcomeAmountPaise).toBe(500_000); // Synthetic value separately measurable
       expect(result.verifiedSyntheticRecoveredPaise).toBe(500_000);
-      expect(result.provenanceNotice).toContain('deterministic synthetic outcome used for evaluation');
+      expect(result.provenanceNotice).toBe(
+        'Deterministic synthetic evaluation outcome; not live merchant settlement.',
+      );
     });
 
     it('enforces that reminder payment-link creation records zero live settlement and zero synthetic recovered', async () => {
@@ -70,6 +73,7 @@ describe('Recovery Execution Adapters & Idempotency Store', () => {
       expect(result.status).toBe('test_link_created');
       expect(result.settledAmountPaise).toBe(0);
       expect(result.liveSettledAmountPaise).toBe(0);
+      expect(result.syntheticOutcomeAmountPaise).toBe(0);
       expect(result.verifiedSyntheticRecoveredPaise).toBe(0);
       expect(result.evidenceClass).toBe('SYNTHETIC');
     });
@@ -79,10 +83,10 @@ describe('Recovery Execution Adapters & Idempotency Store', () => {
       const query = await adapter.getStatus(result.transactionReference);
 
       expect(query.status).toBe('captured');
-      expect(query.settledAmountPaise).toBe(500_000);
       expect(query.source).toBe('simulator_memory');
       expect(query.evidenceClass).toBe('SYNTHETIC');
       expect(query.liveSettledAmountPaise).toBe(0);
+      expect(query.syntheticOutcomeAmountPaise).toBe(500_000);
       expect(query.verifiedSyntheticRecoveredPaise).toBe(500_000);
     });
 
@@ -91,6 +95,7 @@ describe('Recovery Execution Adapters & Idempotency Store', () => {
       expect(query.status).toBe('failed');
       expect(query.settledAmountPaise).toBe(0);
       expect(query.liveSettledAmountPaise).toBe(0);
+      expect(query.syntheticOutcomeAmountPaise).toBe(0);
       expect(query.verifiedSyntheticRecoveredPaise).toBe(0);
     });
   });
