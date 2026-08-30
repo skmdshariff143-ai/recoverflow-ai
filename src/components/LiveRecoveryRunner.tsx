@@ -3,7 +3,7 @@
  *
  * Provides a stepped, real-time visualization of the deterministic closed-loop
  * recovery state machine, processing batch events with Play, Pause, Step,
- * Reset, and Replay controls.
+ * Reset, and Judge Scenario selector.
  */
 
 'use client';
@@ -18,6 +18,8 @@ import {
   ArrowRight,
   UserCheck,
   Zap,
+  ShieldCheck,
+  AlertCircle,
 } from 'lucide-react';
 import type { FailedPayment } from '@/types';
 import type {
@@ -73,7 +75,6 @@ export function LiveRecoveryRunner({
     if (current.currentState === 'DETECTED') {
       stepWorkflowDiagnosisAndEligibility(current, { autoApproveHighEV: false });
     } else if (current.currentState === 'APPROVAL_REQUIRED') {
-      // Pause automatic play if human approval is required
       setIsPlaying(false);
       return;
     } else if (current.currentState === 'SCHEDULED') {
@@ -123,7 +124,6 @@ export function LiveRecoveryRunner({
         cycle: current.cycleCount + 1,
       });
     } else if (current.currentState === 'RECOVERED' || current.currentState === 'STOPPED') {
-      // Move to next payment
       if (onWorkflowComplete) onWorkflowComplete(current);
       if (currentIndex < payments.length - 1) {
         const nextIdx = currentIndex + 1;
@@ -170,6 +170,29 @@ export function LiveRecoveryRunner({
     setActiveWorkflow({ ...current });
   };
 
+  const handleSelectScenario = (scenarioKey: string) => {
+    setIsPlaying(false);
+    let targetIdx = 0;
+
+    if (scenarioKey === 'successful_recovery') {
+      targetIdx = payments.findIndex((p) => !p.opt_out && p.failure_category === 'bank_downtime');
+    } else if (scenarioKey === 'human_approval') {
+      targetIdx = payments.findIndex((p) => p.invoice_value_tier === 'high_value' && !p.opt_out);
+    } else if (scenarioKey === 'customer_opt_out') {
+      targetIdx = payments.findIndex((p) => p.opt_out === true);
+    } else if (scenarioKey === 'permanent_account') {
+      targetIdx = payments.findIndex((p) => p.failure_category === 'permanent_account_closure');
+    } else if (scenarioKey === 'quiet_hours') {
+      targetIdx = payments.findIndex((p) => p.quiet_hours_window.start <= 22);
+    }
+
+    if (targetIdx === -1) targetIdx = 0;
+    setCurrentIndex(targetIdx);
+    if (payments[targetIdx]) {
+      setActiveWorkflow(initRecoveryWorkflow(payments[targetIdx]));
+    }
+  };
+
   const handleReset = () => {
     setIsPlaying(false);
     setCurrentIndex(0);
@@ -197,8 +220,25 @@ export function LiveRecoveryRunner({
           </p>
         </div>
 
-        {/* Action Controls */}
+        {/* Action Controls & Judge Preset Selector */}
         <div className="flex items-center flex-wrap gap-2.5">
+          {/* Judge Safety Scenario Selector */}
+          <div className="flex items-center gap-1.5 bg-indigo-50 border border-indigo-200 p-1 rounded-lg text-xs">
+            <ShieldCheck className="w-3.5 h-3.5 text-indigo-700 ml-1" />
+            <select
+              onChange={(e) => handleSelectScenario(e.target.value)}
+              className="bg-transparent text-indigo-950 font-bold text-xs focus:outline-none pr-2 cursor-pointer"
+              defaultValue=""
+            >
+              <option value="" disabled>⚡ Jump to Judge Scenario...</option>
+              <option value="successful_recovery">1. Successful Recovery (Bank Downtime)</option>
+              <option value="human_approval">2. Human Approval Gate (High Value)</option>
+              <option value="customer_opt_out">3. Customer Opt-Out (Ineligible Stop)</option>
+              <option value="permanent_account">4. Permanent Closure (Non-Recoverable)</option>
+              <option value="quiet_hours">5. Quiet-Hours Scheduling Compliance</option>
+            </select>
+          </div>
+
           <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-lg border border-slate-200 text-xs">
             <span className="text-slate-500 font-medium px-1">Speed:</span>
             <button
@@ -348,57 +388,65 @@ export function LiveRecoveryRunner({
                 <p className="text-xs text-slate-700">
                   This transaction exceeds the high-value risk threshold ({formatPaiseToINR(activeWorkflow.payment.amount, true)}). An authenticated human operator must approve or reject recovery before execution.
                 </p>
-                <div>
-                  <textarea
-                    rows={2}
-                    placeholder="Enter mandatory reviewer rationale..."
+
+                <div className="space-y-2">
+                  <input
+                    type="text"
+                    placeholder="Enter mandatory reviewer note / rationale..."
                     value={manualReviewNote}
                     onChange={(e) => setManualReviewNote(e.target.value)}
-                    className="w-full text-xs p-2 border border-slate-300 rounded bg-white text-slate-800"
+                    className="w-full px-3 py-1.5 text-xs rounded-lg border border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white"
                   />
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => handleReviewerAction('approve')}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded text-xs font-bold transition"
-                  >
-                    Approve Recovery
-                  </button>
-                  <button
-                    onClick={() => handleReviewerAction('reject')}
-                    className="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded text-xs font-bold transition"
-                  >
-                    Reject &amp; Stop
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleReviewerAction('approve')}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-xs transition cursor-pointer"
+                    >
+                      Approve &amp; Schedule
+                    </button>
+                    <button
+                      onClick={() => handleReviewerAction('reject')}
+                      className="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-xs transition cursor-pointer"
+                    >
+                      Reject &amp; Stop
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
           </div>
         </div>
 
-        {/* Right Col: Live Transition Events Log */}
-        <div className="bg-slate-900 text-white rounded-xl p-5 shadow-sm space-y-3 flex flex-col max-h-[500px]">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5 text-indigo-400" />
-              State Transitions ({activeWorkflow.history.length})
-            </h4>
-            <span className="text-[10px] text-emerald-400 font-mono">LIVE TELEMETRY</span>
+        {/* Right Col: Real-time State Machine Event Trail */}
+        <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+            <h3 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+              <Clock className="w-4 h-4 text-indigo-600" />
+              Real-time State Transition Trail
+            </h3>
+            <span className="text-[10px] text-slate-400 font-mono">
+              {activeWorkflow.history.length} events
+            </span>
           </div>
 
-          <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 font-mono text-xs">
+          <div className="space-y-2.5 max-h-[380px] overflow-y-auto pr-1">
             {activeWorkflow.history.map((evt, idx) => (
-              <div key={evt.eventId} className="bg-slate-800/80 p-2.5 rounded border border-slate-700/60 space-y-1">
+              <div
+                key={evt.eventId || idx}
+                className="p-2.5 bg-slate-50 border border-slate-200/80 rounded-lg text-xs space-y-1"
+              >
                 <div className="flex items-center justify-between text-[10px] text-slate-400">
-                  <span>#{idx + 1} · {evt.actor}</span>
-                  <span>{new Date(evt.timestamp).toLocaleTimeString()}</span>
+                  <span className="font-mono">{new Date(evt.timestamp).toLocaleTimeString()}</span>
+                  <span className="bg-slate-200 text-slate-700 font-bold px-1.5 py-0.2 rounded uppercase">
+                    {evt.actor}
+                  </span>
                 </div>
-                <div className="flex items-center gap-1.5 text-xs">
-                  <span className="text-slate-400">{evt.previousState}</span>
-                  <ArrowRight className="w-3 h-3 text-indigo-400" />
-                  <span className="font-bold text-amber-300">{evt.nextState}</span>
+                <div className="flex items-center gap-1 text-slate-800 font-semibold">
+                  <span>{evt.previousState}</span>
+                  <ArrowRight className="w-3 h-3 text-slate-400" />
+                  <span className="text-indigo-600 font-bold">{evt.nextState}</span>
                 </div>
-                <div className="text-[11px] text-slate-300 font-sans">{evt.reasonCode}</div>
+                <div className="text-[11px] text-slate-500">Reason: {evt.reasonCode}</div>
               </div>
             ))}
           </div>
