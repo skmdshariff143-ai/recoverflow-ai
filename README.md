@@ -46,8 +46,8 @@ Most automated payment recovery systems rely on **blind rule cascades** (e.g. "r
 | **Simulated Recovery** | **₹4,76,823.00** | ₹83,664.00 | **+₹3,93,159.00 (+470%)** |
 | **Estimated Cost** | **₹486.00** | ₹480.00 | +₹6.00 |
 | **Net Simulated Recovery** | **₹4,76,337.00** | ₹83,184.00 | **+₹3,93,153.00 (+473%)** |
-| **Unsafe Interventions** | **0 (100% compliant)** | 0 | 0 |
-| **Opt-Out Violations** | **0 (100% compliant)** | 0 | 0 |
+| **Unsafe Interventions** | **0 (0 violations observed)** | 0 | 0 |
+| **Opt-Out Violations** | **0 (0 violations observed)** | 0 | 0 |
 | **Independent Brier Score** | **0.1637** | — | Strictly proper probabilistic score |
 
 ---

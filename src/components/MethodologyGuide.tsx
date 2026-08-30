@@ -98,7 +98,7 @@ export function MethodologyGuide() {
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle2 className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
-                <span><strong>Customer Communication Drafting:</strong> Crafts empathetic, RBI-compliant payment link recovery messages across SMS/Email.</span>
+                <span><strong>Customer Communication Drafting:</strong> Crafts empathetic, policy-constrained prototype payment link recovery messages across SMS/Email.</span>
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle2 className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
