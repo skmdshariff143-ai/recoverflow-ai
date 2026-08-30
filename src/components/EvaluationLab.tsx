@@ -132,6 +132,19 @@ export function EvaluationLab({
           </div>
         </div>
 
+        {/* Reproduction Command Banner */}
+        <div className="mt-3 p-2.5 bg-slate-900 text-slate-200 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs font-mono border border-slate-800">
+          <div className="flex items-center gap-2">
+            <span className="text-emerald-400 font-bold">$</span>
+            <span className="text-slate-300">
+              npm run verify:artifacts &amp;&amp; npx vitest run counterfactualEvaluation.test.ts
+            </span>
+          </div>
+          <span className="text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded">
+            Reproduction Invariant: Identical Frozen Outcomes
+          </span>
+        </div>
+
         {/* ── Key Comparative Headline Metrics ───────────────────── */}
         <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-gradient-to-br from-indigo-50 to-white border border-indigo-200 rounded-xl p-4">
