@@ -72,7 +72,8 @@ export function extractFeatureVector(
   const brokenPromiseNorm = Math.min(1, history.broken_promise_count / 3);
 
   // 3. Recency exponential decay [0, 1]
-  const tsStr = payment.failure_timestamp ?? payment.created_at;
+  const rawObj = payment as unknown as { failure_timestamp?: string; created_at?: string };
+  const tsStr = payment.failure_timestamp ?? rawObj.created_at;
   const failureTime = tsStr ? new Date(tsStr).getTime() : refDate.getTime();
   const diffDays = isNaN(failureTime) ? 0 : Math.max(0, (refDate.getTime() - failureTime) / (1000 * 60 * 60 * 24));
   const recencyDecay = Math.exp(-diffDays / 14);

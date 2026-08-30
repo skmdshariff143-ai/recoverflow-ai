@@ -24,18 +24,19 @@ import {
 } from '../stateMachine';
 import { buildHashChainedLedger, verifyLedgerIntegrity } from '../hashChainLedger';
 import type { AuditRecord } from '../auditTrail';
+import type { FrozenPotentialOutcomes } from '../outcomeEnvironment';
 
 const MOCK_HIGH_VALUE_PAYMENT: FailedPayment = {
   payment_id: 'pay_00999_hv',
   customer_id: 'cust_enterprise_01',
   amount: 4500000, // ₹45,000.00 (High-value threshold is ₹10,000.00)
+  currency: 'INR',
   invoice_value_tier: 'high_value',
   failure_category: 'bank_downtime',
-  raw_error_code: 'BANK_SYSTEM_TIMEOUT_504',
+  raw_gateway_error: 'BANK_SYSTEM_TIMEOUT_504',
   attempt_count: 0,
   opt_out: false,
   quiet_hours_window: { start: 21, end: 8, timezone: 'Asia/Kolkata' },
-  created_at: '2025-08-30T10:00:00Z',
   failure_timestamp: '2025-08-30T10:00:00Z',
   customer_payment_history: {
     on_time_payment_rate: 0.95,
@@ -44,7 +45,6 @@ const MOCK_HIGH_VALUE_PAYMENT: FailedPayment = {
     total_transactions: 20,
     past_recovery_successes: 2,
     past_recovery_failures: 0,
-    days_since_failure: 0,
   },
 };
 
@@ -61,7 +61,7 @@ describe('Closed-Loop Workflow Product Flow Verification', () => {
       id: `rec_init_${Date.now()}`,
       payment_id: workflow.payment.payment_id,
       timestamp: new Date().toISOString(),
-      stage: 'scoring',
+      stage: 'feature_scoring',
       decision: 'diagnosed',
       reason: 'Payment failure detected and categorized',
       metadata: { amount: workflow.payment.amount, category: workflow.payment.failure_category },
@@ -112,7 +112,7 @@ describe('Closed-Loop Workflow Product Flow Verification', () => {
       id: `rec_${approvedEvent.eventId}`,
       payment_id: workflow.payment.payment_id,
       timestamp: approvalTimestamp,
-      stage: 'approval',
+      stage: 'approval_gate',
       decision: 'approved',
       reason: 'Verified enterprise SLA and bank downtime resolution.',
       metadata: { actor: approvedEvent.actor, nextState: approvedEvent.nextState },
@@ -121,14 +121,15 @@ describe('Closed-Loop Workflow Product Flow Verification', () => {
     // ── 4. Bounded Execution & Idempotency ─────────────────────────────
     expect(workflow.cycleCount).toBe(0);
 
-    const outcomeMatrix = {
-      paymentId: workflow.payment.payment_id,
+    const outcomeMatrix: FrozenPotentialOutcomes = {
+      payment_id: workflow.payment.payment_id,
       outcomes: {
         retry: {
           1: {
             recovered: true,
             settledAmountPaise: 4500000,
             disputed: false,
+            latencyMinutes: 15,
             reason: 'Bank downtime resolved, mandate settled on retry',
           },
         },
@@ -150,7 +151,7 @@ describe('Closed-Loop Workflow Product Flow Verification', () => {
       id: `rec_settled_${Date.now()}`,
       payment_id: workflow.payment.payment_id,
       timestamp: new Date().toISOString(),
-      stage: 'execution',
+      stage: 'intervention_execution',
       decision: 'recovered',
       reason: 'INVOICE_SETTLED',
       metadata: {

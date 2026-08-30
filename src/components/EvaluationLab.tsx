@@ -34,7 +34,7 @@ export function EvaluationLab({
   const [errorSearch, setErrorSearch] = useState<string>('');
 
   const activeReport = selectedDataset === 'dev' ? devReport : heldoutReport;
-  const activeMetadata = selectedDataset === 'dev' ? DATASET_METADATA.dev : DATASET_METADATA.heldout;
+  const activeMetadata = selectedDataset === 'dev' ? DATASET_METADATA.dev : DATASET_METADATA.adversarial_stress;
   const policies = activeReport.policies;
 
   const filteredErrors = useMemo(() => {
