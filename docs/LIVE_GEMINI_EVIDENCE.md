@@ -2,7 +2,7 @@
 
 > **Evidence Source**: Programmatically captured by `scripts/capture-live-evidence.ts`  
 > **Target Host**: `https://recoverflow-ai-kohl.vercel.app`  
-> **Capture Timestamp**: `2026-08-30T10:11:23.930Z`  
+> **Capture Timestamp**: `2026-08-30T10:22:30.925Z`  
 > **Evidence JSON**: [`docs/evidence/live-gemini.json`](./evidence/live-gemini.json)
 
 ---
@@ -38,8 +38,8 @@
     "provider": "deterministic_fallback",
     "fallbackReason": "Gemini API key unconfigured; using deterministic rule classifier"
   },
-  "timestamp": "2026-08-30T10:11:22.546Z",
-  "latencyMs": 842
+  "timestamp": "2026-08-30T10:22:29.721Z",
+  "latencyMs": 645
 }
 ```
 
@@ -68,8 +68,8 @@
     "provider": "deterministic_fallback",
     "fallbackReason": "Default template mode active"
   },
-  "timestamp": "2026-08-30T10:11:23.389Z",
-  "latencyMs": 277
+  "timestamp": "2026-08-30T10:22:30.366Z",
+  "latencyMs": 294
 }
 ```
 
@@ -95,7 +95,7 @@
     "provider": "deterministic_fallback",
     "fallbackReason": "Gemini API key unconfigured; using deterministic rule classifier"
   },
-  "timestamp": "2026-08-30T10:11:23.666Z",
+  "timestamp": "2026-08-30T10:22:30.660Z",
   "latencyMs": 264
 }
 ```

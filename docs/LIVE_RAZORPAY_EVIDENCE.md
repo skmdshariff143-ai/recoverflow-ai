@@ -2,7 +2,7 @@
 
 > **Evidence Source**: Programmatically captured by `scripts/capture-live-evidence.ts`  
 > **Target Host**: `https://recoverflow-ai-kohl.vercel.app`  
-> **Capture Timestamp**: `2026-08-30T10:11:25.461Z`  
+> **Capture Timestamp**: `2026-08-30T10:22:32.227Z`  
 > **Evidence JSON**: [`docs/evidence/live-razorpay.json`](./evidence/live-razorpay.json)
 
 ---
@@ -37,7 +37,7 @@
     "currency": "INR",
     "intervention": "reminder",
     "attemptCycle": 1,
-    "idempotencyKey": "idemp_live_1788084683938"
+    "idempotencyKey": "idemp_live_1788085350931"
   },
   "httpStatus": 200,
   "responseBody": {
@@ -49,15 +49,15 @@
       "settledAmountPaise": 0,
       "status": "test_link_created",
       "latencyMs": 15,
-      "timestamp": "2026-08-30T10:11:25.474Z",
+      "timestamp": "2026-08-30T10:22:32.249Z",
       "rawResponseSummary": "Deterministic simulated execution for reminder (cycle 1). Settlement: PENDING."
     },
-    "serverTimestamp": "2026-08-30T10:11:25.474Z",
+    "serverTimestamp": "2026-08-30T10:22:32.249Z",
     "idempotencyStatus": "new_execution_recorded",
     "securityDisclaimer": "Executed in Test Mode. Zero real financial debit triggered."
   },
-  "timestamp": "2026-08-30T10:11:23.938Z",
-  "latencyMs": 496
+  "timestamp": "2026-08-30T10:22:30.931Z",
+  "latencyMs": 278
 }
 ```
 
@@ -77,10 +77,10 @@
     "settledAmountPaise": 0,
     "source": "simulator_memory",
     "adapter": "deterministic_simulator",
-    "timestamp": "2026-08-30T10:11:25.749Z"
+    "timestamp": "2026-08-30T10:22:32.743Z"
   },
-  "timestamp": "2026-08-30T10:11:24.434Z",
-  "latencyMs": 274
+  "timestamp": "2026-08-30T10:22:31.209Z",
+  "latencyMs": 492
 }
 ```
 
@@ -104,7 +104,7 @@
     "currency": "INR",
     "intervention": "retry",
     "attemptCycle": 1,
-    "idempotencyKey": "idemp_rzp_1788084684708"
+    "idempotencyKey": "idemp_rzp_1788085351701"
   },
   "httpStatus": 200,
   "responseBody": {
@@ -116,16 +116,16 @@
       "settledAmountPaise": 0,
       "status": "failed",
       "latencyMs": 5,
-      "timestamp": "2026-08-30T10:11:26.233Z",
+      "timestamp": "2026-08-30T10:22:33.002Z",
       "rawResponseSummary": "Razorpay Test-Mode credentials not configured in environment (RAZORPAY_KEY_ID must start with rzp_test_).",
       "errorMessage": "RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET missing"
     },
-    "serverTimestamp": "2026-08-30T10:11:26.233Z",
+    "serverTimestamp": "2026-08-30T10:22:33.002Z",
     "idempotencyStatus": "new_execution_recorded",
     "securityDisclaimer": "Executed in Test Mode. Zero real financial debit triggered."
   },
-  "timestamp": "2026-08-30T10:11:24.708Z",
-  "latencyMs": 485
+  "timestamp": "2026-08-30T10:22:31.701Z",
+  "latencyMs": 257
 }
 ```
 
@@ -146,7 +146,7 @@
   "responseBody": {
     "error": "Server Configuration Error: RAZORPAY_WEBHOOK_SECRET is not configured. Webhook verification failed closed."
   },
-  "timestamp": "2026-08-30T10:11:25.193Z",
-  "latencyMs": 268
+  "timestamp": "2026-08-30T10:22:31.958Z",
+  "latencyMs": 269
 }
 ```

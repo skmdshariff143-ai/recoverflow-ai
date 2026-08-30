@@ -1,8 +1,18 @@
 {
   "host": "https://recoverflow-ai-kohl.vercel.app",
-  "capturedAt": "2026-08-30T10:11:23.930Z",
+  "capturedAt": "2026-08-30T10:22:30.925Z",
   "version": {
-    "error": "Non-JSON response received"
+    "project": "RecoverFlow AI",
+    "track": "Razorpay AI Buildathon — Track 3: AI Revenue Recovery",
+    "commitSha": "994421c8f96fa8aab62f95bae7bc04f66dd75f03",
+    "buildVersion": "2.3.0-live-verified",
+    "environmentName": "production",
+    "serverTimestamp": "2026-08-30T10:22:30.481Z",
+    "serviceStatus": {
+      "geminiMode": "deterministic_rule_fallback",
+      "razorpayMode": "deterministic_simulator",
+      "webhookVerification": "unconfigured_fail_closed"
+    }
   },
   "captures": {
     "diagnoseNormal": {
@@ -22,8 +32,8 @@
         "provider": "deterministic_fallback",
         "fallbackReason": "Gemini API key unconfigured; using deterministic rule classifier"
       },
-      "timestamp": "2026-08-30T10:11:22.546Z",
-      "latencyMs": 842
+      "timestamp": "2026-08-30T10:22:29.721Z",
+      "latencyMs": 645
     },
     "draftMessage": {
       "endpoint": "/api/ai/draft-message",
@@ -45,8 +55,8 @@
         "provider": "deterministic_fallback",
         "fallbackReason": "Default template mode active"
       },
-      "timestamp": "2026-08-30T10:11:23.389Z",
-      "latencyMs": 277
+      "timestamp": "2026-08-30T10:22:30.366Z",
+      "latencyMs": 294
     },
     "promptInjection": {
       "endpoint": "/api/ai/diagnose",
@@ -65,7 +75,7 @@
         "provider": "deterministic_fallback",
         "fallbackReason": "Gemini API key unconfigured; using deterministic rule classifier"
       },
-      "timestamp": "2026-08-30T10:11:23.666Z",
+      "timestamp": "2026-08-30T10:22:30.660Z",
       "latencyMs": 264
     }
   }
