@@ -115,6 +115,8 @@ const DEFAULT_REFERENCE_DATE = new Date('2025-08-30T00:00:00Z');
 export interface ScoringConfig {
   /** Reference date for recency calculation. Default: 2025-08-30. */
   referenceDate?: Date;
+  /** Scoring model algorithm to apply. Default: 'heuristic'. */
+  modelType?: 'heuristic' | 'trained_logistic';
 }
 
 /** A single factor's contribution to the recovery score. */
@@ -138,6 +140,8 @@ export interface PaymentScore {
   expected_value: number;
   /** Contributing factors, sorted by |contribution| descending. */
   explanation: ScoreExplanationFactor[];
+  /** Model version used to generate this score (e.g. 'v1.0.0-heuristic', 'v1.1.0-logistic-calibrated'). */
+  model_version?: string;
 }
 
 // ─── Main Scoring Function ──────────────────────────────────────────
@@ -255,6 +259,7 @@ export function scorePayment(
     recovery_probability: probability,
     expected_value: expectedValue,
     explanation: sortedExplanation,
+    model_version: 'v1.0.0-heuristic',
   };
 }
 

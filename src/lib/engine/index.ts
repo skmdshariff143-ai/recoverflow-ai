@@ -14,6 +14,19 @@ export type {
 } from './scoreRecovery';
 
 export {
+  extractFeatureVector,
+  trainLogisticRecoveryModel,
+  scorePaymentWithTrainedModel,
+  DEFAULT_TRAINED_MODEL,
+} from './trainModel';
+export type {
+  ModelWeights,
+  TrainedModelArtifact,
+  TrainingSample,
+  TrainOptions,
+} from './trainModel';
+
+export {
   checkSafetyRules,
   MAX_RECOVERY_ATTEMPTS,
   NON_RECOVERABLE_CATEGORIES,
@@ -45,7 +58,10 @@ export {
   DEFAULT_DISPUTE_RATE,
 } from './executeIntervention';
 
-export { computeCalibrationReport } from './calibration';
+export {
+  computeCalibrationReport,
+  compareModelCalibration,
+} from './calibration';
 
 export { runRecoveryBatch } from './runBatch';
 

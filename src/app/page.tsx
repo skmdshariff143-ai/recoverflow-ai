@@ -21,6 +21,9 @@ export default function Home() {
     setBudget,
     simulationSeed,
     setSimulationSeed,
+    scoringModel,
+    setScoringModel,
+    modelComparison,
     activeTab,
     setActiveTab,
     selectedPaymentId,
@@ -92,7 +95,12 @@ export default function Home() {
 
         {/* Tab 2: Probabilistic Calibration Report */}
         {activeTab === 'calibration' && (
-          <CalibrationVisualizer calibration={batchResult.calibration} />
+          <CalibrationVisualizer
+            calibration={batchResult.calibration}
+            modelComparison={modelComparison}
+            scoringModel={scoringModel}
+            onScoringModelChange={setScoringModel}
+          />
         )}
 
         {/* Tab 3: Immutable Audit Trail Explorer */}

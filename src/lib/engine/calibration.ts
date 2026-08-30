@@ -10,6 +10,7 @@
  *  - Per-Category Predicted vs Actual Recovery Table
  *  - 5-Bin Reliability Diagram Metrics (binned by predicted probability)
  *  - Mean Absolute Calibration Error (MACE)
+ *  - Model Comparison (Heuristic v1.0.0 vs Trained Logistic v1.1.0)
  */
 
 import type {
@@ -18,8 +19,13 @@ import type {
   CategoryCalibrationMetric,
   BinnedCalibrationMetric,
   FailureCategory,
+  FailedPayment,
+  PipelineOptions,
+  ModelComparisonReport,
 } from '@/types';
 import { FAILURE_CATEGORIES } from '@/types';
+import { processRecoveryPipeline } from './rankAndAllocate';
+import { executeBatchInterventions } from './executeIntervention';
 
 export function computeCalibrationReport(executedItems: ExecutedItem[]): CalibrationReport {
   // Focus calibration strictly on items that were allocated budget and attempted
@@ -58,39 +64,42 @@ export function computeCalibrationReport(executedItems: ExecutedItem[]): Calibra
   );
 
   // 2. Brier Score = (1/N) * sum((prob - actual)^2)
-  const brierSum = budgeted.reduce((sum, i) => {
-    const actual = i.execution_status === 'recovered' ? 1 : 0;
-    const diff = i.score.recovery_probability - actual;
-    return sum + diff * diff;
+  const brierSum = budgeted.reduce((sum, item) => {
+    const outcome = item.execution_status === 'recovered' ? 1 : 0;
+    return sum + Math.pow(item.score.recovery_probability - outcome, 2);
   }, 0);
   const brierScore = round4(brierSum / budgeted.length);
 
-  // 3. Per-Category Breakdown
+  // 3. Category Breakdown Metrics
   const categoryMetrics: CategoryCalibrationMetric[] = [];
   let categoryErrorSum = 0;
-  let categoryWithSamplesCount = 0;
+  let activeCategoryCount = 0;
 
   for (const cat of FAILURE_CATEGORIES) {
-    const catItems = budgeted.filter((i) => i.payment.failure_category === cat);
+    const catItems = budgeted.filter(
+      (item) => item.payment.failure_category === cat,
+    );
     if (catItems.length === 0) continue;
 
+    activeCategoryCount++;
     const catPredictedSum = catItems.reduce(
-      (sum, i) => sum + i.score.recovery_probability,
+      (sum, item) => sum + item.score.recovery_probability,
       0,
     );
     const catRecoveredCount = catItems.filter(
-      (i) => i.execution_status === 'recovered',
+      (item) => item.execution_status === 'recovered',
     ).length;
 
     const predRate = round4(catPredictedSum / catItems.length);
     const actRate = round4(catRecoveredCount / catItems.length);
-    const error = round4(Math.abs(predRate - actRate));
+    const calibError = round4(Math.abs(predRate - actRate));
+    categoryErrorSum += calibError;
 
-    const expectedValSum = round2(
-      catItems.reduce((sum, i) => sum + i.score.expected_value, 0),
+    const catEV = round2(
+      catItems.reduce((sum, item) => sum + item.score.expected_value, 0),
     );
-    const recoveredAmtSum = round2(
-      catItems.reduce((sum, i) => sum + i.recovered_amount, 0),
+    const catRecoveredAmount = round2(
+      catItems.reduce((sum, item) => sum + item.recovered_amount, 0),
     );
 
     categoryMetrics.push({
@@ -99,39 +108,30 @@ export function computeCalibrationReport(executedItems: ExecutedItem[]): Calibra
       recovered_count: catRecoveredCount,
       predicted_recovery_rate: predRate,
       actual_recovery_rate: actRate,
-      calibration_error: error,
-      expected_value: expectedValSum,
-      recovered_amount: recoveredAmtSum,
+      calibration_error: calibError,
+      expected_value: catEV,
+      recovered_amount: catRecoveredAmount,
     });
-
-    categoryErrorSum += error;
-    categoryWithSamplesCount++;
   }
 
-  // Sort categories by budgeted count descending, then category name
-  categoryMetrics.sort((a, b) => b.budgeted_count - a.budgeted_count);
-
   const meanCategoryError =
-    categoryWithSamplesCount > 0
-      ? round4(categoryErrorSum / categoryWithSamplesCount)
+    activeCategoryCount > 0
+      ? round4(categoryErrorSum / activeCategoryCount)
       : 0;
 
-  // 4. 5-Bin Reliability Diagram Metrics (0.00 to 1.00)
-  const binRanges: Array<{ min: number; max: number; label: string }> = [
+  // 4. 5-Bin Reliability Diagram Partitioning
+  const bins = [
     { min: 0.0, max: 0.2, label: '0.00 – 0.20' },
     { min: 0.2, max: 0.4, label: '0.20 – 0.40' },
     { min: 0.4, max: 0.6, label: '0.40 – 0.60' },
     { min: 0.6, max: 0.8, label: '0.60 – 0.80' },
-    { min: 0.8, max: 1.0, label: '0.80 – 1.00' },
+    { min: 0.8, max: 1.01, label: '0.80 – 1.00' },
   ];
 
-  const binnedMetrics: BinnedCalibrationMetric[] = binRanges.map((bin, idx) => {
-    const inBin = budgeted.filter((i) => {
-      const p = i.score.recovery_probability;
-      if (idx === binRanges.length - 1) {
-        return p >= bin.min && p <= bin.max;
-      }
-      return p >= bin.min && p < bin.max;
+  const binnedMetrics: BinnedCalibrationMetric[] = bins.map((bin, idx) => {
+    const inBin = budgeted.filter((item) => {
+      const p = item.score.recovery_probability;
+      return p >= bin.min && (idx === 4 ? p <= 1.0 : p < bin.max);
     });
 
     if (inBin.length === 0) {
@@ -141,7 +141,7 @@ export function computeCalibrationReport(executedItems: ExecutedItem[]): Calibra
         min_prob: bin.min,
         max_prob: bin.max,
         sample_count: 0,
-        avg_predicted_prob: round4((bin.min + bin.max) / 2),
+        avg_predicted_prob: round4((bin.min + Math.min(1.0, bin.max)) / 2),
         actual_recovery_rate: 0,
         calibration_error: 0,
       };
@@ -176,6 +176,75 @@ export function computeCalibrationReport(executedItems: ExecutedItem[]): Calibra
     mean_category_calibration_error: meanCategoryError,
     category_metrics: categoryMetrics,
     binned_metrics: binnedMetrics,
+  };
+}
+
+/**
+ * Compare calibration and performance between the heuristic baseline and the trained logistic model.
+ */
+export function compareModelCalibration(
+  payments: FailedPayment[],
+  options: PipelineOptions = {},
+): ModelComparisonReport {
+  // 1. Heuristic Model Evaluation
+  const heuristicPipeline = processRecoveryPipeline(payments, {
+    ...options,
+    scoringModel: 'heuristic',
+  });
+  const heuristicExecuted = executeBatchInterventions(heuristicPipeline.items, options);
+  const heuristicCalib = computeCalibrationReport(heuristicExecuted);
+  const heuristicRecoveredRev = Number(
+    heuristicExecuted.reduce((s, i) => s + i.recovered_amount, 0).toFixed(2),
+  );
+  const heuristicRecoveredCount = heuristicExecuted.filter(
+    (i) => i.execution_status === 'recovered',
+  ).length;
+
+  // 2. Trained Logistic Model Evaluation
+  const trainedPipeline = processRecoveryPipeline(payments, {
+    ...options,
+    scoringModel: 'trained_logistic',
+  });
+  const trainedExecuted = executeBatchInterventions(trainedPipeline.items, options);
+  const trainedCalib = computeCalibrationReport(trainedExecuted);
+  const trainedRecoveredRev = Number(
+    trainedExecuted.reduce((s, i) => s + i.recovered_amount, 0).toFixed(2),
+  );
+  const trainedRecoveredCount = trainedExecuted.filter(
+    (i) => i.execution_status === 'recovered',
+  ).length;
+
+  const brierDiff = heuristicCalib.brier_score - trainedCalib.brier_score;
+  const brierImprovementPercent =
+    heuristicCalib.brier_score > 0
+      ? round2((brierDiff / heuristicCalib.brier_score) * 100)
+      : 0;
+
+  const calibrationErrorDelta = round4(
+    heuristicCalib.overall_calibration_error - trainedCalib.overall_calibration_error,
+  );
+
+  return {
+    heuristic: {
+      modelVersion: 'v1.0.0-heuristic',
+      brierScore: heuristicCalib.brier_score,
+      overallCalibrationError: heuristicCalib.overall_calibration_error,
+      predictedRecoveryRate: heuristicCalib.overall_predicted_rate,
+      actualRecoveryRate: heuristicCalib.overall_actual_rate,
+      totalRecoveredRevenue: heuristicRecoveredRev,
+      recoveredCount: heuristicRecoveredCount,
+    },
+    trainedLogistic: {
+      modelVersion: 'v1.1.0-logistic-calibrated',
+      brierScore: trainedCalib.brier_score,
+      overallCalibrationError: trainedCalib.overall_calibration_error,
+      predictedRecoveryRate: trainedCalib.overall_predicted_rate,
+      actualRecoveryRate: trainedCalib.overall_actual_rate,
+      totalRecoveredRevenue: trainedRecoveredRev,
+      recoveredCount: trainedRecoveredCount,
+    },
+    brierImprovementPercent,
+    calibrationErrorDelta,
   };
 }
 

@@ -50,6 +50,7 @@ export function generateAuditTrail(executedItems: ExecutedItem[]): AuditRecord[]
         expected_value: score.expected_value,
         failure_category: payment.failure_category,
         on_time_rate: payment.customer_payment_history.on_time_payment_rate,
+        model_version: score.model_version ?? 'v1.0.0-heuristic',
       },
     });
 

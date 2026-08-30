@@ -17,26 +17,29 @@ import type {
   StopReason,
 } from '@/types';
 import { scorePayment } from './scoreRecovery';
+import { scorePaymentWithTrainedModel } from './trainModel';
 import { checkSafetyRules } from './safetyFilter';
 import { evaluateApprovalStatus } from './approvalGate';
 import { calculateNextContactTime } from './quietHours';
 import { selectIntervention } from './interventions';
 
 export const DEFAULT_RECOVERY_BUDGET = 40;
-const DEFAULT_REFERENCE_DATE = new Date('2025-08-30T10:00:00Z');
+
+function round2(n: number): number {
+  return Math.round(n * 100) / 100;
+}
 
 /**
- * Execute the end-to-end recovery prioritization pipeline across a batch of payments.
- *
- * Pure function: deterministic output for identical inputs and configuration.
+ * Process a batch of failed payments through the entire PayBack AI prioritization pipeline.
  */
 export function processRecoveryPipeline(
   payments: FailedPayment[],
   options: PipelineOptions = {},
 ): BatchPipelineSummary {
   const budget = options.budget ?? DEFAULT_RECOVERY_BUDGET;
-  const refDate = options.referenceDate ?? DEFAULT_REFERENCE_DATE;
+  const refDate = options.referenceDate ?? new Date('2025-08-30T10:00:00Z');
   const autoApprove = options.autoApproveHighValueWithHighEV ?? true;
+  const useTrainedModel = options.scoringModel === 'trained_logistic';
 
   const stoppedItems: PipelineItem[] = [];
   const pendingApprovalItems: PipelineItem[] = [];
@@ -46,7 +49,9 @@ export function processRecoveryPipeline(
 
   for (const payment of payments) {
     totalRevenueAtRisk += payment.amount;
-    const score = scorePayment(payment, { referenceDate: refDate });
+    const score = useTrainedModel
+      ? scorePaymentWithTrainedModel(payment, undefined, refDate)
+      : scorePayment(payment, { referenceDate: refDate });
 
     // Step 1: Safety Rule Filter
     const safety = checkSafetyRules(payment);
@@ -177,8 +182,4 @@ export function processRecoveryPipeline(
     stopped_by_reason: stoppedByReason,
     items: allItems,
   };
-}
-
-function round2(n: number): number {
-  return Number(n.toFixed(2));
 }

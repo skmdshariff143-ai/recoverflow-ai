@@ -116,6 +116,8 @@ export interface CalibrationReport {
 // ─── Pipeline Configuration & Summaries ─────────────────────────────
 
 export interface PipelineOptions {
+  /** Scoring algorithm to use: 'heuristic' (v1.0.0) or 'trained_logistic' (v1.1.0). Default: 'trained_logistic'. */
+  scoringModel?: 'heuristic' | 'trained_logistic';
   /** Maximum number of contact slots to allocate per cycle. Default: 40. */
   budget?: number;
   /** Current simulated reference time. Default: 2025-08-30T10:00:00Z. */
@@ -126,6 +128,29 @@ export interface PipelineOptions {
   simulationSeed?: number;
   /** Simulated dispute/cancellation probability rate on budgeted items. Default: 0.03. */
   disputeRate?: number;
+}
+
+export interface ModelComparisonReport {
+  heuristic: {
+    modelVersion: string;
+    brierScore: number;
+    overallCalibrationError: number;
+    predictedRecoveryRate: number;
+    actualRecoveryRate: number;
+    totalRecoveredRevenue: number;
+    recoveredCount: number;
+  };
+  trainedLogistic: {
+    modelVersion: string;
+    brierScore: number;
+    overallCalibrationError: number;
+    predictedRecoveryRate: number;
+    actualRecoveryRate: number;
+    totalRecoveredRevenue: number;
+    recoveredCount: number;
+  };
+  brierImprovementPercent: number;
+  calibrationErrorDelta: number;
 }
 
 export interface BatchPipelineSummary {

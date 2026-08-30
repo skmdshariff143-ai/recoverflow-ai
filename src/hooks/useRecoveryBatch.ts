@@ -11,6 +11,7 @@ import type { FailedPayment, BatchExecutionResult, ExecutedItem } from '@/types'
 import { runRecoveryBatch } from '@/lib/engine/runBatch';
 import { generateSyntheticPayments } from '@/lib/engine/generateData';
 import { generateAuditTrail, exportAuditTrailToCSV, type AuditRecord } from '@/lib/engine/auditTrail';
+import { compareModelCalibration } from '@/lib/engine/calibration';
 
 export type DashboardTab = 'dashboard' | 'calibration' | 'audit_trail';
 
@@ -36,9 +37,21 @@ export function useRecoveryBatch(options: UseRecoveryBatchOptions = {}) {
   const [sortField, setSortField] = useState<'expected_value' | 'amount' | 'recovery_probability' | 'rank'>('rank');
   const [sortAsc, setSortAsc] = useState<boolean>(true);
 
+  const [scoringModel, setScoringModel] = useState<'heuristic' | 'trained_logistic'>('trained_logistic');
+
   // Execute engine pipeline
   const batchResult: BatchExecutionResult = useMemo(() => {
     return runRecoveryBatch(payments, {
+      budget,
+      simulationSeed,
+      scoringModel,
+      autoApproveHighValueWithHighEV: true,
+    });
+  }, [payments, budget, simulationSeed, scoringModel]);
+
+  // Compute side-by-side model comparison
+  const modelComparison = useMemo(() => {
+    return compareModelCalibration(payments, {
       budget,
       simulationSeed,
       autoApproveHighValueWithHighEV: true,
@@ -193,6 +206,9 @@ export function useRecoveryBatch(options: UseRecoveryBatchOptions = {}) {
     setBudget,
     simulationSeed,
     setSimulationSeed,
+    scoringModel,
+    setScoringModel,
+    modelComparison,
     activeTab,
     setActiveTab,
     selectedPaymentId,
