@@ -2,7 +2,7 @@ name: Quality Gates
 
 on:
   push:
-    branches: [main, 'milestone/*']
+    branches: [main, 'milestone/*', 'verify/*', 'fix/*']
   pull_request:
     branches: [main]
   workflow_dispatch:

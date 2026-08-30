@@ -1,0 +1,115 @@
+{
+  "host": "https://recoverflow-ai-kohl.vercel.app",
+  "capturedAt": "2026-08-30T10:11:25.461Z",
+  "version": {
+    "error": "Non-JSON response received"
+  },
+  "captures": {
+    "simulatorExecute": {
+      "endpoint": "/api/recovery/execute",
+      "method": "POST",
+      "requestHeaders": {
+        "x-recovery-adapter": "simulator"
+      },
+      "requestBody": {
+        "paymentId": "pay_live_test_001",
+        "customerId": "cust_live_001",
+        "customerName": "Live Capture Customer",
+        "customerEmail": "finance@live-test.com",
+        "amountPaise": 450000,
+        "currency": "INR",
+        "intervention": "reminder",
+        "attemptCycle": 1,
+        "idempotencyKey": "idemp_live_1788084683938"
+      },
+      "httpStatus": 200,
+      "responseBody": {
+        "success": false,
+        "receipt": {
+          "success": false,
+          "transactionReference": "sim_txn_pay_live_test_001_c1",
+          "adapterUsed": "deterministic_simulator",
+          "settledAmountPaise": 0,
+          "status": "test_link_created",
+          "latencyMs": 15,
+          "timestamp": "2026-08-30T10:11:25.474Z",
+          "rawResponseSummary": "Deterministic simulated execution for reminder (cycle 1). Settlement: PENDING."
+        },
+        "serverTimestamp": "2026-08-30T10:11:25.474Z",
+        "idempotencyStatus": "new_execution_recorded",
+        "securityDisclaimer": "Executed in Test Mode. Zero real financial debit triggered."
+      },
+      "timestamp": "2026-08-30T10:11:23.938Z",
+      "latencyMs": 496
+    },
+    "statusQuery": {
+      "endpoint": "/api/recovery/status/sim_txn_pay_live_test_001_c1",
+      "method": "GET",
+      "requestHeaders": {},
+      "httpStatus": 200,
+      "responseBody": {
+        "reference": "sim_txn_pay_live_test_001_c1",
+        "status": "test_link_created",
+        "settledAmountPaise": 0,
+        "source": "simulator_memory",
+        "adapter": "deterministic_simulator",
+        "timestamp": "2026-08-30T10:11:25.749Z"
+      },
+      "timestamp": "2026-08-30T10:11:24.434Z",
+      "latencyMs": 274
+    },
+    "razorpayExecuteCheck": {
+      "endpoint": "/api/recovery/execute",
+      "method": "POST",
+      "requestHeaders": {
+        "x-recovery-adapter": "razorpay_test_mode"
+      },
+      "requestBody": {
+        "paymentId": "pay_rzp_check_001",
+        "customerId": "cust_rzp_001",
+        "customerName": "Razorpay Sandbox Test",
+        "customerEmail": "sandbox@merchant.com",
+        "amountPaise": 250000,
+        "currency": "INR",
+        "intervention": "retry",
+        "attemptCycle": 1,
+        "idempotencyKey": "idemp_rzp_1788084684708"
+      },
+      "httpStatus": 200,
+      "responseBody": {
+        "success": false,
+        "receipt": {
+          "success": false,
+          "transactionReference": "rzp_unconfigured_pay_rzp_check_001",
+          "adapterUsed": "razorpay_test_mode",
+          "settledAmountPaise": 0,
+          "status": "failed",
+          "latencyMs": 5,
+          "timestamp": "2026-08-30T10:11:26.233Z",
+          "rawResponseSummary": "Razorpay Test-Mode credentials not configured in environment (RAZORPAY_KEY_ID must start with rzp_test_).",
+          "errorMessage": "RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET missing"
+        },
+        "serverTimestamp": "2026-08-30T10:11:26.233Z",
+        "idempotencyStatus": "new_execution_recorded",
+        "securityDisclaimer": "Executed in Test Mode. Zero real financial debit triggered."
+      },
+      "timestamp": "2026-08-30T10:11:24.708Z",
+      "latencyMs": 485
+    },
+    "webhookFailClosedCheck": {
+      "endpoint": "/api/recovery/webhook",
+      "method": "POST",
+      "requestHeaders": {},
+      "requestBody": {
+        "entity": "event",
+        "event": "payment_link.paid"
+      },
+      "httpStatus": 500,
+      "responseBody": {
+        "error": "Server Configuration Error: RAZORPAY_WEBHOOK_SECRET is not configured. Webhook verification failed closed."
+      },
+      "timestamp": "2026-08-30T10:11:25.193Z",
+      "latencyMs": 268
+    }
+  }
+}
