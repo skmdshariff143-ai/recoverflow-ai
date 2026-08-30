@@ -1,13 +1,21 @@
 /**
- * RecoverFlow AI — Server-Side Idempotency Store.
+ * RecoverFlow AI — Server-Side Idempotency Store (Prototype Scope).
  *
- * Provides in-memory, TTL-bounded idempotency management for recovery executions
- * and webhook event processing.
+ * SCOPE & ARCHITECTURAL LIMITATION NOTICE:
+ * This module provides "Best-effort single-instance prototype idempotency"
+ * using an in-memory Map with TTL-bounded cleanup.
  *
- * NOTE FOR PRODUCTION:
- * This is an in-memory implementation suitable for demo, testing, and single-instance
- * deployments. Production environments require a distributed, durable store such as
- * Redis (Upstash) or a PostgreSQL unique constraint table.
+ * CRITICAL VERCEL SERVERLESS BEHAVIOR:
+ * In a multi-instance serverless deployment (such as Vercel / AWS Lambda):
+ * 1. Multiple parallel container instances may execute concurrently.
+ * 2. Instances may be spun up or recycled at any time.
+ * 3. Module memory is not shared across distinct serverless instances.
+ * 4. A client retry may be routed to a fresh container without prior cache state.
+ *
+ * PRODUCTION REQUIREMENT:
+ * True distributed exactly-once recovery execution requires a durable atomic store:
+ * - Redis / Upstash with atomic SETNX + TTL
+ * - PostgreSQL unique constraint transaction table (e.g. INSERT ... ON CONFLICT DO NOTHING)
  */
 
 import { createHash } from 'crypto';
@@ -23,7 +31,7 @@ export interface IdempotencyEntry {
 
 // 1 hour TTL for in-memory prototype cache
 const DEFAULT_TTL_MS = 60 * 60 * 1000;
-// Max entries to prevent unbounded memory growth
+// Max entries to prevent unbounded memory growth in a single container
 const MAX_CACHE_ENTRIES = 1000;
 
 class InMemoryIdempotencyStore {
@@ -40,7 +48,7 @@ class InMemoryIdempotencyStore {
   }
 
   /**
-   * Check if an idempotency key already exists.
+   * Check if an idempotency key already exists in local container memory.
    * Returns:
    * - { status: 'new' } if never seen
    * - { status: 'replay', receipt } if identical payload replayed
@@ -75,7 +83,6 @@ class InMemoryIdempotencyStore {
     ttlMs: number = DEFAULT_TTL_MS,
   ): void {
     if (this.cache.size >= MAX_CACHE_ENTRIES) {
-      // Remove oldest entry
       const oldestKey = this.cache.keys().next().value;
       if (oldestKey) this.cache.delete(oldestKey);
     }
@@ -91,7 +98,7 @@ class InMemoryIdempotencyStore {
   }
 
   /**
-   * Webhook deduplication check.
+   * Webhook deduplication check in local container memory.
    * Returns true if event is NEW; returns false if duplicate.
    */
   recordWebhookEvent(eventId: string): boolean {
@@ -119,7 +126,7 @@ class InMemoryIdempotencyStore {
   }
 
   /**
-   * Reset store (used in tests).
+   * Reset store (used in unit tests).
    */
   clear(): void {
     this.cache.clear();
