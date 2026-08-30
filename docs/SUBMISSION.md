@@ -16,11 +16,11 @@
 
 - [x] **Product Identity & Claim Integrity**: Standardized name RecoverFlow AI, honest metric labels ("Simulated Recovered", "Observed in reported evaluation"), visible Data Provenance selector.
 - [x] **Financial Correctness**: Strict integer-paise representation ($1\text{ INR} = 100\text{ Paise}$), basis points EV math, negative/float rejection, overflow protection, currency segregation.
-- [x] **Honest Non-Circular Evaluation**: Evaluated against frozen independent potential outcome matrices. Zero self-fulfilling prediction loops.
+- [x] **Honest Non-Circular Evaluation**: Evaluated against internally generated frozen potential-outcome matrices. Zero self-fulfilling prediction loops.
 - [x] **Benchmarked Against Control Policies**: Tested on 200 Development Records and 80 Held-Out Adversarial Cases against Fixed Retry Control, Retry-All Control, and High-Confidence Only.
 - [x] **Closed-Loop Multi-Cycle State Machine**: Deterministic state machine (`DETECTED` $\to$ `DIAGNOSED` $\to$ `SCHEDULED` $\to$ `EXECUTING` $\to$ `OUTCOME_OBSERVED` $\to$ `RECOVERED` / `STOPPED`) with channel switching and quiet-hours scheduling.
 - [x] **Execution Adapter Boundary**: Deterministic Simulator (offline reproducible) and Razorpay Test-Mode Adapter (server-side with graceful fallback).
-- [x] **Bounded Gemini 3.6 AI Copilot**: Grounded assistant for unstructured error log normalization and policy-constrained draft reminder generation.
+- [x] **Authority-Isolated Gemini 3.6 AI Copilot**: Grounded assistant for unstructured error log normalization and policy-constrained draft reminder generation with no financial execution privileges.
 - [x] **Tamper-Evident SHA-256 Hash Chain Ledger**: Cryptographic verification of all audit events with real-time mutation detection.
 - [x] **Quality Gates**: 146 unit tests passing across 20 suites, 11 Playwright E2E browser tests passing across 5 viewports, 0 ESLint warnings, 0 TypeScript errors, clean Next.js 16 production build.
 

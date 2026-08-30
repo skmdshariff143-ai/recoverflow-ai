@@ -51,7 +51,7 @@ To prevent any evaluator from confusing a deterministic sandbox simulation with 
 
 ## 4. Reconciled Batch Financial Equation
 
-For any evaluation batch of size $N$ with total revenue at risk $R_{\text{gross}}$, the financial waterfall balances with 100% mathematical precision:
+For any evaluation batch of size $N$ with total revenue at risk $R_{\text{gross}}$, the financial waterfall achieves exact integer-paise reconciliation with zero-paise drift for the reported deterministic batch:
 
 $$\text{Revenue at Risk} = \text{Safety Halted} + \text{Awaiting Human Review} + \text{Deferred (Budget Limit)} + \text{Pending Observation} + \text{Unsettled Attempts} + \text{Verified Recovered}$$
 
