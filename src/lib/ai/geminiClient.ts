@@ -184,7 +184,7 @@ export async function draftCustomerCommunicationWithGemini(
     subject: `Action Required: Payment Update for Invoice (${amountINR})`,
     messageBody: `Dear ${cleanName}, your recent payment of ${amountINR} could not be completed due to a temporary ${cleanCat} issue. Please visit your merchant customer portal to retry or update your payment details.`,
     tone: 'empathetic',
-    complianceNotice: 'Template constrained by prototype communication policy; requires merchant compliance review before production use. Reply STOP to opt out.',
+    complianceNotice: 'Policy-constrained prototype communication requiring merchant compliance review before production use. Reply STOP to opt out.',
     provider: 'deterministic_fallback',
     fallbackReason: 'Default template mode active',
   };
