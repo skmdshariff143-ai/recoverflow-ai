@@ -1,5 +1,5 @@
 /**
- * RecoverFlow AI — Immutable Audit Trail Generator.
+ * PayBack AI — Immutable Audit Trail Generator.
  *
  * Emits chronological, structured audit events for every decision point
  * in the recovery pipeline (scoring, safety checks, approval, ranking,

@@ -1,5 +1,5 @@
 /**
- * Unit tests for the RecoverFlow AI Scoring Engine.
+ * Unit tests for the PayBack AI Scoring Engine.
  *
  * Tests:
  *   1.  Score always in [0, 1].

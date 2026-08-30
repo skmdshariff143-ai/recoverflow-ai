@@ -1,5 +1,5 @@
 /**
- * Unit tests for RecoverFlow AI Bounded Gemini AI Diagnostic Layer & Adversarial Hardening.
+ * Unit tests for PayBack AI Bounded Gemini AI Diagnostic Layer & Adversarial Hardening.
  */
 
 import { describe, it, expect } from 'vitest';

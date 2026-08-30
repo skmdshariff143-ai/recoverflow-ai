@@ -1,5 +1,5 @@
 /**
- * RecoverFlow AI — Server-Side Recovery Execution API Route.
+ * PayBack AI — Server-Side Recovery Execution API Route.
  *
  * Enforces strict request validation, adapter boundary checks, and enforceable
  * idempotency replay/conflict detection.

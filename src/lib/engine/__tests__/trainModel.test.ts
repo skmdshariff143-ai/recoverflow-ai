@@ -1,5 +1,5 @@
 /**
- * Unit tests for the RecoverFlow AI Trained Logistic Calibration Model (Milestone 7a).
+ * Unit tests for the PayBack AI Trained Logistic Calibration Model (Milestone 7a).
  *
  * Validates:
  *  1. Determinism: identical training set and hyperparameters produce identical model artifacts.
@@ -19,6 +19,7 @@ import {
   type TrainingSample,
 } from '../trainModel';
 import { compareModelCalibration } from '../calibration';
+import { scorePayment } from '../scoreRecovery';
 import type { FailedPayment } from '@/types';
 
 describe('trainLogisticRecoveryModel', () => {
@@ -93,7 +94,7 @@ describe('trainLogisticRecoveryModel', () => {
     });
 
     console.log('\n╔════════════════════════════════════════════════════════════════════════════╗');
-    console.log('║    RecoverFlow AI — Model Calibration Comparison (Milestone 7a Upgrade)        ║');
+    console.log('║    PayBack AI — Model Calibration Comparison (Milestone 7a Upgrade)        ║');
     console.log('╠════════════════════════════════════════════════════════════════════════════╣');
     console.log(`║  Metric                       Heuristic (v1.0)     Trained Logistic (v1.1) ║`);
     console.log('╟────────────────────────────────────────────────────────────────────────────╢');
@@ -109,5 +110,20 @@ describe('trainLogisticRecoveryModel', () => {
     expect(comparison.trainedLogistic.modelVersion).toBe('v1.1.0-logistic-calibrated');
     expect(comparison.trainedLogistic.brierScore).toBeLessThan(0.30);
     expect(comparison.trainedLogistic.totalRecoveredRevenue).toBeGreaterThan(0);
+  });
+
+  // ── 5. End-to-End Model Switching Distinctness ───────────────────
+
+  it('proves heuristic and trained logistic models produce distinct scoring distributions across the batch', () => {
+    let distinctScoreCount = 0;
+    for (const p of payments) {
+      const heuristicScore = scorePayment(p);
+      const trainedScore = scorePaymentWithTrainedModel(p, DEFAULT_TRAINED_MODEL);
+      if (Math.abs(heuristicScore.recovery_probability - trainedScore.recovery_probability) > 0.001) {
+        distinctScoreCount++;
+      }
+    }
+    // Differentiated probabilities under trained logistic calibration
+    expect(distinctScoreCount).toBeGreaterThanOrEqual(50);
   });
 });

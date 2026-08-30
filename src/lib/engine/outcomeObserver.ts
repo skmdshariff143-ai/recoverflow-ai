@@ -1,5 +1,5 @@
 /**
- * RecoverFlow AI — Normalized Outcome Observation Layer.
+ * PayBack AI — Normalized Outcome Observation Layer.
  *
  * Provides bounded, tamper-evident post-intervention outcome observation
  * without exposing public webhook HTTP receivers.

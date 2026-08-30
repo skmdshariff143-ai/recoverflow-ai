@@ -1,4 +1,4 @@
-# RecoverFlow AI — Data Provenance & Lineage Specification
+# PayBack AI — Data Provenance & Lineage Specification
 
 > **Track**: Razorpay AI Buildathon — Track 3: AI Revenue Recovery  
 > **Document**: Data Lineage, Assumptions, and Non-Circular Evaluation Architecture
@@ -7,11 +7,11 @@
 
 ## 1. Dataset Taxonomy & Separation
 
-RecoverFlow AI strictly separates its datasets into three disjoint cohorts to prevent data leakage and self-fulfilling evaluation loops:
+PayBack AI strictly separates its datasets into three disjoint cohorts to prevent data leakage and self-fulfilling evaluation loops:
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────────┐
-│                             RECOVERFLOW AI DATASETS                              │
+│                               PAYBACK AI DATASETS                                │
 ├────────────────────────────┬────────────────────────────┬────────────────────────┤
 │ 1. Synthetic Training Set  │ 2. Development Benchmark   │ 3. Frozen Internal     │
 │                            │    Cohort                  │    Adversarial Stress  │
@@ -43,4 +43,4 @@ All underlying transition baseline rates are **declared synthetic simulation ass
 
 - The **Outcome Generator** (`outcomeEnvironment.ts`) accepts only `payment: FailedPayment` and an independent `seed: number`.
 - The **Scoring Engine** (`scoreRecovery.ts`, `trainModel.ts`) has zero access to future potential outcome matrices.
-- The **Evaluation Engine** (`counterfactualEvaluation.ts`) evaluates all policies (RecoverFlow AI, Fixed Retry Control, Retry-All, High-Confidence Only) against **identical frozen matrices**.
+- The **Evaluation Engine** (`counterfactualEvaluation.ts`) evaluates all policies (PayBack AI, Fixed Retry Control, Retry-All, High-Confidence Only) against **identical frozen matrices**.

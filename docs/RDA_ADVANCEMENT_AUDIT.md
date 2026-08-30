@@ -1,4 +1,4 @@
-# RecoverFlow AI — Track 3 Advancement & Forensic Baseline Audit
+# PayBack AI — Track 3 Advancement & Forensic Baseline Audit
 
 > **Audit Version**: v4.0.0-baseline  
 > **Repository**: [https://github.com/skmdshariff143-ai/recoverflow-ai](https://github.com/skmdshariff143-ai/recoverflow-ai)  

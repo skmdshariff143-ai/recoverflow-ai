@@ -1,4 +1,4 @@
-# RecoverFlow AI — Forensic Baseline & Codebase Audit (Phase 0)
+# PayBack AI — Forensic Baseline & Codebase Audit (Phase 0)
 
 > **Audit Date**: August 30, 2026  
 > **Starting Commit**: `66bda964262a2cf95c19347c744e924d79d3362c` (`main`)  
@@ -35,7 +35,7 @@ While the existing codebase demonstrates solid modularity (clean TypeScript inte
 - **Source Code**: `package.json`, `src/app/page.tsx`, `src/components/Header.tsx`, `README.md`
 - **Analysis**: The GitHub repository is named `recoverflow-ai`, but `package.json` was titled `payback-ai` and the UI referred to `PayBack AI`.
 - **Impact**: Creates confusion for evaluators and breaks naming consistency across artifacts and deployment targets.
-- **Required Correction**: Standardize the entire project as **RecoverFlow AI** across all package metadata, components, headings, tests, documentation, and accessible ARIA attributes.
+- **Required Correction**: Standardize the entire project as **PayBack AI** across all package metadata, components, headings, tests, documentation, and accessible ARIA attributes.
 
 ---
 
@@ -80,8 +80,8 @@ While the existing codebase demonstrates solid modularity (clean TypeScript inte
 
 ### Finding 8: Absence of a Baseline Control Policy Comparison
 - **Source Code**: `src/lib/engine/calibration.ts`
-- **Analysis**: RecoverFlow AI is only benchmarked against itself (heuristic vs logistic), but not against a standard industry **Control Policy** (e.g. Fixed Retry Schedule / Retry-All without EV prioritization).
-- **Required Correction**: Implement counterfactual policy evaluation comparing RecoverFlow AI against a Fixed Retry Control on the exact same frozen potential outcomes.
+- **Analysis**: PayBack AI is only benchmarked against itself (heuristic vs logistic), but not against a standard industry **Control Policy** (e.g. Fixed Retry Schedule / Retry-All without EV prioritization).
+- **Required Correction**: Implement counterfactual policy evaluation comparing PayBack AI against a Fixed Retry Control on the exact same frozen potential outcomes.
 
 ---
 
@@ -89,7 +89,7 @@ While the existing codebase demonstrates solid modularity (clean TypeScript inte
 
 | Claim / Component | Source of Truth | Reproducible? | Accurate? | Required Correction |
 |:---|:---|:---:|:---:|:---|
-| **Product Name** | `package.json`, UI | Yes | ❌ Inconsistent | Rename from `PayBack AI` to `RecoverFlow AI` everywhere. |
+| **Product Name** | `package.json`, UI | Yes | ❌ Inconsistent | Rename from `PayBack AI` to `PayBack AI` everywhere. |
 | **Recovery Revenue** | `executeIntervention.ts` | Yes | ⚠️ Simulated | Clearly label as "Simulated Recovery (Test Mode)" with data provenance badges. |
 | **Model Calibration** | `calibration.ts` | Yes | ❌ Circular | Replace self-sampled outcomes with an independent structural outcome generator. |
 | **Held-Out Validation** | `synthetic-payments.json` | Yes | ❌ Missing | Create a 200-record development set and an 80-record frozen adversarial held-out set. |
@@ -99,7 +99,7 @@ While the existing codebase demonstrates solid modularity (clean TypeScript inte
 | **Reviewer Controls** | `PaymentDrilldownModal` | Yes | ⚠️ Read-only | Add actionable reviewer decisions (`Approve`, `Reject`, `Request Evidence`, `Stop`). |
 | **Audit Immutability** | `auditTrail.ts` | Yes | ⚠️ Client-side | Implement SHA-256 tamper-evident hash-chained ledger with integrity verification. |
 | **Monetary Integrity** | Engine & UI | Yes | ⚠️ Mixed Float/Int | Strict integer-paise math and basis points ($bps$) probability calculations. |
-| **Control Comparison** | `calibration.ts` | Yes | ❌ Absent | Add Counterfactual Policy Simulator comparing RecoverFlow vs Fixed Retry Control. |
+| **Control Comparison** | `calibration.ts` | Yes | ❌ Absent | Add Counterfactual Policy Simulator comparing PayBack AI vs Fixed Retry Control. |
 
 ---
 
@@ -108,7 +108,7 @@ While the existing codebase demonstrates solid modularity (clean TypeScript inte
 ```
 Phase 0: Forensic Audit & Baseline Verification (Completed)
    │
-Phase 1: Product Identity & Claim Integrity (RecoverFlow AI Standardization)
+Phase 1: Product Identity & Claim Integrity (PayBack AI Standardization)
    │
 Phase 2: Financial Correctness (Integer Paise & Currency Segregation)
    │

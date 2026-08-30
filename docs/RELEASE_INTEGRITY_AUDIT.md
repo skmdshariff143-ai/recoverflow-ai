@@ -1,4 +1,4 @@
-# RecoverFlow AI — End-to-End Release Integrity Audit
+# PayBack AI — End-to-End Release Integrity Audit
 
 > **Branch**: `fix/end-to-end-release-integrity`  
 > **Starting Commit**: `938fb357f7c14403eb7a92163288080813a0785e`  
@@ -20,7 +20,7 @@
 | 7 | **Razorpay Test-Mode Adapter & Server Boundary** | `src/lib/adapters/recoveryAdapter.ts` | Class exists but no dedicated server route or status polling | No execution dispatcher | Adapter tests pass | **PARTIAL** | Add server-only `/api/recovery/execute` and `/api/recovery/status` with Zod validation, idempotency, and test-mode status mapping. |
 | 8 | **Unified SHA-256 Audit Ledger** | `src/lib/engine/hashChainLedger.ts` | Ledger built from `batchResult.executed_items` instead of unified lifecycle events | Ledger tab shows items | Ledger tests pass | **PARTIAL** | Unify all operational events (detection, scoring, safety, approval, execution, outcome, AI advice) into canonical hash chain. |
 | 9 | **AI Safety & Clean Fallback Boundary** | `src/lib/ai/geminiClient.ts` | System prompt passed in body; regex JSON parsing; fabricated URL in fallback | Modal drafts messages | Mock tests pass | **PARTIAL** | Use proper `systemInstruction`, structured schema, real fallback without fabricated URLs, wire `/api/ai/diagnose`. |
-| 10 | **Fair Metrics Semantics (Gross vs Net)** | `counterfactualEvaluation.ts`, `MetricsOverview.tsx` | `incrementalRecoveredPaise` labeled net yield; Brier score restricted to budget | UI cards display rates | Benchmark tests pass | **DEFECT** | Fix `netIncrementalRecoveryPaise = recoverflowNet - baselineNet`; separate unsuccessful from preventable; report full-cohort Brier score. |
+| 10 | **Fair Metrics Semantics (Gross vs Net)** | `counterfactualEvaluation.ts`, `MetricsOverview.tsx` | `incrementalRecoveredPaise` labeled net yield; Brier score restricted to budget | UI cards display rates | Benchmark tests pass | **DEFECT** | Fix `netIncrementalRecoveryPaise = paybackNet - baselineNet`; separate unsuccessful from preventable; report full-cohort Brier score. |
 | 11 | **Verification Pipeline Termination & Artifact Verification** | `scripts/verify-artifacts.ts`, `package.json` | Vitest may hang on unclosed async handles; `verify:artifacts` lacks schema & diff check | CI / CLI execution | Needs execution | **DEFECT** | Fix async handle lifecycle in tests; upgrade `verify-artifacts.ts` to validate Zod schemas, counts, hashes, and git diff. |
 
 ---

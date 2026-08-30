@@ -1,5 +1,5 @@
 /**
- * RecoverFlow AI — Top-Level Metrics & Calibration Headline Overview.
+ * PayBack AI — Top-Level Metrics & Calibration Headline Overview.
  */
 
 'use client';

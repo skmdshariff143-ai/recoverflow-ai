@@ -1,5 +1,5 @@
 /**
- * RecoverFlow AI — Bounded Gemini AI Diagnostic & Communication Layer.
+ * PayBack AI — Bounded Gemini AI Diagnostic & Communication Layer.
  *
  * Provides language model assistance for:
  *   1. Normalizing ambiguous/unstructured gateway failure error logs.
@@ -127,7 +127,7 @@ export async function diagnoseGatewayErrorWithGemini(
 
   try {
     const ai = new GoogleGenAI({ apiKey });
-    const systemPrompt = `You are a financial risk diagnostic assistant for RecoverFlow AI.
+    const systemPrompt = `You are a financial risk diagnostic assistant for PayBack AI.
 Analyze the following payment gateway error string and classify it into exactly one of the valid FailureCategory values:
 ${FAILURE_CATEGORIES.join(', ')}
 
@@ -197,7 +197,7 @@ export async function draftCustomerCommunicationWithGemini(
 
   try {
     const ai = new GoogleGenAI({ apiKey });
-    const systemPrompt = `You are an automated customer communications assistant for RecoverFlow AI.
+    const systemPrompt = `You are an automated customer communications assistant for PayBack AI.
 Draft polite, professional payment reminder messages strictly within compliance boundaries.
 Never invent payment links, card numbers, or legal guarantees.
 Return ONLY valid JSON matching:

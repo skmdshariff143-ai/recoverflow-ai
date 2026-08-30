@@ -1,7 +1,7 @@
 /**
  * Script: generate-benchmarks.ts
  *
- * Generates frozen, reproducible benchmark datasets for RecoverFlow AI:
+ * Generates frozen, reproducible benchmark datasets for PayBack AI:
  *  1. data/dev-payments-200.json (200 records)
  *  2. data/heldout-adversarial-80.json (80 adversarial boundary records)
  *  3. data/frozen-outcomes-200.json (independent ground-truth outcomes)

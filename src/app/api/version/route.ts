@@ -1,5 +1,5 @@
 /**
- * RecoverFlow AI — Version & Build Metadata Endpoint.
+ * PayBack AI — Version & Build Metadata Endpoint.
  *
  * Exposes non-sensitive build and deployment provenance information.
  * Zero secrets or environment variable values are exposed.
@@ -17,7 +17,7 @@ export async function GET() {
   const isGeminiConfigured = !!process.env.GEMINI_API_KEY;
 
   return NextResponse.json({
-    project: 'RecoverFlow AI',
+    project: 'PayBack AI',
     track: 'Razorpay AI Buildathon — Track 3: AI Revenue Recovery',
     commitSha: process.env.VERCEL_GIT_COMMIT_SHA ?? 'b941b1b',
     buildVersion: '2.4.0-submission',

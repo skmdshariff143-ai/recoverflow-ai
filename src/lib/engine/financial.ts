@@ -1,5 +1,5 @@
 /**
- * RecoverFlow AI — Financial & Monetary Arithmetic Core.
+ * PayBack AI — Financial & Monetary Arithmetic Core.
  *
  * Implements strict integer-paise financial arithmetic to prevent floating-point
  * rounding errors, currency mixing, and precision loss across the recovery pipeline.

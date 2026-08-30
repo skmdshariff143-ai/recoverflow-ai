@@ -1,4 +1,4 @@
-# RecoverFlow AI — Security & Fintech Threat Model
+# PayBack AI — Security & Fintech Threat Model
 
 > **Submission Document**: Razorpay AI Buildathon · Track 3: AI Revenue Recovery
 

@@ -1,5 +1,5 @@
 /**
- * RecoverFlow AI — Recovery Queue Ranking & Budget Allocation Engine.
+ * PayBack AI — Recovery Queue Ranking & Budget Allocation Engine.
  *
  * Orchestrates the full triage and prioritization pipeline:
  *  1. Feature scoring (recovery probability & expected value).
@@ -30,7 +30,7 @@ function round2(n: number): number {
 }
 
 /**
- * Process a batch of failed payments through the entire RecoverFlow AI prioritization pipeline.
+ * Process a batch of failed payments through the entire PayBack AI prioritization pipeline.
  */
 export function processRecoveryPipeline(
   payments: FailedPayment[],

@@ -1,4 +1,4 @@
-# RecoverFlow AI — Final Track 3 Proof & Claim Reconciliation Audit
+# PayBack AI — Final Track 3 Proof & Claim Reconciliation Audit
 
 > **Document Version**: v4.0.0-final  
 > **Base SHA**: `b41ded8bef7a9394280203b51997ebbb5179dbf6`  
@@ -28,7 +28,7 @@ Every claim made across the application, documentation, and evaluation artifacts
 - **What Failed in Previous Run**:  
   In `tests/e2e/dashboard.spec.ts`, test 3 (`clicking a payment row opens the explainable decision drill-down drawer`) failed with `expect(locator).toBeVisible() failed` on `getByText(/Deterministic Scoring Waterfall/i)`.
 - **Exact Root Cause**:  
-  When `CaseRecoveryJourney.tsx` was rendered inside `PaymentDrilldownModal.tsx`, it called `calculateExpectedValuePaise(payment.amount, score)` where `score` was passed as a float (e.g. `0.805`). In RecoverFlow's financial core, `calculateExpectedValuePaise` enforces strict integer basis points `[0, 10000]`. Passing a non-integer float triggered `FinancialValidationError: Invalid basis points: 0.805`, which caused a client-side React rendering error that crashed the modal into the Next.js Error Boundary page.
+  When `CaseRecoveryJourney.tsx` was rendered inside `PaymentDrilldownModal.tsx`, it called `calculateExpectedValuePaise(payment.amount, score)` where `score` was passed as a float (e.g. `0.805`). In PayBack AI's financial core, `calculateExpectedValuePaise` enforces strict integer basis points `[0, 10000]`. Passing a non-integer float triggered `FinancialValidationError: Invalid basis points: 0.805`, which caused a client-side React rendering error that crashed the modal into the Next.js Error Boundary page.
 - **How It Was Fixed**:  
   Imported `probabilityToBps(score)` in `CaseRecoveryJourney.tsx` to safely convert the 0–1 probability float into an integer basis point value before calculating Expected Value in integer paise.
 - **Integrity Confirmation**:  

@@ -1,5 +1,5 @@
 /**
- * RecoverFlow AI — Main Control Center Application.
+ * PayBack AI — Main Control Center Application.
  *
  * Interactive Bounded Revenue Recovery, Evaluation Lab & Audit Control Center.
  */
@@ -184,7 +184,7 @@ export default function Home() {
       <footer className="bg-slate-900 border-t border-slate-800 text-slate-400 py-6 text-xs text-center">
         <div className="max-w-7xl mx-auto px-4 space-y-1">
           <p className="font-medium text-slate-300">
-            RecoverFlow AI — Autonomous Bounded Revenue Recovery Engine
+            PayBack AI — Autonomous Bounded Revenue Recovery Engine
           </p>
           <p className="text-slate-500">
             Submission for Razorpay AI Buildathon · Track 3: AI Revenue Recovery · Deterministic Calibration &amp; Cryptographic Audit Ledger

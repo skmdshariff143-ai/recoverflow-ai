@@ -1,4 +1,4 @@
-# RecoverFlow AI — Genuine Live Gemini AI Provenance & Integration Evidence
+# PayBack AI — Genuine Live Gemini AI Provenance & Integration Evidence
 
 > **Evidence Source**: Programmatically captured by `scripts/capture-live-evidence.ts`  
 > **Target Host**: `https://recoverflow-ai-kohl.vercel.app`  
@@ -61,9 +61,9 @@
   "responseBody": {
     "channel": "email",
     "subject": "Payment Processing Update - Action Required",
-    "messageBody": "Dear Rajesh Sharma,\n\nWe were unable to complete your recent payment of ₹14,500.00 due to an authentication failure during the transaction.\n\nPlease log in to your secure account portal to update your payment authorization or retry the payment.\n\nIf you have already completed this payment or need help, please reach out to our support team.\n\nBest regards,\nRecoverFlow AI Support",
+    "messageBody": "Dear Rajesh Sharma,\n\nWe were unable to complete your recent payment of ₹14,500.00 due to an authentication failure during the transaction.\n\nPlease log in to your secure account portal to update your payment authorization or retry the payment.\n\nIf you have already completed this payment or need help, please reach out to our support team.\n\nBest regards,\nPayBack AI Support",
     "tone": "empathetic",
-    "complianceNotice": "This is a payment status notification. RecoverFlow AI will never ask for full card details, PINs, or banking passwords directly via email.",
+    "complianceNotice": "This is a payment status notification. PayBack AI will never ask for full card details, PINs, or banking passwords directly via email.",
     "provider": "gemini_gemini_3_6_flash"
   },
   "timestamp": "2026-08-30T11:29:08.453Z",

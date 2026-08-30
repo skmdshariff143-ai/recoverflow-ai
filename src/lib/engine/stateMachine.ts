@@ -1,5 +1,5 @@
 /**
- * RecoverFlow AI — Closed-Loop Multi-Cycle Recovery State Machine.
+ * PayBack AI — Closed-Loop Multi-Cycle Recovery State Machine.
  *
  * Implements an auditable, deterministic, multi-cycle recovery state machine:
  *

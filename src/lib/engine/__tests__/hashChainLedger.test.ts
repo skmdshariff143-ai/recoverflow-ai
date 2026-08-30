@@ -1,5 +1,5 @@
 /**
- * Unit tests for RecoverFlow AI SHA-256 Hash-Chained Audit Ledger & Tamper Detection.
+ * Unit tests for PayBack AI SHA-256 Hash-Chained Audit Ledger & Tamper Detection.
  */
 
 import { describe, it, expect } from 'vitest';

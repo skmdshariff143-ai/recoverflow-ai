@@ -1,5 +1,5 @@
 /**
- * RecoverFlow AI — Ranked Payment Queue Component.
+ * PayBack AI — Ranked Payment Queue Component.
  *
  * Interactive, searchable, sortable, and filterable view of all 100 payments.
  * Clicking any row opens the explainable decision drill-down drawer.
@@ -58,6 +58,7 @@ export function RankedQueueTable({
 
   const totalPages = Math.ceil(items.length / pageSize) || 1;
   const paginatedItems = items.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const maxExpectedValue = Math.max(...items.map((i) => i.score.expected_value), 1);
 
   const handleSort = (field: 'rank' | 'expected_value' | 'amount' | 'recovery_probability') => {
     if (sortField === field) {
@@ -276,9 +277,21 @@ export function RankedQueueTable({
 
                     {/* Expected Value */}
                     <td className="py-2.5 px-3 text-right font-bold text-slate-800">
-                      ₹{(item.score.expected_value / 100).toLocaleString('en-IN', {
-                        minimumFractionDigits: 2,
-                      })}
+                      <div className="flex items-center justify-end gap-2">
+                        <div className="hidden sm:block w-14 h-1.5 bg-slate-100 rounded-full overflow-hidden shrink-0">
+                          <div
+                            className="h-full bg-gradient-to-r from-indigo-500 to-emerald-500 rounded-full transition-all duration-300"
+                            style={{
+                              width: `${Math.max(4, Math.min(100, (item.score.expected_value / maxExpectedValue) * 100))}%`,
+                            }}
+                          />
+                        </div>
+                        <span className="font-mono text-xs text-slate-900">
+                          ₹{(item.score.expected_value / 100).toLocaleString('en-IN', {
+                            minimumFractionDigits: 2,
+                          })}
+                        </span>
+                      </div>
                     </td>
 
                     {/* Suggested Intervention */}

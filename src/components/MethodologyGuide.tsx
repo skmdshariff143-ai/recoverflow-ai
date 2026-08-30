@@ -1,5 +1,5 @@
 /**
- * RecoverFlow AI — Methodology, Governance, & Judge Submission Guide.
+ * PayBack AI — Methodology, Governance, & Judge Submission Guide.
  */
 
 'use client';
@@ -49,7 +49,7 @@ export function MethodologyGuide() {
             <div className="bg-slate-800/80 p-3 rounded-lg border border-slate-700/60">
               <span className="font-bold text-amber-400 block mb-1">0:00 – 0:35 (Problem)</span>
               <p className="text-slate-300 leading-relaxed">
-                Why blind rule cascades waste gateway fees and harass customers. How RecoverFlow AI converts failure into an EV-ranked queue.
+                Why blind rule cascades waste gateway fees and harass customers. How PayBack AI converts failure into an EV-ranked queue.
               </p>
             </div>
 

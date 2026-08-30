@@ -1,5 +1,5 @@
 /**
- * RecoverFlow AI — Automated Live Evidence Capture & Documentation Generator.
+ * PayBack AI — Automated Live Evidence Capture & Documentation Generator.
  *
  * Issues genuine HTTP requests against the deployed serverless application,
  * sanitizes and redacts IDs/secrets, writes raw JSON evidence, and generates
@@ -76,7 +76,7 @@ async function captureHttp(
 async function runCapture() {
   const host = process.argv[2] ?? 'https://recoverflow-ai-kohl.vercel.app';
   console.log(`\n======================================================`);
-  console.log(` RecoverFlow AI — Live Evidence Capture Suite`);
+  console.log(` PayBack AI — Live Evidence Capture Suite`);
   console.log(` Target Host: ${host}`);
   console.log(` UTC Capture Timestamp: ${new Date().toISOString()}`);
   console.log(`======================================================\n`);
@@ -221,7 +221,7 @@ function generateMarkdownFromEvidence(
   const isLiveGemini = geminiProvider.toString().startsWith('gemini');
 
   // Generate docs/LIVE_GEMINI_EVIDENCE.md
-  const geminiMd = `# RecoverFlow AI — Genuine Live Gemini AI Provenance & Integration Evidence
+  const geminiMd = `# PayBack AI — Genuine Live Gemini AI Provenance & Integration Evidence
 
 > **Evidence Source**: Programmatically captured by \`scripts/capture-live-evidence.ts\`  
 > **Target Host**: \`${gemini.host}\`  
@@ -273,7 +273,7 @@ ${JSON.stringify(gemini.captures.promptInjection, null, 2)}
   const isLiveRazorpay = rzpAdapterStatus === 'captured' || rzpAdapterStatus === 'test_link_created';
 
   // Generate docs/LIVE_RAZORPAY_EVIDENCE.md
-  const razorpayMd = `# RecoverFlow AI — Genuine Live Recovery Execution Evidence
+  const razorpayMd = `# PayBack AI — Genuine Live Recovery Execution Evidence
 
 > **Evidence Source**: Programmatically captured by \`scripts/capture-live-evidence.ts\`  
 > **Target Host**: \`${razorpay.host}\`  

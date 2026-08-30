@@ -1,4 +1,4 @@
-# RecoverFlow AI — Metrics & Financial KPI Formulations
+# PayBack AI — Metrics & Financial KPI Formulations
 
 > **Submission Document**: Razorpay AI Buildathon · Track 3: AI Revenue Recovery
 
@@ -28,7 +28,7 @@ Where costs are defined in integer paise:
 
 | Policy | Intervention Capacity | Expected Value Prioritization | Safety Compliance |
 |---|---|---|---|
-| **RecoverFlow AI** | 40 slots | Yes (EV Ranked) | 100% (0 violations) |
+| **PayBack AI** | 40 slots | Yes (EV Ranked) | 100% (0 violations) |
 | **Highest Amount First** | 40 slots | Partial (Amount only) | 100% |
 | **Highest Probability First** | 40 slots | Partial (Probability only) | 100% |
 | **Fixed Retry Control** | 40 slots | No (FIFO) | 100% |

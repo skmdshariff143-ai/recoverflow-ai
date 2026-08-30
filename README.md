@@ -1,4 +1,4 @@
-# RecoverFlow AI — Bounded, Explainable Recovery Orchestration
+# PayBack AI — Bounded, Explainable Recovery Orchestration
 
 > **Razorpay AI Buildathon Submission** · Track 3: AI Revenue Recovery  
 > **Live Web Application**: [https://recoverflow-ai-kohl.vercel.app](https://recoverflow-ai-kohl.vercel.app)  
@@ -9,11 +9,11 @@
 
 ---
 
-## 🎯 The Pitch: Why RecoverFlow AI?
+## 🎯 The Pitch: Why PayBack AI?
 
 Most automated payment recovery systems rely on **blind rule cascades** (e.g. "retry all failed charges after 4 hours, then again after 24 hours"). In high-volume commerce, this wastes gateway fees and retry bandwidth on hopeless failures (closed accounts, hard cancellations), annoys reliable customers with aggressive reminders during temporary bank downtime, and fails to prioritize high-value enterprise invoices.
 
-**RecoverFlow AI** transforms revenue recovery into a **bounded, explainable closed-loop orchestration engine**:
+**PayBack AI** transforms revenue recovery into a **bounded, explainable closed-loop orchestration engine**:
 1. **Integer-Paise Financial Precision**: All monetary accounting uses integer paise. Expected-value calculations convert probability scores to integer basis points before applying them to money.
 2. **Deterministic & Calibrated Scoring**: Evaluates 6 transparent behavioral signals to predict recovery probability and Expected Value ($\text{EV}_{\text{paise}} = \text{round}(\text{amountPaise} \times \text{bps} / 10000)$).
 3. **Independent Frozen Evaluation**: Completely decouples ground-truth outcomes from predicted probabilities to eliminate circular evaluation bias.
@@ -33,7 +33,7 @@ Most automated payment recovery systems rely on **blind rule cascades** (e.g. "r
 3. **Live Execution & Outcome Check (2:30 – 3:30)**:  
    Inside the drawer, trigger **Dispatch Live Execution** and **Run Outcome Check** to observe test-mode link creation and proactive settlement polling.
 4. **Evaluation Lab & Counterfactual Policy Simulator (3:30 – 4:30)**:  
-   Switch to the **Evaluation Lab** tab. Compare RecoverFlow AI against 6 control policies (Fixed Retry, Retry-All, Random) across identical frozen outcomes. View the reconciled Financial Waterfall.
+   Switch to the **Evaluation Lab** tab. Compare PayBack AI against 6 control policies (Fixed Retry, Retry-All, Random) across identical frozen outcomes. View the reconciled Financial Waterfall.
 5. **Audit Ledger & SHA-256 Verification (4:30 – 5:00)**:  
    Navigate to the **Audit Ledger** tab and click **Verify Ledger Integrity** to observe real-time cryptographic hash-chain validation and mutation detection.
 
@@ -55,7 +55,7 @@ Most automated payment recovery systems rely on **blind rule cascades** (e.g. "r
 
 ## 📊 Key Results (200-Payment Benchmark Cohort)
 
-| Metric | RecoverFlow AI (EV Prioritization) | Fixed Retry Control (First 40 Eligible) | Incremental Delta (Δ) |
+| Metric | PayBack AI (EV Prioritization) | Fixed Retry Control (First 40 Eligible) | Incremental Delta (Δ) |
 | :--- | :---: | :---: | :---: |
 | **Interventions Budgeted** | **40 slots** | 40 slots | 0 (Identical budget) |
 | **Invoices Recovered** | **27 / 40 (67.5%)** | 10 / 40 (25.0%) | **+17 invoices (+170%)** |
@@ -153,7 +153,7 @@ npm run verify
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to view the RecoverFlow AI Control Center.
+Open [http://localhost:3000](http://localhost:3000) to view the PayBack AI Control Center.
 
 ---
 

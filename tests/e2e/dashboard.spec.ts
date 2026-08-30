@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('RecoverFlow AI — Interactive Workspaces & Drill-Down', () => {
+test.describe('PayBack AI — Interactive Workspaces & Drill-Down', () => {
 
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
@@ -8,7 +8,7 @@ test.describe('RecoverFlow AI — Interactive Workspaces & Drill-Down', () => {
 
   test('renders top-level KPI metrics panel with non-zero financial values', async ({ page }) => {
     // Check title
-    await expect(page).toHaveTitle(/RecoverFlow AI/i);
+    await expect(page).toHaveTitle(/PayBack AI/i);
 
     // Verify KPI metric cards render
     await expect(page.getByText('Total Revenue at Risk')).toBeVisible();

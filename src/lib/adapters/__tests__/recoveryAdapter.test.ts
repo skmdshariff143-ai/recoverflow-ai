@@ -1,5 +1,5 @@
 /**
- * Unit tests for RecoverFlow AI Execution Adapters & Idempotency Store.
+ * Unit tests for PayBack AI Execution Adapters & Idempotency Store.
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';

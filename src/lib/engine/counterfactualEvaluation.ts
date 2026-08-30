@@ -1,11 +1,11 @@
 /**
- * RecoverFlow AI — Counterfactual Policy Simulator & Independent Evaluation Engine.
+ * PayBack AI — Counterfactual Policy Simulator & Independent Evaluation Engine.
  *
  * Evaluates recovery policies against identical frozen ground-truth potential outcomes
  * to calculate true incremental yield, intervention efficiency, and safety compliance.
  *
  * Evaluates 7 comprehensive policies:
- *   1. recoverflow_ai: Expected Value prioritization
+ *   1. payback_ai: Expected Value prioritization
  *   2. control_fixed_retry: First-eligible fixed retry
  *   3. control_random_eligible: Random eligible selection (Equal budget)
  *   4. control_highest_amount: Highest gross amount first (Equal budget)
@@ -22,7 +22,7 @@ import type { FrozenPotentialOutcomes } from './outcomeEnvironment';
 import { sumPaise } from './financial';
 
 export type PolicyType =
-  | 'recoverflow_ai'
+  | 'payback_ai'
   | 'control_fixed_retry'
   | 'control_random_eligible'
   | 'control_highest_amount'
@@ -114,7 +114,7 @@ export function evaluateCohortPolicies(
   const refDate = options.referenceDate ?? new Date('2025-08-30T10:00:00Z');
   const totalAmountAtRiskPaise = sumPaise(payments.map((p) => p.amount));
 
-  // ── 1. RecoverFlow AI Dynamic Prioritization Policy ─────────────────
+  // ── 1. PayBack AI Dynamic Prioritization Policy ─────────────────
   const rfPipeline = processRecoveryPipeline(payments, {
     ...options,
     budget,
@@ -349,9 +349,9 @@ export function evaluateCohortPolicies(
     duplicateExecutions: 0,
     estimatedCostPaise: costPaise,
     netRecoveredPaise: recoveredAmount - costPaise,
-    falsePositiveCount: policy === 'recoverflow_ai' ? errors.filter((e) => e.errorType === 'false_positive').length : 0,
-    falsePositiveExposurePaise: policy === 'recoverflow_ai' ? sumPaise(errors.filter((e) => e.errorType === 'false_positive').map((e) => e.amountPaise)) : 0,
-    falseNegativeCount: policy === 'recoverflow_ai' ? errors.filter((e) => e.errorType === 'false_negative').length : 0,
+    falsePositiveCount: policy === 'payback_ai' ? errors.filter((e) => e.errorType === 'false_positive').length : 0,
+    falsePositiveExposurePaise: policy === 'payback_ai' ? sumPaise(errors.filter((e) => e.errorType === 'false_positive').map((e) => e.amountPaise)) : 0,
+    falseNegativeCount: policy === 'payback_ai' ? errors.filter((e) => e.errorType === 'false_negative').length : 0,
     unnecessaryInterventionRatePercent: Number((((interventions - recoveredCnt) / Math.max(1, interventions)) * 100).toFixed(1)),
     brierScoreOnIndependentOutcomes: brier,
   });
@@ -360,9 +360,9 @@ export function evaluateCohortPolicies(
     datasetName: payments.length === 200 ? 'Development Cohort (200 Records)' : 'Held-Out Adversarial (80 Records)',
     recordCount: payments.length,
     policies: {
-      recoverflow_ai: buildPolicyResult(
-        'recoverflow_ai',
-        'RecoverFlow AI (EV Prioritization)',
+      payback_ai: buildPolicyResult(
+        'payback_ai',
+        'PayBack AI (EV Prioritization)',
         rfInterventions,
         rfRecoveredPaise,
         rfRecoveredCount,
@@ -435,7 +435,7 @@ export function evaluateMultiSeedDistribution(
 ): MultiSeedBenchmarkDistribution {
   const results = seeds.map((seed) => {
     const report = evaluateCohortPolicies(payments, frozenOutcomes, { simulationSeed: seed });
-    const rf = report.policies.recoverflow_ai;
+    const rf = report.policies.payback_ai;
     return {
       seed,
       recoveredAmountPaise: rf.recoveredAmountPaise,

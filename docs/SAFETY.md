@@ -1,4 +1,4 @@
-# RecoverFlow AI — Safety Rules, Stopping Invariants & Quiet Hours
+# PayBack AI — Safety Rules, Stopping Invariants & Quiet Hours
 
 > **Submission Document**: Razorpay AI Buildathon · Track 3: AI Revenue Recovery
 
@@ -6,7 +6,7 @@
 
 ## 1. Hard Stopping Invariants
 
-RecoverFlow AI evaluates non-negotiable safety rules before any scoring, ranking, or intervention dispatch:
+PayBack AI evaluates non-negotiable safety rules before any scoring, ranking, or intervention dispatch:
 
 1. **Customer Opt-Out (`opt_out === true`)**:
    Immediately halted (`STOPPED: customer_opted_out`). Zero SMS, email, or retry attempts permitted.

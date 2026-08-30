@@ -1,5 +1,5 @@
 /**
- * RecoverFlow AI — Trained Logistic Regression Calibration Model.
+ * PayBack AI — Trained Logistic Regression Calibration Model.
  *
  * Implements a pure TypeScript, deterministic Logistic Regression engine
  * with L2 regularization that learns optimal feature weights from historical

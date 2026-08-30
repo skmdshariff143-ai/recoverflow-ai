@@ -1,5 +1,5 @@
 /**
- * Unit & Lineage tests for RecoverFlow AI Dataset Separation & Zero Data Leakage.
+ * Unit & Lineage tests for PayBack AI Dataset Separation & Zero Data Leakage.
  */
 
 import { describe, it, expect } from 'vitest';

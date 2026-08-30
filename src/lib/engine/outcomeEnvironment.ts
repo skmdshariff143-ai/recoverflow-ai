@@ -1,5 +1,5 @@
 /**
- * RecoverFlow AI — Independent Structural Outcome Environment.
+ * PayBack AI — Independent Structural Outcome Environment.
  *
  * This module models the ground-truth physical reality of recovery outcomes.
  * CRITICAL ARCHITECTURAL SEPARATION:

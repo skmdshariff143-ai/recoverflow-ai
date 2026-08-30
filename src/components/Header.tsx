@@ -1,5 +1,5 @@
 /**
- * RecoverFlow AI — Top Navigation Header & Global Control Bar.
+ * PayBack AI — Top Navigation Header & Global Control Bar.
  */
 
 'use client';
@@ -58,7 +58,7 @@ export function Header({
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-lg font-bold tracking-tight text-white flex items-center gap-2">
-                  RecoverFlow AI
+                  PayBack AI
                   <span className="text-xs bg-indigo-500/20 text-indigo-300 font-semibold px-2 py-0.5 rounded-full border border-indigo-500/30">
                     Track 3: Revenue Recovery
                   </span>

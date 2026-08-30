@@ -1,5 +1,5 @@
 /**
- * RecoverFlow AI — Custom Hook for Recovery Batch & Evaluation State Management.
+ * PayBack AI — Custom Hook for Recovery Batch & Evaluation State Management.
  *
  * Separates data orchestration, state machine evaluation, and audit ledger integrity from UI components.
  * Genuinely connects reviewer approval actions to session workflow state and cryptographic ledger.
@@ -302,7 +302,8 @@ export function useRecoveryBatch(options: UseRecoveryBatchOptions = {}) {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.setAttribute('href', url);
-    link.setAttribute('download', `recoverflow-audit-trail-${Date.now()}.csv`);
+    link.setAttribute('download', `payback-audit-trail-${Date.now()}.csv`);
+    link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -323,7 +324,7 @@ export function useRecoveryBatch(options: UseRecoveryBatchOptions = {}) {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.setAttribute('href', url);
-    link.setAttribute('download', `recoverflow-audit-ledger-${Date.now()}.json`);
+    link.setAttribute('download', `payback-audit-ledger-${Date.now()}.json`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

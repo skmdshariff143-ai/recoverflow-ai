@@ -1,5 +1,5 @@
 /**
- * RecoverFlow AI — Cross-Request Outcome Consistency Verification Script.
+ * PayBack AI — Cross-Request Outcome Consistency Verification Script.
  *
  * Verifies that execution and status polling endpoints return 100% consistent
  * normalized synthetic outcomes across sequential and concurrent requests.
@@ -54,7 +54,7 @@ async function sleep(ms: number) {
 
 async function runConsistencyVerification() {
   console.log(`\n════════════════════════════════════════════════════════════════════`);
-  console.log(` RecoverFlow AI — Execution & Observation Consistency Audit`);
+  console.log(` PayBack AI — Execution & Observation Consistency Audit`);
   console.log(` Target Host: ${baseUrl}`);
   console.log(`════════════════════════════════════════════════════════════════════\n`);
 

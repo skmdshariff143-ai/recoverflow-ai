@@ -1,5 +1,5 @@
 /**
- * Unit tests for RecoverFlow AI Financial & Monetary Invariants (Phase 2).
+ * Unit tests for PayBack AI Financial & Monetary Invariants (Phase 2).
  */
 
 import { describe, it, expect } from 'vitest';

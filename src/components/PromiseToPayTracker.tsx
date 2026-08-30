@@ -1,5 +1,5 @@
 /**
- * RecoverFlow AI — Promise-to-Pay Management Workspace.
+ * PayBack AI — Promise-to-Pay Management Workspace.
  *
  * Tracks customer payment commitments across life-cycle states:
  * created -> reminder_scheduled -> due -> kept -> broken -> extended -> escalated -> stopped.

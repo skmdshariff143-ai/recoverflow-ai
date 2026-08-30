@@ -1,5 +1,5 @@
 /**
- * RecoverFlow AI — Tamper-Evident SHA-256 Hash-Chained Audit Ledger.
+ * PayBack AI — Tamper-Evident SHA-256 Hash-Chained Audit Ledger.
  *
  * Upgrades flat session audit logs into a verifiable cryptographic hash chain:
  *   Record[0]: PrevHash = "0000000000000000000000000000000000000000000000000000000000000000" (Genesis)

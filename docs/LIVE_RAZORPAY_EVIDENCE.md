@@ -1,4 +1,4 @@
-# RecoverFlow AI — Server-Side Test-Mode Execution & Status Evidence
+# PayBack AI — Server-Side Test-Mode Execution & Status Evidence
 
 > **Evidence Source**: Programmatically captured by `scripts/capture-live-evidence.ts`  
 > **Target Host**: `https://recoverflow-ai-kohl.vercel.app`  

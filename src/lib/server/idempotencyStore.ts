@@ -1,5 +1,5 @@
 /**
- * RecoverFlow AI — Server-Side Idempotency Store (Prototype Scope).
+ * PayBack AI — Server-Side Idempotency Store (Prototype Scope).
  *
  * SCOPE & ARCHITECTURAL LIMITATION NOTICE:
  * This module provides "Best-effort single-instance prototype idempotency"

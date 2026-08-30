@@ -1,4 +1,4 @@
-# RecoverFlow AI — Official Track 3 Bar Independent Audit
+# PayBack AI — Official Track 3 Bar Independent Audit
 
 > **Evaluation Track**: Razorpay AI Buildathon — Track 3: AI Revenue Recovery  
 > **Repository**: [https://github.com/skmdshariff143-ai/recoverflow-ai](https://github.com/skmdshariff143-ai/recoverflow-ai)  

@@ -1,5 +1,5 @@
 /**
- * RecoverFlow AI — Explainable Decision Drill-Down & Reviewer Action Panel.
+ * PayBack AI — Explainable Decision Drill-Down & Reviewer Action Panel.
  *
  * Renders the 6-factor deterministic scoring waterfall, customer payment history,
  * bounded Gemini AI copilot for error diagnosis & drafting messages,
@@ -828,10 +828,10 @@ export function PaymentDrilldownModal({
         </div>
 
         {/* ── Modal Footer ─────────────────────────────────────── */}
-        <div className="bg-slate-50 p-4 border-t border-slate-200 flex justify-end">
+        <div className="bg-slate-900 p-4 border-t border-slate-800 flex justify-end">
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold transition cursor-pointer"
+            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 rounded-lg text-xs font-semibold transition cursor-pointer"
           >
             Close Drill-Down
           </button>

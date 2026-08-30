@@ -1,5 +1,5 @@
 /**
- * RecoverFlow AI — Core domain types.
+ * PayBack AI — Core domain types.
  *
  * Framework-agnostic. Used across engine, hooks, and UI layers.
  */

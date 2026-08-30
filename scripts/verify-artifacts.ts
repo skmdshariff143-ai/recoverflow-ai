@@ -23,7 +23,7 @@ function sha256(content: string): string {
 }
 
 console.log('════════════════════════════════════════════════════════════════════');
-console.log(' RecoverFlow AI — Comprehensive Benchmark & Artifact Integrity Audit');
+console.log(' PayBack AI — Comprehensive Benchmark & Artifact Integrity Audit');
 console.log('════════════════════════════════════════════════════════════════════\n');
 
 let errors = 0;

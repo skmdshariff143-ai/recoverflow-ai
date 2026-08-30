@@ -1,4 +1,4 @@
-# RecoverFlow AI — Forensic Evidence & Integrity Audit
+# PayBack AI — Forensic Evidence & Integrity Audit
 
 > **Audit Version**: v3.0.0-forensic  
 > **Repository**: [https://github.com/skmdshariff143-ai/recoverflow-ai](https://github.com/skmdshariff143-ai/recoverflow-ai)  

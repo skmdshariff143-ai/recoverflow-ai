@@ -1,5 +1,5 @@
 /**
- * RecoverFlow AI — High-Value Approval Gate.
+ * PayBack AI — High-Value Approval Gate.
  *
  * High-value invoices (tier = 'high_value') require human-in-the-loop review
  * before recovery actions can be executed.

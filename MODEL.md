@@ -1,4 +1,4 @@
-# RecoverFlow AI — Scoring Model, Calibration & Counterfactual Evaluation Architecture
+# PayBack AI — Scoring Model, Calibration & Counterfactual Evaluation Architecture
 
 > **Submission Document**: Razorpay AI Buildathon · Track 3: AI Revenue Recovery  
 > **Repository**: [https://github.com/skmdshariff143-ai/recoverflow-ai](https://github.com/skmdshariff143-ai/recoverflow-ai)  
@@ -13,7 +13,7 @@ Traditional payment recovery engines rely on **blind rule cascades** (e.g., "ret
 2. **Customer Friction & Churn**: Bombarding good customers with aggressive reminders during temporary bank outages or during local quiet hours.
 3. **Sub-optimal Value Capture**: Treating a ₹50,000 enterprise invoice with an 80% recovery probability identically to a ₹200 one-off purchase with a 10% recovery probability.
 
-**RecoverFlow AI** replaces blind cascades with a **calibrated, explainable prioritization engine**:
+**PayBack AI** replaces blind cascades with a **calibrated, explainable prioritization engine**:
 
 $$\text{Expected Value (Paise)} = \text{round}\left(\frac{\text{Amount (Paise)} \times P(\text{Recovery})_{\text{bps}}}{10,000}\right)$$
 
@@ -57,7 +57,7 @@ To eliminate the circular evaluation flaw where a model samples outcomes from it
 1. **Separation of Concerns**: The **Decision Model** produces predictions using only pre-intervention features.
 2. **Outcome Generator**: A separately defined physical environment generates **frozen potential outcomes** $\mathbf{Y}(i, a)$ for each payment $i$, intervention $a \in \{\text{retry}, \text{reminder}, \text{both}\}$, and attempt $k \in \{1, 2, 3\}$.
 3. **Information Barrier**: The outcome generator **never** reads predicted probability, expected value, queue rank, or model confidence.
-4. **Counterfactual Policy Evaluation**: RecoverFlow AI and control policies (Fixed Retry, Retry-All, High-Confidence Only) are evaluated against **identical frozen matrices**.
+4. **Counterfactual Policy Evaluation**: PayBack AI and control policies (Fixed Retry, Retry-All, High-Confidence Only) are evaluated against **identical frozen matrices**.
 
 ---
 

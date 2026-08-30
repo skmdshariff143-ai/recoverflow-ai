@@ -1,5 +1,5 @@
 /**
- * RecoverFlow AI — Batch Recovery Proof & Invariant Reconciliation Test Suite.
+ * PayBack AI — Batch Recovery Proof & Invariant Reconciliation Test Suite.
  *
  * Mathematically validates the core fintech and evaluation invariants:
  * 1. Exact integer-paise financial waterfall balancing with 0 drift.
@@ -276,9 +276,9 @@ describe('Batch Recovery Proof & Invariant Reconciliation', () => {
     // In evaluation, control_retry_all shows unbudgeted potential across all eligible cases
     expect(evaluation.policies.control_retry_all.interventionsExecuted).toBe(147);
 
-    // But RecoverFlow AI strictly adheres to the 40-slot budget
-    expect(evaluation.policies.recoverflow_ai.interventionsExecuted).toBe(40);
-    expect(evaluation.policies.recoverflow_ai.unsafeInterventionCount).toBe(0);
-    expect(evaluation.policies.recoverflow_ai.optOutViolations).toBe(0);
+    // But PayBack AI strictly adheres to the 40-slot budget
+    expect(evaluation.policies.payback_ai.interventionsExecuted).toBe(40);
+    expect(evaluation.policies.payback_ai.unsafeInterventionCount).toBe(0);
+    expect(evaluation.policies.payback_ai.optOutViolations).toBe(0);
   });
 });

@@ -1,4 +1,4 @@
-# RecoverFlow AI — System Architecture & Data Flow
+# PayBack AI — System Architecture & Data Flow
 
 > **Submission Document**: Razorpay AI Buildathon · Track 3: AI Revenue Recovery  
 > **Repository**: [https://github.com/skmdshariff143-ai/recoverflow-ai](https://github.com/skmdshariff143-ai/recoverflow-ai)
@@ -7,7 +7,7 @@
 
 ## 1. Architectural Overview
 
-RecoverFlow AI is structured into decoupled, single-responsibility layers:
+PayBack AI is structured into decoupled, single-responsibility layers:
 
 ```
                       ┌────────────────────────────────────────┐

@@ -1,5 +1,5 @@
 /**
- * RecoverFlow AI — Full Batch Orchestration Engine.
+ * PayBack AI — Full Batch Orchestration Engine.
  *
  * Connects the entire end-to-end recovery intelligence pipeline:
  *   1. Feature Extraction & Scoring (Milestone 2)

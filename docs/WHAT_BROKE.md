@@ -1,10 +1,10 @@
-# RecoverFlow AI — "What Broke & How It Was Fixed"
+# PayBack AI — "What Broke & How It Was Fixed"
 
 > **Submission Document**: Razorpay AI Buildathon · Track 3: AI Revenue Recovery  
 > **Repository**: [https://github.com/skmdshariff143-ai/recoverflow-ai](https://github.com/skmdshariff143-ai/recoverflow-ai)  
 > **Live Production URL**: [https://recoverflow-ai-kohl.vercel.app](https://recoverflow-ai-kohl.vercel.app)
 
-This document provides transparent, specific accounts of real technical obstacles encountered during the architecture, implementation, and deployment of **RecoverFlow AI**, detailing root causes, diagnoses, fixes, and regression prevention.
+This document provides transparent, specific accounts of real technical obstacles encountered during the architecture, implementation, and deployment of **PayBack AI**, detailing root causes, diagnoses, fixes, and regression prevention.
 
 ---
 

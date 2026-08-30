@@ -1,4 +1,4 @@
-# RecoverFlow AI — Razorpay Official Test-Mode Integration Guide
+# PayBack AI — Razorpay Official Test-Mode Integration Guide
 
 > **Submission Document**: Razorpay AI Buildathon · Track 3: AI Revenue Recovery
 
@@ -6,7 +6,7 @@
 
 ## 1. Overview
 
-RecoverFlow AI integrates with Razorpay via official Test-Mode APIs:
+PayBack AI integrates with Razorpay via official Test-Mode APIs:
 - **Payment Link Creation**: `POST https://api.razorpay.com/v1/payment_links`
 - **Proactive Status Polling**: `GET https://api.razorpay.com/v1/payment_links/:id`
 - **Execution Endpoint**: `POST /api/recovery/execute` (with `x-recovery-adapter: razorpay_test_mode`)

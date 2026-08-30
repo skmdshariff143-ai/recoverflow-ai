@@ -1,5 +1,5 @@
 /**
- * RecoverFlow AI — Guided Submission Experience (Judge Mode).
+ * PayBack AI — Guided Submission Experience (Judge Mode).
  *
  * Provides a structured 10-step evaluator walkthrough connecting all Track 3 objectives:
  * 1. Problem & Batch Ingestion
@@ -71,7 +71,7 @@ export const JUDGE_STEPS: StepContent[] = [
     icon: ShieldAlert,
     headline: 'High-volume merchants burn fees on blind retries during gateway downtime.',
     description:
-      'RecoverFlow AI ingests failed payment records and immediately computes revenue exposure in strict integer paise. Each invoice is mapped with customer history, tenure, and prior attempts.',
+      'PayBack AI ingests failed payment records and immediately computes revenue exposure in strict integer paise. Each invoice is mapped with customer history, tenure, and prior attempts.',
     technicalDetails: [
       'Ingests 100 failed transactions totaling ₹6,87,694.53 (68,769,453 paise).',
       'All monetary accounting uses integer paise. Expected-value calculations convert probability scores to integer basis points before applying them to money.',
@@ -110,7 +110,7 @@ export const JUDGE_STEPS: StepContent[] = [
     icon: Zap,
     headline: 'Expected Value ranking allocates limited contact capacity to highest-yield invoices.',
     description:
-      'Rather than retry every transaction blindly, RecoverFlow AI calculates recovery probability (basis points) and Expected Value in integer paise, selecting from retry, reminder, both, or none.',
+      'Rather than retry every transaction blindly, PayBack AI calculates recovery probability (basis points) and Expected Value in integer paise, selecting from retry, reminder, both, or none.',
     technicalDetails: [
       'Expected Value: EV_paise = round(amount_paise * bps / 10000).',
       'Intervention strategy: retry (downtime), reminder (auth/funds), both, or none (closed).',
@@ -168,7 +168,7 @@ export const JUDGE_STEPS: StepContent[] = [
     icon: RefreshCw,
     headline: 'Closed-loop settlement verification without exposing public webhook surface area.',
     description:
-      'To prevent spoofing and eliminate unauthenticated attack surface, RecoverFlow AI uses outbound status polling (GET /api/recovery/status/:id) and internal telemetry actors.',
+      'To prevent spoofing and eliminate unauthenticated attack surface, PayBack AI uses outbound status polling (GET /api/recovery/status/:id) and internal telemetry actors.',
     technicalDetails: [
       'Internal Telemetry Actors: outcome_observer (polling) & gateway_webhook (internal telemetry).',
       'Public webhook receiver (POST /api/recovery/webhook) is permanently removed (HTTP 404).',

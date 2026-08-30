@@ -1,5 +1,5 @@
 /**
- * Unit tests for the RecoverFlow AI Calibration Engine.
+ * Unit tests for the PayBack AI Calibration Engine.
  *
  * Validates:
  *  1. Exact mathematical precision against a hand-calculated 10-record fixture.

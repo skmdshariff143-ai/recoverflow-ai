@@ -1,5 +1,5 @@
 /**
- * RecoverFlow AI — Interactive Live Recovery Runner Workspace.
+ * PayBack AI — Interactive Live Recovery Runner Workspace.
  *
  * Provides a stepped, real-time visualization of the deterministic closed-loop
  * recovery state machine, processing batch events with Play, Pause, Step,

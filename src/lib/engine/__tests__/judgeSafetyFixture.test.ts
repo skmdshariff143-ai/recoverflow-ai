@@ -1,5 +1,5 @@
 /**
- * RecoverFlow AI — Deterministic Judge Safety & Escalation Fixture Unit Tests.
+ * PayBack AI — Deterministic Judge Safety & Escalation Fixture Unit Tests.
  *
  * Proves that the Hand-Curated Safety Fixture deterministically produces:
  * 1. An approval queue > 0 (High-value invoice > ₹10,000 halts at pending approval).

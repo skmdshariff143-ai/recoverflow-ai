@@ -1,5 +1,5 @@
 /**
- * Unit tests for the RecoverFlow AI High-Value Approval Gate.
+ * Unit tests for the PayBack AI High-Value Approval Gate.
  *
  * Validates:
  *  1. Standard-value invoices never require manual approval.

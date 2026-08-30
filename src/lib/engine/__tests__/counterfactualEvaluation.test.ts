@@ -1,5 +1,5 @@
 /**
- * Unit tests for RecoverFlow AI Counterfactual Policy Simulator & 7-Policy Evaluation.
+ * Unit tests for PayBack AI Counterfactual Policy Simulator & 7-Policy Evaluation.
  *
  * Validates:
  *  1. Independent outcome generation without circular dependencies on predicted probabilities.
@@ -42,7 +42,7 @@ describe('Counterfactual Policy Simulator & Independent Evaluation', () => {
       budget: 40,
     });
 
-    const rf = report.policies.recoverflow_ai;
+    const rf = report.policies.payback_ai;
     const ctrlFixed = report.policies.control_fixed_retry;
     const ctrlRandom = report.policies.control_random_eligible;
     const ctrlHighAmount = report.policies.control_highest_amount;
@@ -97,7 +97,7 @@ describe('Counterfactual Policy Simulator & Independent Evaluation', () => {
       budget: 30,
     });
 
-    const rf = report.policies.recoverflow_ai;
+    const rf = report.policies.payback_ai;
     expect(rf.unsafeInterventionCount).toBe(0);
     expect(rf.optOutViolations).toBe(0);
   });

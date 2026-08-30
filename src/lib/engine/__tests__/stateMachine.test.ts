@@ -1,5 +1,5 @@
 /**
- * Unit tests for RecoverFlow AI Closed-Loop State Machine (Phase 4).
+ * Unit tests for PayBack AI Closed-Loop State Machine (Phase 4).
  */
 
 import { describe, it, expect } from 'vitest';

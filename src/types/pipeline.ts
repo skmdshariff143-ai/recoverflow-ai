@@ -1,5 +1,5 @@
 /**
- * RecoverFlow AI — Pipeline domain types.
+ * PayBack AI — Pipeline domain types.
  *
  * Types for safety filtering, approval gating, quiet-hours scheduling,
  * ranking, budget allocation, test-mode execution, and calibration analysis.

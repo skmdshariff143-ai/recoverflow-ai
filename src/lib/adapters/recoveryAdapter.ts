@@ -1,5 +1,5 @@
 /**
- * RecoverFlow AI — Execution Adapter Boundary & Razorpay Test-Mode Integration.
+ * PayBack AI — Execution Adapter Boundary & Razorpay Test-Mode Integration.
  *
  * Defines the contract for recovery workflow execution adapters, supporting both
  * an offline Deterministic Simulator and an official Razorpay Test-Mode API integration.
@@ -16,7 +16,7 @@ import { createHash } from 'crypto';
 
 // ─── Deterministic Simulator Reference & Checksum Utility ────────────
 
-const SIMULATOR_INTEGRITY_SALT = 'recoverflow_sim_receipt_v2_2026';
+const SIMULATOR_INTEGRITY_SALT = 'payback_sim_receipt_v2_2026';
 
 export function computeSimulatorChecksum(
   paymentId: string,
@@ -352,7 +352,7 @@ export class RazorpayTestModeAdapter implements RecoveryExecutionAdapter {
     // Security Invariant: Live-mode keys are strictly forbidden
     if (configuredKey.startsWith('rzp_live_')) {
       throw new Error(
-        'SECURITY VIOLATION: Live mode Razorpay keys (rzp_live_*) are strictly prohibited. Only test-mode keys (rzp_test_*) are permitted in RecoverFlow AI.',
+        'SECURITY VIOLATION: Live mode Razorpay keys (rzp_live_*) are strictly prohibited. Only test-mode keys (rzp_test_*) are permitted in PayBack AI.',
       );
     }
 
@@ -403,7 +403,7 @@ export class RazorpayTestModeAdapter implements RecoveryExecutionAdapter {
         currency: 'INR',
         accept_partial: false,
         reference_id: `rec_${validated.paymentId}_c${validated.attemptCycle}`,
-        description: `RecoverFlow AI Recovery Link for Invoice ${validated.paymentId}`,
+        description: `PayBack AI Recovery Link for Invoice ${validated.paymentId}`,
         customer: {
           name: validated.customerName,
           email: validated.customerEmail,
@@ -415,7 +415,7 @@ export class RazorpayTestModeAdapter implements RecoveryExecutionAdapter {
         },
         reminder_enable: true,
         notes: {
-          source: 'RecoverFlow AI - Track 3 Buildathon',
+          source: 'PayBack AI - Track 3 Buildathon',
           idempotency_key: validated.idempotencyKey,
         },
       };

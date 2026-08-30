@@ -1,5 +1,5 @@
 /**
- * RecoverFlow AI — Canonical Batch Recovery Proof, Reconciled Waterfall & Evidence Pack.
+ * PayBack AI — Canonical Batch Recovery Proof, Reconciled Waterfall & Evidence Pack.
  *
  * Provides mathematically reconciled batch proof:
  * 1. Exact Financial Waterfall Balance: 100% integer-paise equivalence without floating drift.
@@ -108,7 +108,7 @@ export const RecoveryIntelligence: React.FC<RecoveryIntelligenceProps> = ({
   // ─── 3. Export Judge Evidence Pack (JSON & CSV) ─────────────────────
   const exportJsonEvidence = () => {
     const evidencePack = {
-      project: 'RecoverFlow AI',
+      project: 'PayBack AI',
       exportTimestamp: new Date().toISOString(),
       evaluationScope: {
         evidenceClassification: 'SYNTHETIC_BENCHMARK_EVALUATION',

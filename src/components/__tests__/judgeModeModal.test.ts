@@ -1,5 +1,5 @@
 /**
- * RecoverFlow AI — Judge Mode Walkthrough Unit Tests.
+ * PayBack AI — Judge Mode Walkthrough Unit Tests.
  *
  * Verifies that the 10-step submission tour covers all essential Track 3 requirements:
  * 1. Problem & Ingestion

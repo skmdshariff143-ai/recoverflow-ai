@@ -1,5 +1,5 @@
 /**
- * RecoverFlow AI — Deterministic Judge Safety & Escalation Fixture.
+ * PayBack AI — Deterministic Judge Safety & Escalation Fixture.
  *
  * Distinct from the canonical 100-record batch and benchmark datasets.
  * Labeled: HAND-CURATED SAFETY FIXTURE.

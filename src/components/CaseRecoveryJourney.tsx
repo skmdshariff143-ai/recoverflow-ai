@@ -1,5 +1,5 @@
 /**
- * RecoverFlow AI — Visible Closed-Loop Recovery Journey Stepper.
+ * PayBack AI — Visible Closed-Loop Recovery Journey Stepper.
  *
  * Visually renders the complete 8-stage fintech recovery lifecycle for any selected case:
  * 1. DETECT (Revenue at risk, amount, gateway error)

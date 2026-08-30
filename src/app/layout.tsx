@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "RecoverFlow AI — Bounded, Explainable Recovery Orchestration",
+  title: "PayBack AI — Bounded, Explainable Recovery Orchestration",
   description:
     "Bounded, explainable recovery orchestration for failed payments. Track 3: AI Revenue Recovery — Razorpay AI Buildathon.",
 };

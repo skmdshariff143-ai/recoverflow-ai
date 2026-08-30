@@ -1,4 +1,4 @@
-# RecoverFlow AI — 5-Minute Evaluator Demonstration Script
+# PayBack AI — 5-Minute Evaluator Demonstration Script
 
 > **Submission Document**: Razorpay AI Buildathon · Track 3: AI Revenue Recovery  
 > **Repository**: [https://github.com/skmdshariff143-ai/recoverflow-ai](https://github.com/skmdshariff143-ai/recoverflow-ai)  
@@ -12,7 +12,7 @@
 - **Target Page**: Dashboard Workspace (`https://recoverflow-ai-kohl.vercel.app`)
 - **What to Click**: Focus on Top KPI Cards (`Total Revenue at Risk`, `Simulated Recovered`, `Safety Halted`).
 - **What to Say**:  
-  *"Traditional recovery bots execute blind cascades—retrying hopeless failures like closed accounts while harassing customers during temporary bank downtime. RecoverFlow AI ingests failed payment records, enforces hard safety stopping invariants, and dynamically ranks interventions by Expected Value in integer paise."*
+  *"Traditional recovery bots execute blind cascades—retrying hopeless failures like closed accounts while harassing customers during temporary bank downtime. PayBack AI ingests failed payment records, enforces hard safety stopping invariants, and dynamically ranks interventions by Expected Value in integer paise."*
 - **Visible Expected Result**: Top KPI panel displays ₹6,87,695 at risk, ₹1,46,900 recovered across 18 settled invoices, and 26 safety stops.
 - **Backup Fallback**: If network is slow, local development server (`npm run dev`) mirrors identical deterministic values.
 
@@ -40,7 +40,7 @@
 - **Target Page**: **Evaluation Lab** Tab
 - **What to Click**: Click **Evaluation Lab** tab; view the 7-Policy comparison table and the Reconciled Financial Waterfall.
 - **What to Say**:  
-  *"To eliminate circular evaluation bias, we test 7 policies against identical frozen potential outcomes. RecoverFlow AI achieves +₹3,93,159 (+470%) net recovery lift over a Fixed Retry baseline under an identical 40-slot budget. The financial waterfall reconciles 100% of revenue at risk to settled, stopped, and remaining exposure."*
+  *"To eliminate circular evaluation bias, we test 7 policies against identical frozen potential outcomes. PayBack AI achieves +₹3,93,159 (+470%) net recovery lift over a Fixed Retry baseline under an identical 40-slot budget. The financial waterfall reconciles 100% of revenue at risk to settled, stopped, and remaining exposure."*
 - **Visible Expected Result**: 7-policy comparison matrix displays side-by-side yields, Brier scores, and error inspector breakdown.
 
 ---

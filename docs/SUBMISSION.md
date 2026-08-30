@@ -1,4 +1,4 @@
-# RecoverFlow AI — Submission Package
+# PayBack AI — Submission Package
 
 > **Track**: Razorpay AI Buildathon — Track 3: AI Revenue Recovery  
 > **Repository**: [https://github.com/skmdshariff143-ai/recoverflow-ai](https://github.com/skmdshariff143-ai/recoverflow-ai)  
@@ -8,13 +8,13 @@
 
 ## 1. Executive Summary
 
-**RecoverFlow AI** is a bounded, explainable revenue recovery orchestration platform designed for high-volume merchants. Rather than executing blind, scheduled retries across all failures, RecoverFlow AI ingests failed payment records, computes deterministic recovery probabilities and expected value in integer paise, enforces hard safety stopping invariants, coordinates closed-loop multi-cycle recovery with quiet-hours protection, and maintains a tamper-evident SHA-256 cryptographic audit ledger.
+**PayBack AI** is a bounded, explainable revenue recovery orchestration platform designed for high-volume merchants. Rather than executing blind, scheduled retries across all failures, PayBack AI ingests failed payment records, computes deterministic recovery probabilities and expected value in integer paise, enforces hard safety stopping invariants, coordinates closed-loop multi-cycle recovery with quiet-hours protection, and maintains a tamper-evident SHA-256 cryptographic audit ledger.
 
 ---
 
 ## 2. Evidence & Verification Checklist
 
-- [x] **Product Identity & Claim Integrity**: Standardized name RecoverFlow AI, honest metric labels ("Simulated Recovered", "Observed in reported evaluation"), visible Data Provenance selector.
+- [x] **Product Identity & Claim Integrity**: Standardized name PayBack AI, honest metric labels ("Simulated Recovered", "Observed in reported evaluation"), visible Data Provenance selector.
 - [x] **Financial Correctness**: Strict integer-paise representation ($1\text{ INR} = 100\text{ Paise}$), basis points EV math, negative/float rejection, overflow protection, currency segregation.
 - [x] **Honest Non-Circular Evaluation**: Evaluated against internally generated frozen potential-outcome matrices. Zero self-fulfilling prediction loops.
 - [x] **Benchmarked Against Control Policies**: Tested on 200 Development Records and 80 Held-Out Adversarial Cases against Fixed Retry Control, Retry-All Control, and High-Confidence Only.
@@ -28,7 +28,7 @@
 
 ## 3. Benchmark Verification Results
 
-| Evaluation Metric | RecoverFlow AI (EV Prioritization) | Fixed Retry Control (First 40 Eligible) | Incremental Impact (Δ) |
+| Evaluation Metric | PayBack AI (EV Prioritization) | Fixed Retry Control (First 40 Eligible) | Incremental Impact (Δ) |
 | :--- | :---: | :---: | :---: |
 | **Cohort Size** | 200 Invoices (₹33,94,800 at risk) | 200 Invoices (₹33,94,800 at risk) | — |
 | **Interventions Budgeted** | **40 slots** | 40 slots | 0 (Equal capacity) |

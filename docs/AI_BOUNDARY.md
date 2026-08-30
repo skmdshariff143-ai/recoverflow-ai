@@ -1,4 +1,4 @@
-# RecoverFlow AI — Strict AI vs Non-AI Responsibility Boundary
+# PayBack AI — Strict AI vs Non-AI Responsibility Boundary
 
 > **Submission Document**: Razorpay AI Buildathon · Track 3: AI Revenue Recovery
 

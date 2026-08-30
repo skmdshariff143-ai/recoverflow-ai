@@ -1,7 +1,7 @@
 /**
- * RecoverFlow AI — Counterfactual Evaluation Lab Workspace.
+ * PayBack AI — Counterfactual Evaluation Lab Workspace.
  *
- * Provides a rigorous, independent comparative evaluation of RecoverFlow AI's
+ * Provides a rigorous, independent comparative evaluation of PayBack AI's
  * Expected Value dynamic policy against 6 alternative baselines on identical frozen
  * ground-truth potential outcome matrices, plus a transparent error inspector.
  */
@@ -52,7 +52,7 @@ export function EvaluationLab({
     });
   }, [activeReport.errorInspector, errorFilter, errorSearch]);
 
-  const rf = policies.recoverflow_ai;
+  const rf = policies.payback_ai;
   const ctrlHighAmount = policies.control_highest_amount;
   const ctrlHighProb = policies.control_highest_probability;
   const ctrlFixed = policies.control_fixed_retry;
@@ -149,7 +149,7 @@ export function EvaluationLab({
         <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-gradient-to-br from-indigo-50 to-white border border-indigo-200 rounded-xl p-4">
             <span className="text-xs font-semibold text-indigo-900 uppercase tracking-wider block">
-              RecoverFlow AI Recovery
+              PayBack AI Recovery
             </span>
             <div className="mt-2 text-2xl font-bold text-indigo-700">
               {formatPaiseToINR(rf.recoveredAmountPaise, false)}

@@ -1,5 +1,5 @@
 /**
- * Unit tests for RecoverFlow AI Normalized Outcome Observation Layer.
+ * Unit tests for PayBack AI Normalized Outcome Observation Layer.
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';

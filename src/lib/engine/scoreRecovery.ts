@@ -1,5 +1,5 @@
 /**
- * RecoverFlow AI — Deterministic Recovery Scoring Engine.
+ * PayBack AI — Deterministic Recovery Scoring Engine.
  *
  * Scores each failed payment for recovery probability and expected
  * value using a transparent, auditable, category-anchored formula.

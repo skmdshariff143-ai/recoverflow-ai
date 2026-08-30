@@ -1,5 +1,5 @@
 /**
- * RecoverFlow AI — Global Audit Trail & Cryptographic Ledger Explorer.
+ * PayBack AI — Global Audit Trail & Cryptographic Ledger Explorer.
  *
  * Searchable, filterable, and exportable (CSV / JSON) view of every
  * audit event logged across the entire recovery lifecycle, with cryptographic

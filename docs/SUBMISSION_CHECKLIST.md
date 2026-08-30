@@ -1,4 +1,4 @@
-# RecoverFlow AI — Razorpay Buildathon Submission Checklist
+# PayBack AI — Razorpay Buildathon Submission Checklist
 
 > **Submission Document**: Razorpay AI Buildathon · Track 3: AI Revenue Recovery
 

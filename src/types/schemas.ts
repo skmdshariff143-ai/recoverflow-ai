@@ -1,5 +1,5 @@
 /**
- * RecoverFlow AI — Zod Schemas for Runtime & Artifact Validation.
+ * PayBack AI — Zod Schemas for Runtime & Artifact Validation.
  */
 
 import { z } from 'zod';

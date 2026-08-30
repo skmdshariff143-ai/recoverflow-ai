@@ -1,4 +1,4 @@
-# RecoverFlow AI — Truth & Claim Reconciliation Audit
+# PayBack AI — Truth & Claim Reconciliation Audit
 
 > **Document Version**: v3.3.0-forensic  
 > **Repository**: [https://github.com/skmdshariff143-ai/recoverflow-ai](https://github.com/skmdshariff143-ai/recoverflow-ai)  
@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-This document performs an exhaustive, adversarial reconciliation between every marketing, architectural, and evaluation claim made in RecoverFlow AI and the actual executable source code, test evidence, and live environment behavior.
+This document performs an exhaustive, adversarial reconciliation between every marketing, architectural, and evaluation claim made in PayBack AI and the actual executable source code, test evidence, and live environment behavior.
 
 Every capability is categorized honestly as **Accurate** or **Partial**, followed by the exact scope disclosure.
 

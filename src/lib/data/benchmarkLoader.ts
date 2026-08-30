@@ -1,5 +1,5 @@
 /**
- * RecoverFlow AI — Single Source of Truth Benchmark Data Layer.
+ * PayBack AI — Single Source of Truth Benchmark Data Layer.
  *
  * Imports checked-in, schema-verified benchmark datasets and frozen outcome
  * matrices directly, guaranteeing that the live UI evaluates the exact same

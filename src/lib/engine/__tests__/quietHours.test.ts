@@ -1,5 +1,5 @@
 /**
- * Unit tests for the RecoverFlow AI Quiet-Hours Scheduler.
+ * Unit tests for the PayBack AI Quiet-Hours Scheduler.
  *
  * Validates:
  *  1. Accurate detection of timestamps inside/outside quiet hours across timezones.

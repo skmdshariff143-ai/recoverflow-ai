@@ -1,5 +1,5 @@
 /**
- * RecoverFlow AI — Product-Level Closed-Loop Workflow Verification Test.
+ * PayBack AI — Product-Level Closed-Loop Workflow Verification Test.
  *
  * Proves that:
  * 1. High-value cases (> ₹10,000) stop for manual reviewer approval.

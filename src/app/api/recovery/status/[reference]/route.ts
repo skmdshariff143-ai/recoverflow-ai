@@ -1,5 +1,5 @@
 /**
- * RecoverFlow AI — Server-Side Recovery Transaction Status Route.
+ * PayBack AI — Server-Side Recovery Transaction Status Route.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
