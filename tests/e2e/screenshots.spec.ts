@@ -38,7 +38,8 @@ test.describe('RecoverFlow AI — Multi-Viewport & Screenshot Verification', () 
         await page.screenshot({
           path: 'docs/screenshots/02-explainable-drilldown.png',
         });
-        await page.locator('button[aria-label="Close modal"]').click();
+        const closeBtn = page.getByRole('button', { name: /Close Drill-Down/i }).or(page.locator('button[aria-label="Close modal"]'));
+        await closeBtn.first().click();
         await page.waitForTimeout(300);
 
         // Evaluation Lab

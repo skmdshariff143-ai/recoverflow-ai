@@ -29,7 +29,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    let payload: Record<string, unknown>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let payload: any;
     try {
       payload = JSON.parse(rawBody);
     } catch {
@@ -40,11 +41,8 @@ export async function POST(req: NextRequest) {
     }
 
     const eventType = String(payload.event ?? 'unknown');
-    const eventId = String(
-      (payload.payload as Record<string, Record<string, unknown>>)?.payment?.entity?.id ??
-      (payload.payload as Record<string, Record<string, unknown>>)?.payment_link?.entity?.id ??
-      `evt_${Date.now()}`,
-    );
+    const paymentEntity = payload?.payload?.payment?.entity ?? payload?.payload?.payment_link?.entity;
+    const eventId = String(paymentEntity?.id ?? `evt_${Date.now()}`);
 
     // ── 2. Deduplication & Replay Protection ─────────────────────────
     const isNewEvent = idempotencyStore.recordWebhookEvent(eventId);
@@ -63,10 +61,6 @@ export async function POST(req: NextRequest) {
     let settledAmountPaise = 0;
 
     if (eventType === 'payment.captured' || eventType === 'payment_link.paid') {
-      const paymentEntity =
-        (payload.payload as Record<string, Record<string, unknown>>)?.payment?.entity ??
-        (payload.payload as Record<string, Record<string, unknown>>)?.payment_link?.entity;
-
       if (paymentEntity && typeof paymentEntity.amount === 'number') {
         recoveryObserved = true;
         settledAmountPaise = paymentEntity.amount;
