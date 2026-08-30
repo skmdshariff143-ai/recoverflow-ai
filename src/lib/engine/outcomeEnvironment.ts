@@ -99,14 +99,14 @@ export function generatePotentialOutcomes(
         continue;
       }
 
-      // Hard physical stop conditions
-      if (payment.opt_out || cat === 'permanent_account_closure') {
+      // Hard physical stop conditions (opt-out, closed account, hard cancellation)
+      if (payment.opt_out || cat === 'permanent_account_closure' || cat === 'customer_cancellation') {
         outcomes[intervention][attempt] = {
           recovered: false,
           settledAmountPaise: 0,
           disputed: false,
           latencyMinutes: 0,
-          reason: 'Hard non-recoverable account state.',
+          reason: 'Hard non-recoverable account state (opt-out / terminal closure / hard cancellation).',
         };
         continue;
       }

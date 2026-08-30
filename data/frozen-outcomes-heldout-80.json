@@ -8,21 +8,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "reminder": {
@@ -31,21 +31,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "both": {
@@ -54,21 +54,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "none": {
@@ -105,21 +105,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "reminder": {
@@ -128,21 +128,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "both": {
@@ -151,21 +151,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "none": {
@@ -202,21 +202,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "reminder": {
@@ -225,21 +225,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "both": {
@@ -248,21 +248,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "none": {
@@ -299,21 +299,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "reminder": {
@@ -322,21 +322,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "both": {
@@ -345,21 +345,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "none": {
@@ -396,21 +396,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "reminder": {
@@ -419,21 +419,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "both": {
@@ -442,21 +442,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "none": {
@@ -493,21 +493,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "reminder": {
@@ -516,21 +516,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "both": {
@@ -539,21 +539,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "none": {
@@ -590,21 +590,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "reminder": {
@@ -613,21 +613,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "both": {
@@ -636,21 +636,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "none": {
@@ -687,21 +687,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "reminder": {
@@ -710,21 +710,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "both": {
@@ -733,21 +733,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "none": {
@@ -1560,21 +1560,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "reminder": {
@@ -1583,21 +1583,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "both": {
@@ -1606,21 +1606,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "none": {
@@ -1657,21 +1657,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "reminder": {
@@ -1680,21 +1680,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "both": {
@@ -1703,21 +1703,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "none": {
@@ -1754,21 +1754,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "reminder": {
@@ -1777,21 +1777,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "both": {
@@ -1800,21 +1800,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "none": {
@@ -1851,21 +1851,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "reminder": {
@@ -1874,21 +1874,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "both": {
@@ -1897,21 +1897,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "none": {
@@ -1948,21 +1948,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "reminder": {
@@ -1971,21 +1971,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "both": {
@@ -1994,21 +1994,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "none": {
@@ -2045,21 +2045,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "reminder": {
@@ -2068,21 +2068,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "both": {
@@ -2091,21 +2091,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "none": {
@@ -2142,21 +2142,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "reminder": {
@@ -2165,21 +2165,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "both": {
@@ -2188,21 +2188,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "none": {
@@ -2239,21 +2239,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "reminder": {
@@ -2262,21 +2262,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "both": {
@@ -2285,21 +2285,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "none": {
@@ -2336,21 +2336,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "reminder": {
@@ -2359,21 +2359,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "both": {
@@ -2382,21 +2382,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "none": {
@@ -2627,21 +2627,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "reminder": {
@@ -2650,21 +2650,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "both": {
@@ -2673,21 +2673,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "none": {
@@ -2821,21 +2821,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "reminder": {
@@ -2844,21 +2844,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "both": {
@@ -2867,21 +2867,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "none": {
@@ -3596,22 +3596,22 @@
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 37,
-          "reason": "Attempt 1 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 94,
-          "reason": "Attempt 2 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 101,
-          "reason": "Attempt 3 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "reminder": {
@@ -3619,22 +3619,22 @@
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 100,
-          "reason": "Attempt 1 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 123,
-          "reason": "Attempt 2 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 23,
-          "reason": "Attempt 3 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "both": {
@@ -3642,22 +3642,22 @@
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 14,
-          "reason": "Attempt 1 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 8,
-          "reason": "Attempt 2 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 55,
-          "reason": "Attempt 3 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "none": {
@@ -6215,22 +6215,22 @@
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 119,
-          "reason": "Attempt 1 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 38,
-          "reason": "Attempt 2 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 63,
-          "reason": "Attempt 3 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "reminder": {
@@ -6238,22 +6238,22 @@
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 76,
-          "reason": "Attempt 1 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 104,
-          "reason": "Attempt 2 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 78,
-          "reason": "Attempt 3 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "both": {
@@ -6261,22 +6261,22 @@
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 109,
-          "reason": "Attempt 1 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 105,
-          "reason": "Attempt 2 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 82,
-          "reason": "Attempt 3 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "none": {
@@ -6312,22 +6312,22 @@
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 89,
-          "reason": "Attempt 1 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 25,
-          "reason": "Attempt 2 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 84,
-          "reason": "Attempt 3 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "reminder": {
@@ -6335,22 +6335,22 @@
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 109,
-          "reason": "Attempt 1 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 94,
-          "reason": "Attempt 2 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 84,
-          "reason": "Attempt 3 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "both": {
@@ -6358,22 +6358,22 @@
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 21,
-          "reason": "Attempt 1 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
-          "recovered": true,
-          "settledAmountPaise": 2732,
+          "recovered": false,
+          "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 95,
-          "reason": "Settled via both on attempt 2"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 104,
-          "reason": "Attempt 3 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "none": {
@@ -6410,21 +6410,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "reminder": {
@@ -6433,21 +6433,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "both": {
@@ -6456,21 +6456,21 @@
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
           "latencyMinutes": 0,
-          "reason": "Hard non-recoverable account state."
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "none": {
@@ -6506,22 +6506,22 @@
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 27,
-          "reason": "Attempt 1 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 105,
-          "reason": "Attempt 2 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 88,
-          "reason": "Attempt 3 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "reminder": {
@@ -6529,22 +6529,22 @@
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 43,
-          "reason": "Attempt 1 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 56,
-          "reason": "Attempt 2 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 56,
-          "reason": "Attempt 3 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "both": {
@@ -6552,22 +6552,22 @@
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 91,
-          "reason": "Attempt 1 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 68,
-          "reason": "Attempt 2 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 116,
-          "reason": "Attempt 3 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "none": {
@@ -6603,22 +6603,22 @@
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 55,
-          "reason": "Attempt 1 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 124,
-          "reason": "Attempt 2 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 90,
-          "reason": "Attempt 3 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "reminder": {
@@ -6626,22 +6626,22 @@
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 67,
-          "reason": "Attempt 1 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 52,
-          "reason": "Attempt 2 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 69,
-          "reason": "Attempt 3 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "both": {
@@ -6649,22 +6649,22 @@
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 62,
-          "reason": "Attempt 1 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 85,
-          "reason": "Attempt 2 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 70,
-          "reason": "Attempt 3 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "none": {
@@ -6700,22 +6700,22 @@
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 44,
-          "reason": "Attempt 1 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 39,
-          "reason": "Attempt 2 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 93,
-          "reason": "Attempt 3 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "reminder": {
@@ -6723,45 +6723,45 @@
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 94,
-          "reason": "Attempt 1 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 75,
-          "reason": "Attempt 2 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 88,
-          "reason": "Attempt 3 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "both": {
         "1": {
-          "recovered": true,
-          "settledAmountPaise": 188465,
+          "recovered": false,
+          "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 59,
-          "reason": "Settled via both on attempt 1"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 18,
-          "reason": "Attempt 2 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 96,
-          "reason": "Attempt 3 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "none": {
@@ -6797,22 +6797,22 @@
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 14,
-          "reason": "Attempt 1 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 34,
-          "reason": "Attempt 2 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 14,
-          "reason": "Attempt 3 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "reminder": {
@@ -6820,22 +6820,22 @@
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 28,
-          "reason": "Attempt 1 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 53,
-          "reason": "Attempt 2 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 38,
-          "reason": "Attempt 3 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "both": {
@@ -6843,22 +6843,22 @@
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 34,
-          "reason": "Attempt 1 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 78,
-          "reason": "Attempt 2 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 84,
-          "reason": "Attempt 3 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "none": {
@@ -6894,22 +6894,22 @@
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 37,
-          "reason": "Attempt 1 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 43,
-          "reason": "Attempt 2 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 83,
-          "reason": "Attempt 3 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "reminder": {
@@ -6917,22 +6917,22 @@
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 63,
-          "reason": "Attempt 1 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 119,
-          "reason": "Attempt 2 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 124,
-          "reason": "Attempt 3 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "both": {
@@ -6940,22 +6940,22 @@
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 103,
-          "reason": "Attempt 1 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "2": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 16,
-          "reason": "Attempt 2 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         },
         "3": {
           "recovered": false,
           "settledAmountPaise": 0,
           "disputed": false,
-          "latencyMinutes": 90,
-          "reason": "Attempt 3 exhausted without settlement"
+          "latencyMinutes": 0,
+          "reason": "Hard non-recoverable account state (opt-out / terminal closure / hard cancellation)."
         }
       },
       "none": {
