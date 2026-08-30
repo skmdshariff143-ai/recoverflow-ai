@@ -3,7 +3,7 @@
  *
  * Provides language model assistance for:
  *   1. Normalizing ambiguous/unstructured gateway failure error logs.
- *   2. Drafting compliant, empathetic customer recovery reminders.
+ *   2. Drafting policy-constrained customer recovery reminders (prototype requiring merchant compliance review).
  *   3. Explaining governance/safety stopping decisions in plain English.
  *
  * STRICT FINTECH SAFETY BOUNDARIES:
@@ -166,7 +166,7 @@ Strict rules:
 }
 
 /**
- * Draft compliant customer recovery communication via Gemini with fallback.
+ * Draft policy-constrained customer recovery reminder via Gemini with fallback (prototype requiring merchant compliance review).
  */
 export async function draftCustomerCommunicationWithGemini(
   customerName: string,

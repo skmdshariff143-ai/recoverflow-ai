@@ -69,6 +69,23 @@ export function RankedQueueTable({
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden space-y-4 p-4">
+      {/* ── Table Header & Evidence Provenance ─────────────────── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+        <div>
+          <div className="flex items-center gap-2">
+            <h3 className="font-bold text-slate-900 text-sm">
+              Prioritized Recovery Queue ({items.length} of {totalCount} Invoices)
+            </h3>
+            <span className="text-[10px] font-mono font-bold bg-amber-50 text-amber-800 px-2 py-0.5 rounded border border-amber-200 uppercase">
+              SYNTHETIC
+            </span>
+          </div>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Ranked by Expected Value (EV = Amount × Probability). Click any row to inspect explainability waterfall.
+          </p>
+        </div>
+      </div>
+
       {/* ── Filter and Search Bar ──────────────────────────────── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2.5 flex-1">

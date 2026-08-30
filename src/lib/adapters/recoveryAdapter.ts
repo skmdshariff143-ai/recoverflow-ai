@@ -100,7 +100,7 @@ export class DeterministicSimulatorAdapter implements RecoveryExecutionAdapter {
       timestamp: new Date().toISOString(),
       // Invariant: Zero fake external URLs. Use internal simulation identifier.
       paymentLinkUrl: undefined,
-      rawResponseSummary: `Deterministic simulated execution for ${validated.intervention} (cycle ${validated.attemptCycle}). Settlement: ${isSuccess ? 'CAPTURED' : 'PENDING'}.`,
+      rawResponseSummary: `Deterministic simulated execution for ${validated.intervention} (cycle ${validated.attemptCycle}). Settlement: ${isSuccess ? 'SYNTHETIC_OUTCOME_VERIFIED' : 'TEST_LINK_CREATED'}. (Note: Deterministic synthetic evaluation outcome, not live merchant settlement).`,
     };
 
     this.transactionStore.set(ref, result);

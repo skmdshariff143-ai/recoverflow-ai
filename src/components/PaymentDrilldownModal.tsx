@@ -662,7 +662,7 @@ export function PaymentDrilldownModal({
             <div className="bg-white border border-slate-200 rounded-lg p-3 space-y-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="font-semibold text-slate-800">
-                  2. Draft Compliant Customer Recovery Notification:
+                  2. Draft Policy-Constrained Customer Reminder (Requires Merchant Review):
                 </span>
                 <div className="flex items-center gap-2">
                   <select
@@ -712,12 +712,17 @@ export function PaymentDrilldownModal({
             </div>
           </div>
 
-          {/* 5. Human-in-the-Loop Reviewer Action Panel */}
+          {/* 5. Policy-Constrained Human Review Gate */}
           <div className="bg-white border-2 border-emerald-300 rounded-xl p-4 space-y-3 bg-emerald-50/10">
-            <h4 className="font-bold text-slate-900 flex items-center gap-1.5">
-              <UserCheck className="w-4 h-4 text-emerald-600" />
-              Human-in-the-Loop Reviewer Action Gate
-            </h4>
+            <div className="flex items-center justify-between">
+              <h4 className="font-bold text-slate-900 flex items-center gap-1.5">
+                <UserCheck className="w-4 h-4 text-emerald-600" />
+                Policy-Constrained Reviewer Action Gate (Human-in-the-Loop)
+              </h4>
+              <span className="text-[10px] bg-slate-100 text-slate-700 font-mono px-2 py-0.5 rounded border border-slate-200">
+                Governance Boundary
+              </span>
+            </div>
             <p className="text-[11px] text-slate-600">
               Required for high-value enterprise invoices or disputed payments before triggering gateway clearance.
             </p>
