@@ -31,7 +31,11 @@ import {
   Fingerprint,
 } from 'lucide-react';
 import type { FailedPayment, InterventionType } from '@/types';
-import { formatPaiseToINR, calculateExpectedValuePaise } from '@/lib/engine/financial';
+import {
+  formatPaiseToINR,
+  calculateExpectedValuePaise,
+  probabilityToBps,
+} from '@/lib/engine/financial';
 import { checkSafetyRules } from '@/lib/engine/safetyFilter';
 
 interface CaseRecoveryJourneyProps {
@@ -61,7 +65,7 @@ export const CaseRecoveryJourney: React.FC<CaseRecoveryJourneyProps> = ({
 }) => {
   const safetyResult = checkSafetyRules(payment);
   const isHighValue = payment.invoice_value_tier === 'high_value' || payment.amount >= 1_000_000;
-  const evPaise = calculateExpectedValuePaise(payment.amount, score);
+  const evPaise = calculateExpectedValuePaise(payment.amount, probabilityToBps(score));
 
   // Stage 1: Detect
   const s1Status = 'completed';
