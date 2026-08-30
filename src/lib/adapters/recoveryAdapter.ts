@@ -9,12 +9,16 @@
  * 2. Only test-mode keys ('rzp_test_...') are accepted.
  * 3. Payment-link creation is NEVER counted as recovered revenue.
  * 4. Webhook signatures are verified using constant-time HMAC-SHA256 comparison.
+ * 5. Simulator statuses are transaction-bound rather than hard-coded.
  */
 
 import { z } from 'zod';
 import { createHmac, timingSafeEqual } from 'crypto';
 
 // ─── Zod Schemas for Validation ──────────────────────────────────────
+
+export const AdapterTypeSchema = z.enum(['simulator', 'razorpay_test_mode']);
+export type AdapterType = z.infer<typeof AdapterTypeSchema>;
 
 export const RecoveryExecutionRequestSchema = z.object({
   paymentId: z.string().min(1),
@@ -54,23 +58,32 @@ export const RecoveryExecutionResultSchema = z.object({
   status: LinkStatusSchema,
   latencyMs: z.number().nonnegative(),
   timestamp: z.string(),
-  paymentLinkUrl: z.string().url().optional(),
+  paymentLinkUrl: z.string().optional(),
   rawResponseSummary: z.string(),
   errorMessage: z.string().optional(),
 });
 
 export type RecoveryExecutionResult = z.infer<typeof RecoveryExecutionResultSchema>;
 
+export interface StatusQueryResult {
+  status: LinkStatus;
+  settledAmountPaise: number;
+  razorpayStatusRaw?: string;
+  source: 'simulator_memory' | 'razorpay_test_api';
+  timestamp: string;
+}
+
 export interface RecoveryExecutionAdapter {
   readonly adapterName: 'deterministic_simulator' | 'razorpay_test_mode';
   execute(request: RecoveryExecutionRequest): Promise<RecoveryExecutionResult>;
-  getStatus(transactionReference: string): Promise<{ status: LinkStatus; settledAmountPaise: number }>;
+  getStatus(transactionReference: string): Promise<StatusQueryResult>;
 }
 
 // ─── 1. Deterministic Simulator Adapter (Offline / Reproducible) ──────
 
 export class DeterministicSimulatorAdapter implements RecoveryExecutionAdapter {
   readonly adapterName = 'deterministic_simulator' as const;
+  private transactionStore = new Map<string, RecoveryExecutionResult>();
 
   async execute(request: RecoveryExecutionRequest): Promise<RecoveryExecutionResult> {
     const validated = RecoveryExecutionRequestSchema.parse(request);
@@ -78,26 +91,53 @@ export class DeterministicSimulatorAdapter implements RecoveryExecutionAdapter {
     const startTime = Date.now();
     const isSuccess = validated.intervention !== 'reminder'; // Direct simulated recovery
 
-    return {
+    const ref = `sim_txn_${validated.paymentId}_c${validated.attemptCycle}`;
+    const result: RecoveryExecutionResult = {
       success: isSuccess,
-      transactionReference: `sim_txn_${validated.paymentId}_c${validated.attemptCycle}`,
+      transactionReference: ref,
       adapterUsed: this.adapterName,
       settledAmountPaise: isSuccess ? validated.amountPaise : 0,
       status: isSuccess ? 'captured' : 'test_link_created',
       latencyMs: Math.max(15, Date.now() - startTime),
       timestamp: new Date().toISOString(),
-      paymentLinkUrl: `https://rzp.io/i/sim_${validated.paymentId}`,
-      rawResponseSummary: `Deterministic simulated execution for ${validated.intervention} (cycle ${validated.attemptCycle}).`,
+      // Invariant: Zero fake external URLs. Use internal simulation identifier.
+      paymentLinkUrl: undefined,
+      rawResponseSummary: `Deterministic simulated execution for ${validated.intervention} (cycle ${validated.attemptCycle}). Settlement: ${isSuccess ? 'CAPTURED' : 'PENDING'}.`,
+    };
+
+    this.transactionStore.set(ref, result);
+    return result;
+  }
+
+  async getStatus(transactionReference: string): Promise<StatusQueryResult> {
+    const existing = this.transactionStore.get(transactionReference);
+    if (!existing) {
+      return {
+        status: 'failed',
+        settledAmountPaise: 0,
+        source: 'simulator_memory',
+        timestamp: new Date().toISOString(),
+      };
+    }
+
+    return {
+      status: existing.status,
+      settledAmountPaise: existing.settledAmountPaise,
+      source: 'simulator_memory',
+      timestamp: new Date().toISOString(),
     };
   }
 
-  async getStatus(_transactionReference: string): Promise<{ status: LinkStatus; settledAmountPaise: number }> {
-    return {
-      status: _transactionReference ? 'captured' : 'failed',
-      settledAmountPaise: 500_000,
-    };
+  /**
+   * For testing: seed a simulated transaction
+   */
+  seedTransaction(ref: string, result: RecoveryExecutionResult): void {
+    this.transactionStore.set(ref, result);
   }
 }
+
+// Global shared simulator instance for server memory persistence across requests
+export const globalSimulatorAdapter = new DeterministicSimulatorAdapter();
 
 // ─── 2. Official Razorpay Test-Mode Adapter (Server-Side) ───────────
 
@@ -133,7 +173,6 @@ export class RazorpayTestModeAdapter implements RecoveryExecutionAdapter {
     const validated = RecoveryExecutionRequestSchema.parse(request);
 
     if (!this.isConfigured()) {
-      // Graceful fallback to simulator if credentials are not configured
       return {
         success: false,
         transactionReference: `rzp_unconfigured_${validated.paymentId}`,
@@ -143,8 +182,8 @@ export class RazorpayTestModeAdapter implements RecoveryExecutionAdapter {
         latencyMs: 5,
         timestamp: new Date().toISOString(),
         rawResponseSummary:
-          'Razorpay Test-Mode credentials not provided or invalid in .env.local — running in graceful fallback mode.',
-        errorMessage: 'RAZORPAY_KEY_ID (must start with rzp_test_) or RAZORPAY_KEY_SECRET missing',
+          'Razorpay Test-Mode credentials not configured in environment (RAZORPAY_KEY_ID must start with rzp_test_).',
+        errorMessage: 'RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET missing',
       };
     }
 
@@ -192,6 +231,8 @@ export class RazorpayTestModeAdapter implements RecoveryExecutionAdapter {
 
       if (!res.ok) {
         const errorBody = await res.text();
+        // Redact any sensitive information from error body
+        const safeSummary = `Razorpay API HTTP ${res.status}: ${errorBody.slice(0, 100).replace(/[<>{}\\]/g, '')}`;
         return {
           success: false,
           transactionReference: `rzp_err_${validated.paymentId}`,
@@ -200,8 +241,8 @@ export class RazorpayTestModeAdapter implements RecoveryExecutionAdapter {
           status: 'failed',
           latencyMs: Date.now() - startTime,
           timestamp: new Date().toISOString(),
-          rawResponseSummary: `Razorpay API HTTP ${res.status}: ${errorBody.slice(0, 150)}`,
-          errorMessage: `Payment link creation failed with status ${res.status}`,
+          rawResponseSummary: safeSummary,
+          errorMessage: `Payment link creation returned HTTP ${res.status}`,
         };
       }
 
@@ -214,7 +255,7 @@ export class RazorpayTestModeAdapter implements RecoveryExecutionAdapter {
         status: 'test_link_created',
         latencyMs: Date.now() - startTime,
         timestamp: new Date().toISOString(),
-        paymentLinkUrl: data.short_url ?? `https://rzp.io/i/${data.id}`,
+        paymentLinkUrl: data.short_url,
         rawResponseSummary: `Razorpay Test Payment Link created: ${data.id} (Status: ${data.status})`,
       };
     } catch (err: unknown) {
@@ -227,17 +268,90 @@ export class RazorpayTestModeAdapter implements RecoveryExecutionAdapter {
         status: errorMsg.includes('abort') ? 'timeout' : 'failed',
         latencyMs: Date.now() - startTime,
         timestamp: new Date().toISOString(),
-        rawResponseSummary: `Network exception during Razorpay test-mode call: ${errorMsg}`,
+        rawResponseSummary: `Network exception during Razorpay test call: ${errorMsg.slice(0, 100)}`,
         errorMessage: errorMsg,
       };
     }
   }
 
-  async getStatus(_transactionReference: string): Promise<{ status: LinkStatus; settledAmountPaise: number }> {
-    return {
-      status: _transactionReference ? 'awaiting_payment' : 'failed',
-      settledAmountPaise: 0,
-    };
+  async getStatus(transactionReference: string): Promise<StatusQueryResult> {
+    if (!this.isConfigured()) {
+      return {
+        status: 'failed',
+        settledAmountPaise: 0,
+        source: 'razorpay_test_api',
+        timestamp: new Date().toISOString(),
+      };
+    }
+
+    const authHeader = `Basic ${Buffer.from(`${this.keyId}:${this.keySecret}`).toString('base64')}`;
+
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+      const res = await fetch(`https://api.razorpay.com/v1/payment_links/${encodeURIComponent(transactionReference)}`, {
+        method: 'GET',
+        headers: {
+          Authorization: authHeader,
+        },
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!res.ok) {
+        return {
+          status: 'failed',
+          settledAmountPaise: 0,
+          razorpayStatusRaw: `HTTP_${res.status}`,
+          source: 'razorpay_test_api',
+          timestamp: new Date().toISOString(),
+        };
+      }
+
+      const data = await res.json();
+      const rawStatus: string = data.status ?? 'created';
+
+      let mappedStatus: LinkStatus = 'test_link_created';
+      let settledAmountPaise = 0;
+
+      if (rawStatus === 'paid') {
+        mappedStatus = 'paid';
+        settledAmountPaise = data.amount_paid ?? data.amount ?? 0;
+      } else if (rawStatus === 'partially_paid') {
+        mappedStatus = 'awaiting_payment';
+        settledAmountPaise = data.amount_paid ?? 0;
+      } else if (rawStatus === 'created') {
+        mappedStatus = 'test_link_created';
+        settledAmountPaise = 0;
+      } else if (rawStatus === 'cancelled') {
+        mappedStatus = 'cancelled';
+        settledAmountPaise = 0;
+      } else if (rawStatus === 'expired') {
+        mappedStatus = 'expired';
+        settledAmountPaise = 0;
+      } else {
+        mappedStatus = 'failed';
+        settledAmountPaise = 0;
+      }
+
+      return {
+        status: mappedStatus,
+        settledAmountPaise,
+        razorpayStatusRaw: rawStatus,
+        source: 'razorpay_test_api',
+        timestamp: new Date().toISOString(),
+      };
+    } catch {
+      return {
+        status: 'failed',
+        settledAmountPaise: 0,
+        razorpayStatusRaw: 'NETWORK_ERROR',
+        source: 'razorpay_test_api',
+        timestamp: new Date().toISOString(),
+      };
+    }
   }
 }
 
@@ -272,12 +386,11 @@ export function verifyRazorpayWebhookSignature(
 /**
  * Factory to return the active execution adapter.
  */
-export function getExecutionAdapter(): RecoveryExecutionAdapter {
-  const key = process.env.RAZORPAY_KEY_ID;
-  const secret = process.env.RAZORPAY_KEY_SECRET;
-
-  if (key && secret && key.startsWith('rzp_test_')) {
+export function getExecutionAdapter(requested?: string): RecoveryExecutionAdapter {
+  if (requested === 'razorpay_test_mode') {
+    const key = process.env.RAZORPAY_KEY_ID;
+    const secret = process.env.RAZORPAY_KEY_SECRET;
     return new RazorpayTestModeAdapter(key, secret);
   }
-  return new DeterministicSimulatorAdapter();
+  return globalSimulatorAdapter;
 }

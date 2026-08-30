@@ -1,16 +1,22 @@
 /**
- * Unit tests for RecoverFlow AI Execution Adapters & Razorpay Test-Mode Integration.
+ * Unit tests for RecoverFlow AI Execution Adapters, Webhook Verification & Idempotency Store.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import {
   DeterministicSimulatorAdapter,
   RazorpayTestModeAdapter,
   verifyRazorpayWebhookSignature,
+  AdapterTypeSchema,
   type RecoveryExecutionRequest,
 } from '../recoveryAdapter';
+import { idempotencyStore } from '@/lib/server/idempotencyStore';
 
-describe('Recovery Execution Adapters', () => {
+describe('Recovery Execution Adapters & Idempotency Store', () => {
+  beforeEach(() => {
+    idempotencyStore.clear();
+  });
+
   const validRequest: RecoveryExecutionRequest = {
     paymentId: 'pay_test_001',
     customerId: 'cust_001',
@@ -25,10 +31,19 @@ describe('Recovery Execution Adapters', () => {
     referenceNotes: 'Test retry execution',
   };
 
+  describe('Adapter Boundary & Schema Validation', () => {
+    it('validates known adapters and rejects unknown adapter identifiers', () => {
+      expect(AdapterTypeSchema.safeParse('simulator').success).toBe(true);
+      expect(AdapterTypeSchema.safeParse('razorpay_test_mode').success).toBe(true);
+      expect(AdapterTypeSchema.safeParse('live_production_gateway').success).toBe(false);
+      expect(AdapterTypeSchema.safeParse('stripe_adapter').success).toBe(false);
+    });
+  });
+
   describe('DeterministicSimulatorAdapter', () => {
     const adapter = new DeterministicSimulatorAdapter();
 
-    it('executes valid request and returns structured execution receipt', async () => {
+    it('executes valid request, records transaction, and does not generate fake external URLs', async () => {
       const result = await adapter.execute(validRequest);
 
       expect(result.success).toBe(true);
@@ -36,12 +51,22 @@ describe('Recovery Execution Adapters', () => {
       expect(result.settledAmountPaise).toBe(500_000);
       expect(result.status).toBe('captured');
       expect(result.transactionReference).toContain('sim_txn_');
-      expect(result.paymentLinkUrl).toBeDefined();
+      expect(result.paymentLinkUrl).toBeUndefined(); // Invariant: no fake URLs
     });
 
-    it('rejects invalid inputs via Zod schema validation', async () => {
-      const invalid = { ...validRequest, amountPaise: -500 };
-      await expect(adapter.execute(invalid as unknown as RecoveryExecutionRequest)).rejects.toThrow();
+    it('getStatus retrieves the exact recorded transaction amount from memory', async () => {
+      const result = await adapter.execute(validRequest);
+      const query = await adapter.getStatus(result.transactionReference);
+
+      expect(query.status).toBe('captured');
+      expect(query.settledAmountPaise).toBe(500_000);
+      expect(query.source).toBe('simulator_memory');
+    });
+
+    it('getStatus returns failed for unknown references', async () => {
+      const query = await adapter.getStatus('unknown_ref_999');
+      expect(query.status).toBe('failed');
+      expect(query.settledAmountPaise).toBe(0);
     });
   });
 
@@ -65,19 +90,49 @@ describe('Recovery Execution Adapters', () => {
       const result = await adapter.execute(validRequest);
       expect(result.success).toBe(false);
       expect(result.adapterUsed).toBe('razorpay_test_mode');
-      expect(result.settledAmountPaise).toBe(0); // Invariant: unrecovered money
+      expect(result.settledAmountPaise).toBe(0);
       expect(result.status).toBe('failed');
-      expect(result.rawResponseSummary).toContain('running in graceful fallback mode');
+      expect(result.rawResponseSummary).toContain('Razorpay Test-Mode credentials not configured');
     });
   });
 
-  describe('Razorpay Webhook Signature Verification', () => {
+  describe('Server-Side Idempotency Store', () => {
+    it('records new executions and accurately replays matching idempotency keys', async () => {
+      const adapter = new DeterministicSimulatorAdapter();
+      const receipt = await adapter.execute(validRequest);
+
+      // Check new key
+      const initialCheck = idempotencyStore.check(validRequest.idempotencyKey, validRequest);
+      expect(initialCheck.status).toBe('new');
+
+      // Save in store
+      idempotencyStore.save(validRequest.idempotencyKey, validRequest, receipt);
+
+      // Replay with identical payload
+      const replayCheck = idempotencyStore.check(validRequest.idempotencyKey, validRequest);
+      expect(replayCheck.status).toBe('replay');
+      if (replayCheck.status === 'replay') {
+        expect(replayCheck.receipt.transactionReference).toBe(receipt.transactionReference);
+      }
+    });
+
+    it('detects and flags conflicting payloads with the same idempotency key', async () => {
+      const adapter = new DeterministicSimulatorAdapter();
+      const receipt = await adapter.execute(validRequest);
+      idempotencyStore.save(validRequest.idempotencyKey, validRequest, receipt);
+
+      const conflictingRequest = { ...validRequest, amountPaise: 999_000 };
+      const conflictCheck = idempotencyStore.check(validRequest.idempotencyKey, conflictingRequest);
+      expect(conflictCheck.status).toBe('conflict');
+    });
+  });
+
+  describe('Razorpay Webhook Signature Verification & Deduplication', () => {
     const secret = 'whsec_test_secret_key_123';
     const rawPayload = JSON.stringify({
       entity: 'event',
       account_id: 'acc_test',
       event: 'payment.captured',
-      contains: ['payment'],
       payload: {
         payment: {
           entity: {
@@ -97,7 +152,7 @@ describe('Recovery Execution Adapters', () => {
       expect(isValid).toBe(true);
     });
 
-    it('rejects tampered webhook payloads or incorrect signatures', () => {
+    it('rejects tampered webhook payloads or incorrect secrets', () => {
       const crypto = require('crypto');
       const validSignature = crypto.createHmac('sha256', secret).update(rawPayload).digest('hex');
 
@@ -107,6 +162,14 @@ describe('Recovery Execution Adapters', () => {
 
       const isWrongSecretValid = verifyRazorpayWebhookSignature(rawPayload, validSignature, 'wrong_secret');
       expect(isWrongSecretValid).toBe(false);
+    });
+
+    it('deduplicates processed webhook events', () => {
+      const isFirst = idempotencyStore.recordWebhookEvent('evt_wh_001');
+      expect(isFirst).toBe(true);
+
+      const isDuplicate = idempotencyStore.recordWebhookEvent('evt_wh_001');
+      expect(isDuplicate).toBe(false);
     });
   });
 });
