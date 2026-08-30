@@ -93,6 +93,15 @@ export function PaymentDrilldownModal({
     error?: string;
   } | null>(null);
 
+  // Proactive Outcome Observer Status Polling
+  const [outcomeLoading, setOutcomeLoading] = useState<boolean>(false);
+  const [outcomeResult, setOutcomeResult] = useState<{
+    status: string;
+    settledAmountPaise: number;
+    source: string;
+    timestamp: string;
+  } | null>(null);
+
   if (!item) return null;
 
   const payment = item.payment;
@@ -179,6 +188,41 @@ export function PaymentDrilldownModal({
       setExecutionResult({ error: err instanceof Error ? err.message : 'Execution request failed' });
     } finally {
       setExecutionLoading(false);
+    }
+  };
+
+  const handleRunOutcomeCheck = async () => {
+    setOutcomeLoading(true);
+    try {
+      const ref =
+        executionResult?.receipt?.transactionReference ??
+        `sim_txn_${payment.payment_id}_c${item.attempts_taken ?? 1}`;
+      const res = await fetch(`/api/recovery/status/${ref}`);
+      if (res.ok) {
+        const data = await res.json();
+        setOutcomeResult({
+          status: data.status,
+          settledAmountPaise: data.settledAmountPaise ?? 0,
+          source: data.source ?? 'simulator_memory',
+          timestamp: data.timestamp ?? new Date().toISOString(),
+        });
+      } else {
+        setOutcomeResult({
+          status: 'pending',
+          settledAmountPaise: 0,
+          source: 'deterministic_simulator_fallback',
+          timestamp: new Date().toISOString(),
+        });
+      }
+    } catch {
+      setOutcomeResult({
+        status: 'pending',
+        settledAmountPaise: 0,
+        source: 'deterministic_simulator_fallback',
+        timestamp: new Date().toISOString(),
+      });
+    } finally {
+      setOutcomeLoading(false);
     }
   };
 
@@ -507,6 +551,48 @@ export function PaymentDrilldownModal({
                     </div>
                   </>
                 )}
+              </div>
+            )}
+
+            {/* Outcome Observer Polling Trigger */}
+            <div className="pt-2 border-t border-slate-800 flex flex-wrap items-center justify-between gap-2">
+              <div className="text-[11px] text-slate-400">
+                <span>Post-Intervention Settlement Verification:</span>
+              </div>
+
+              <button
+                onClick={handleRunOutcomeCheck}
+                disabled={outcomeLoading}
+                className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-3 py-1.5 rounded-lg text-xs transition cursor-pointer"
+              >
+                <RotateCw className={`w-3.5 h-3.5 ${outcomeLoading ? 'animate-spin' : ''}`} />
+                {outcomeLoading ? 'Polling Status...' : 'Run Outcome Check'}
+              </button>
+            </div>
+
+            {outcomeResult && (
+              <div className="p-3 bg-slate-950 border border-emerald-500/30 rounded-lg space-y-1.5 text-xs font-mono">
+                <div className="flex items-center justify-between text-slate-300">
+                  <span className="text-emerald-400 font-bold">Outcome Polling Result:</span>
+                  <span className="text-[10px] text-slate-400">actor: outcome_observer</span>
+                </div>
+                <div className="flex justify-between text-slate-300">
+                  <span>Observed Status:</span>
+                  <span className="font-bold text-white uppercase">{outcomeResult.status}</span>
+                </div>
+                <div className="flex justify-between text-slate-300">
+                  <span>Verified Settlement:</span>
+                  <span className="font-bold text-emerald-300">
+                    {formatPaiseToINR(outcomeResult.settledAmountPaise, true)}
+                  </span>
+                </div>
+                <div className="flex justify-between text-slate-400 text-[10px]">
+                  <span>Telemetry Source:</span>
+                  <span>{outcomeResult.source}</span>
+                </div>
+                <div className="text-[10px] text-slate-400 pt-1 border-t border-slate-800">
+                  Accounting Invariant: Payment link created counts as ₹0.00 recovered until verified settlement.
+                </div>
               </div>
             )}
           </div>
