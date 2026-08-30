@@ -13,6 +13,7 @@
 import type { FailedPayment } from '@/types';
 import { CATEGORY_BASE_RATES } from './scoreRecovery';
 import type { PaymentScore, ScoreExplanationFactor } from './scoreRecovery';
+import { calculateExpectedValuePaise, probabilityToBps } from './financial';
 
 export interface ModelWeights {
   category_base_rate: number;
@@ -294,7 +295,7 @@ export function scorePaymentWithTrainedModel(
   const totalZ = model.bias + z_cat + z_ontime + z_broken + z_recency + z_tenure + z_attempt + z_past;
   const rawProb = sigmoid(totalZ);
   const recoveryProbability = Number(Math.max(0.01, Math.min(0.99, rawProb)).toFixed(3));
-  const expectedValue = Number(((recoveryProbability * payment.amount) / 100).toFixed(2)) * 100;
+  const expectedValue = calculateExpectedValuePaise(payment.amount, probabilityToBps(recoveryProbability));
 
   // Generate structured waterfall factors for explainability
   const explanation: ScoreExplanationFactor[] = [

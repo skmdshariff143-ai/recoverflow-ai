@@ -41,6 +41,7 @@
  */
 
 import type { FailedPayment, FailureCategory } from '@/types';
+import { calculateExpectedValuePaise, probabilityToBps } from './financial';
 
 // ─── Category Base Recovery Rates ────────────────────────────────────
 //
@@ -247,7 +248,7 @@ export function scorePayment(
   // ── Aggregate & clamp ───────────────────────────────────────────
   const rawScore = cBase + cReliability + cPromise + cRecency + cTenure + cAttempts;
   const probability = round4(clamp(rawScore, 0, 1));
-  const expectedValue = round2(probability * payment.amount);
+  const expectedValue = calculateExpectedValuePaise(payment.amount, probabilityToBps(probability));
 
   // Sort by |contribution| descending for the explanation.
   const sortedExplanation = [...factors].sort(

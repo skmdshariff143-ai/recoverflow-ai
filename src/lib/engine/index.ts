@@ -2,6 +2,19 @@ export { generateSyntheticPayments } from './generateData';
 export type { GenerateDataOptions } from './generateData';
 
 export {
+  probabilityToBps,
+  bpsToProbability,
+  calculateExpectedValuePaise,
+  validatePaiseAmount,
+  assertMatchingCurrency,
+  sumPaise,
+  formatPaiseToINR,
+  FinancialValidationError,
+  BPS_SCALE,
+  MAX_SAFE_PAISE,
+} from './financial';
+
+export {
   scorePayment,
   scorePaymentBatch,
   CATEGORY_BASE_RATES,

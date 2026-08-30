@@ -24,6 +24,7 @@ import {
   scorePaymentBatch,
   CATEGORY_BASE_RATES,
 } from '../scoreRecovery';
+import { calculateExpectedValuePaise, probabilityToBps } from '../financial';
 import type { FailedPayment, FailureCategory } from '@/types';
 
 // ─── Test Fixture Builder ───────────────────────────────────────────
@@ -100,13 +101,14 @@ describe('scorePayment', () => {
 
   // ── 2. Expected value = probability × amount ───────────────────
 
-  it('expected_value equals recovery_probability × amount', () => {
+  it('expected_value equals recovery_probability × amount in integer paise', () => {
     const amounts = [100, 50_000, 500_000, 5_000_000];
     for (const amount of amounts) {
       const payment = makePayment({ amount });
       const score = scorePayment(payment);
-      const computed = Math.round(score.recovery_probability * amount * 100) / 100;
+      const computed = calculateExpectedValuePaise(amount, probabilityToBps(score.recovery_probability));
       expect(score.expected_value).toBe(computed);
+      expect(Number.isInteger(score.expected_value)).toBe(true);
     }
   });
 
@@ -323,10 +325,11 @@ describe('scorePayment', () => {
       expect(s.recovery_probability).toBeGreaterThanOrEqual(0);
       expect(s.recovery_probability).toBeLessThanOrEqual(1);
 
-      // Expected value = probability × amount.
+      // Expected value = probability × amount in integer paise.
       const payment = payments.find((p) => p.payment_id === s.payment_id)!;
-      const computed = Math.round(s.recovery_probability * payment.amount * 100) / 100;
+      const computed = calculateExpectedValuePaise(payment.amount, probabilityToBps(s.recovery_probability));
       expect(s.expected_value).toBe(computed);
+      expect(Number.isInteger(s.expected_value)).toBe(true);
 
       // Explanation present.
       expect(s.explanation.length).toBeGreaterThanOrEqual(1);
