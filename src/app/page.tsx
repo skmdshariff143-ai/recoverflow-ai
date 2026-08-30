@@ -18,11 +18,11 @@ export default function Home() {
                 Generator (100+ records with payment history)
               </span>
             </li>
-            <li className="flex items-start gap-2 text-gray-400">
-              <span>○</span>
+            <li className="flex items-start gap-2">
+              <span className="text-green-600 font-bold">✓</span>
               <span>
-                <strong>Milestone 2</strong> — Scoring Engine (probability +
-                expected value + explanation)
+                <strong>Milestone 2</strong> — Deterministic Scoring Engine
+                (probability + expected value + 6-factor explanations)
               </span>
             </li>
             <li className="flex items-start gap-2 text-gray-400">

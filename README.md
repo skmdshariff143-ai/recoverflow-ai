@@ -20,8 +20,21 @@ Given a batch of failed/at-risk payments, predict each payment's probability of 
   - Pre-generated fixture: `data/synthetic-payments.json`.
 - **15 unit tests**: record count, distribution, field validation, uniqueness, determinism, opt-out, quiet-hours, customer history structure + correlation, high-value tiers, gateway errors.
 
-### ○ Milestone 2 — Scoring Engine (next)
-### ○ Milestone 3 — Ranking + Budget Allocation + Safety Rules
+### ✅ Milestone 2 — Deterministic Scoring Engine
+
+- **Scoring Engine** (`src/lib/engine/scoreRecovery.ts`):
+  - Category-anchored proportional scoring formula with named constants (no magic numbers).
+  - Calculates `recovery_probability` (0–1), `expected_value` (`probability × amount`).
+  - 6-factor structured explanations sorted by contribution magnitude for human-review drill-down.
+  - Category base rates anchor recovery ceiling (e.g., `bank_downtime`: 0.78 vs `permanent_account_closure`: 0.02).
+- **37 total unit tests** across data generation and scoring engine.
+- **Empirical Batch Results (100 synthetic payments)**:
+  - Infrastructure failures (`gateway_degradation`, `bank_downtime`): ~75% avg recovery probability.
+  - Deduplication & transient failures (`duplicate_attempt`, `auth_failure`, `expired_card`): ~45–68% avg.
+  - High-friction / behavioral issues (`insufficient_funds`, `invalid_mandate`): ~26–33% avg.
+  - Hard stops & high-risk (`broken_promise_to_pay`, `customer_cancellation`, `permanent_account_closure`): 1.6–8.8% avg.
+
+### ○ Milestone 3 — Ranking + Budget Allocation + Safety Rules (next)
 ### ○ Milestone 4 — Test-Mode Execution + Calibration
 ### ○ Milestone 5 — Dashboard, Drill-down, Audit Explorer
 ### ○ Milestone 6 — Polish, README, Screenshots
