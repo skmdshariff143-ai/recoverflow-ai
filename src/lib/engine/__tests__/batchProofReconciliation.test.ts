@@ -56,48 +56,76 @@ describe('Batch Recovery Proof & Invariant Reconciliation', () => {
 
     const totalAtRiskPaise = payments.reduce((acc, p) => acc + p.amount, 0);
 
-    const safetyHaltedPaise = result.executed_items
+    // 1. Pre-allocation pipeline partition
+    const preAllocSafetyHaltedPaise = result.summary.items
       .filter((it) => it.status === 'stopped')
       .reduce((acc, it) => acc + it.payment.amount, 0);
 
-    const awaitingApprovalPaise = result.executed_items
+    const preAllocPendingApprovalPaise = result.summary.items
       .filter((it) => it.status === 'pending_approval')
       .reduce((acc, it) => acc + it.payment.amount, 0);
 
-    const deferredPaise = result.executed_items
+    const preAllocDeferredPaise = result.summary.items
       .filter((it) => it.status === 'deferred')
-      .reduce((acc, it) => acc + it.payment.amount, 0);
-
-    const inFlightPaise = result.executed_items
-      .filter((it) => it.status === 'budgeted' && it.execution_status !== 'recovered')
       .reduce((acc, it) => acc + it.payment.amount, 0);
 
     const verifiedSyntheticRecoveredPaise = result.executed_items
       .filter((it) => it.execution_status === 'recovered')
       .reduce((acc, it) => acc + it.recovered_amount, 0);
 
+    const inFlightPaise =
+      result.summary.items
+        .filter((it) => it.status === 'budgeted')
+        .reduce((acc, it) => acc + it.payment.amount, 0) -
+      verifiedSyntheticRecoveredPaise;
+
     // Equation 1: Gross at risk = Safety halted + Awaiting approval + Deferred + In flight + Verified synthetic recovered
     const eq1Sum =
-      safetyHaltedPaise +
-      awaitingApprovalPaise +
-      deferredPaise +
+      preAllocSafetyHaltedPaise +
+      preAllocPendingApprovalPaise +
+      preAllocDeferredPaise +
       inFlightPaise +
       verifiedSyntheticRecoveredPaise;
     expect(eq1Sum).toBe(totalAtRiskPaise);
 
     // Equation 2: Remaining exposure = Safety halted + Awaiting approval + Deferred + In flight
     const remainingExposurePaise = totalAtRiskPaise - verifiedSyntheticRecoveredPaise;
-    const eq2Sum = safetyHaltedPaise + awaitingApprovalPaise + deferredPaise + inFlightPaise;
+    const eq2Sum =
+      preAllocSafetyHaltedPaise +
+      preAllocPendingApprovalPaise +
+      preAllocDeferredPaise +
+      inFlightPaise;
     expect(eq2Sum).toBe(remainingExposurePaise);
 
-    // Exact integer counts & paise check
+    // Exact integer counts & paise check (Pre-allocation)
     expect(totalAtRiskPaise).toBe(68769453);
-    expect(safetyHaltedPaise).toBe(18748512);
-    expect(awaitingApprovalPaise).toBe(0);
-    expect(deferredPaise).toBe(12914880);
-    expect(inFlightPaise).toBe(22416036);
+    expect(preAllocSafetyHaltedPaise).toBe(10342369);
+    expect(preAllocPendingApprovalPaise).toBe(0);
+    expect(preAllocDeferredPaise).toBe(4666835);
+    expect(inFlightPaise).toBe(39070224);
     expect(verifiedSyntheticRecoveredPaise).toBe(14690025);
     expect(remainingExposurePaise).toBe(54079428);
+
+    // 2. Post-execution final state partition
+    const postExecStoppedPaise = result.executed_items
+      .filter((it) => it.execution_status === 'stopped')
+      .reduce((acc, it) => acc + it.payment.amount, 0);
+    const postExecDeferredPaise = result.executed_items
+      .filter((it) => it.execution_status === 'deferred')
+      .reduce((acc, it) => acc + it.payment.amount, 0);
+    const postExecRetryScheduledPaise = result.executed_items
+      .filter((it) => it.execution_status === 'retry_scheduled')
+      .reduce((acc, it) => acc + it.payment.amount, 0);
+
+    expect(
+      postExecStoppedPaise +
+        postExecDeferredPaise +
+        postExecRetryScheduledPaise +
+        verifiedSyntheticRecoveredPaise,
+    ).toBe(totalAtRiskPaise);
+    expect(postExecStoppedPaise).toBe(34098656);
+    expect(postExecDeferredPaise).toBe(4666835);
+    expect(postExecRetryScheduledPaise).toBe(15313937);
   });
 
   it('ensures simulator adapter marks output with synthetic evidence classification', async () => {

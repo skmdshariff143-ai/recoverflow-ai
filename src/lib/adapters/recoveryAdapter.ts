@@ -219,6 +219,13 @@ export class RazorpayTestModeAdapter implements RecoveryExecutionAdapter {
         rawResponseSummary:
           'Razorpay Test-Mode credentials not configured in environment (RAZORPAY_KEY_ID must start with rzp_test_).',
         errorMessage: 'RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET missing',
+        executionStatus: 'failed',
+        outcomeStatus: 'unverified',
+        evidenceClass: 'FALLBACK',
+        verifiedSyntheticRecoveredPaise: 0,
+        liveSettledAmountPaise: 0,
+        providerReference: undefined,
+        provenanceNotice: 'Razorpay test-mode credentials unconfigured. Operating in fallback mode.',
       };
     }
 
@@ -278,6 +285,13 @@ export class RazorpayTestModeAdapter implements RecoveryExecutionAdapter {
           timestamp: new Date().toISOString(),
           rawResponseSummary: safeSummary,
           errorMessage: `Payment link creation returned HTTP ${res.status}`,
+          executionStatus: 'failed',
+          outcomeStatus: 'unverified',
+          evidenceClass: 'LIVE_TEST_MODE',
+          verifiedSyntheticRecoveredPaise: 0,
+          liveSettledAmountPaise: 0,
+          providerReference: `rzp_err_${validated.paymentId}`,
+          provenanceNotice: 'Server-side Razorpay test-mode execution encountered API error.',
         };
       }
 
@@ -292,6 +306,13 @@ export class RazorpayTestModeAdapter implements RecoveryExecutionAdapter {
         timestamp: new Date().toISOString(),
         paymentLinkUrl: data.short_url,
         rawResponseSummary: `Razorpay Test Payment Link created: ${data.id} (Status: ${data.status})`,
+        executionStatus: 'link_created',
+        outcomeStatus: 'live_test_mode_created',
+        evidenceClass: 'LIVE_TEST_MODE',
+        verifiedSyntheticRecoveredPaise: 0,
+        liveSettledAmountPaise: 0,
+        providerReference: data.id,
+        provenanceNotice: 'Razorpay Sandbox Payment Link created. Settlement pending observation (counts as ₹0.00 recovered).',
       };
     } catch (err: unknown) {
       const errorMsg = err instanceof Error ? err.message : String(err);
@@ -305,6 +326,13 @@ export class RazorpayTestModeAdapter implements RecoveryExecutionAdapter {
         timestamp: new Date().toISOString(),
         rawResponseSummary: `Network exception during Razorpay test call: ${errorMsg.slice(0, 100)}`,
         errorMessage: errorMsg,
+        executionStatus: 'failed',
+        outcomeStatus: 'unverified',
+        evidenceClass: 'LIVE_TEST_MODE',
+        verifiedSyntheticRecoveredPaise: 0,
+        liveSettledAmountPaise: 0,
+        providerReference: undefined,
+        provenanceNotice: 'Network exception occurred during test-mode call.',
       };
     }
   }

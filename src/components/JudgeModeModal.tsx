@@ -233,7 +233,7 @@ export const JUDGE_STEPS: StepContent[] = [
     ],
     recommendedAction: {
       label: 'Inspect Audit Ledger',
-      tab: 'audit_trail',
+      tab: 'audit_ledger',
     },
   },
   {

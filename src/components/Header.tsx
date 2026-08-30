@@ -17,6 +17,7 @@ import {
   Database,
   Zap,
   HandCoins,
+  Award,
 } from 'lucide-react';
 import type { DashboardTab } from '@/types/pipeline';
 

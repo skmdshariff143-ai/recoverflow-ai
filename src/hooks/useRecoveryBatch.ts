@@ -118,7 +118,7 @@ export function useRecoveryBatch(options: UseRecoveryBatchOptions = {}) {
       ...rawResult,
       executed_items: modifiedItems,
     };
-  }, [payments, budget, simulationSeed, scoringModel, reviewerDecisions]);
+  }, [payments, budget, simulationSeed, scoringModel, reviewerDecisions, provenance]);
 
   // Compute side-by-side model comparison
   const modelComparison = useMemo(() => {
