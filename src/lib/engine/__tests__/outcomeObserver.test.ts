@@ -146,4 +146,53 @@ describe('Normalized Outcome Observation Layer', () => {
     expect(workflow.currentState).toBe('STOPPED');
     expect(workflow.terminalReason).toContain('dispute halt');
   });
+
+  it('detects contradictory outcomes for the same intervention, transitions to OUTCOME_CONFLICT, and halts revenue crediting', () => {
+    const workflow = initRecoveryWorkflow(MOCK_PAYMENT);
+    stepWorkflowDiagnosisAndEligibility(workflow);
+    workflow.currentState = 'EXECUTING';
+
+    const firstSuccessEvent: NormalizedOutcomeEvent = {
+      ...validEvent,
+      eventId: 'evt_conflict_1',
+      observedStatus: 'captured',
+      observedAmountPaise: 250000,
+    };
+
+    const firstRun = outcomeObserverManager.processOutcome(workflow, firstSuccessEvent);
+    expect(firstRun.accepted).toBe(true);
+    expect(firstRun.newState).toBe('RECOVERED');
+
+    // Contradictory event for the same payment & intervention
+    const contradictoryFailedEvent: NormalizedOutcomeEvent = {
+      ...validEvent,
+      eventId: 'evt_conflict_2',
+      observedStatus: 'failed',
+      observedAmountPaise: 0,
+    };
+
+    const conflictRun = outcomeObserverManager.processOutcome(workflow, contradictoryFailedEvent);
+    expect(conflictRun.accepted).toBe(true);
+    expect(conflictRun.isConflict).toBe(true);
+    expect(conflictRun.newState).toBe('OUTCOME_CONFLICT');
+    expect(conflictRun.recoveredAmountPaise).toBe(0);
+    expect(conflictRun.message).toContain('OUTCOME CONFLICT');
+  });
+
+  it('strictly throws error if simulator observation attempts to record liveSettledAmountPaise > 0', () => {
+    const workflow = initRecoveryWorkflow(MOCK_PAYMENT);
+    stepWorkflowDiagnosisAndEligibility(workflow);
+    workflow.currentState = 'EXECUTING';
+
+    const invalidSimulatorEvent: NormalizedOutcomeEvent = {
+      ...validEvent,
+      eventId: 'evt_sim_invalid_live_amt',
+      evidenceClass: 'simulator_telemetry',
+      liveSettledAmountPaise: 250000, // Invariant violation: Simulator live settled amount must be 0
+    };
+
+    expect(() => {
+      outcomeObserverManager.processOutcome(workflow, invalidSimulatorEvent);
+    }).toThrow(/Financial invariant violation: Simulator observation cannot record liveSettledAmountPaise > 0/);
+  });
 });

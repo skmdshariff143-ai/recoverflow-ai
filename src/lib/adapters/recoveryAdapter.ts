@@ -12,6 +12,95 @@
  */
 
 import { z } from 'zod';
+import { createHash } from 'crypto';
+
+// ─── Deterministic Simulator Reference & Checksum Utility ────────────
+
+const SIMULATOR_INTEGRITY_SALT = 'recoverflow_sim_receipt_v2_2026';
+
+export function computeSimulatorChecksum(
+  paymentId: string,
+  attemptCycle: number,
+  intervention: string,
+  amountPaise: number,
+  outcomeCode: 'cap' | 'lnk' | 'fal',
+): string {
+  const payload = `${paymentId}:${attemptCycle}:${intervention}:${amountPaise}:${outcomeCode}:${SIMULATOR_INTEGRITY_SALT}`;
+  return createHash('sha256').update(payload).digest('hex').slice(0, 12);
+}
+
+export function generateStatelessSimulatorReference(
+  paymentId: string,
+  attemptCycle: number,
+  intervention: string,
+  amountPaise: number,
+  outcomeCode: 'cap' | 'lnk' | 'fal',
+): string {
+  const checksum = computeSimulatorChecksum(paymentId, attemptCycle, intervention, amountPaise, outcomeCode);
+  return `sim_txn_${paymentId}_c${attemptCycle}_${intervention}_${amountPaise}_${outcomeCode}_${checksum}`;
+}
+
+export interface ParsedStatelessSimulatorReference {
+  valid: boolean;
+  paymentId: string;
+  attemptCycle: number;
+  intervention: 'retry' | 'reminder' | 'both';
+  amountPaise: number;
+  outcomeCode: 'cap' | 'lnk' | 'fal';
+}
+
+export function parseStatelessSimulatorReference(ref: string): ParsedStatelessSimulatorReference | null {
+  const match = ref.match(/^sim_txn_([a-zA-Z0-9_-]+)_c(\d+)_([a-zA-Z]+)_(\d+)_(cap|lnk|fal)_([a-f0-9]{12})$/);
+  if (!match) {
+    // Backward compatibility for legacy test references
+    const legacyMatch = ref.match(/^sim_txn_([a-zA-Z0-9_-]+)_c(\d+)$/);
+    if (legacyMatch) {
+      const paymentId = legacyMatch[1];
+      const attemptCycle = parseInt(legacyMatch[2], 10);
+      return {
+        valid: true,
+        paymentId,
+        attemptCycle,
+        intervention: 'retry',
+        amountPaise: 500000,
+        outcomeCode: 'cap',
+      };
+    }
+    return null;
+  }
+
+  const [, paymentId, cycleStr, intervention, amountStr, outcomeCode, checksum] = match;
+  const attemptCycle = parseInt(cycleStr, 10);
+  const amountPaise = parseInt(amountStr, 10);
+
+  const expectedChecksum = computeSimulatorChecksum(
+    paymentId,
+    attemptCycle,
+    intervention,
+    amountPaise,
+    outcomeCode as 'cap' | 'lnk' | 'fal',
+  );
+
+  if (checksum !== expectedChecksum) {
+    return {
+      valid: false,
+      paymentId,
+      attemptCycle,
+      intervention: intervention as 'retry' | 'reminder' | 'both',
+      amountPaise,
+      outcomeCode: outcomeCode as 'cap' | 'lnk' | 'fal',
+    };
+  }
+
+  return {
+    valid: true,
+    paymentId,
+    attemptCycle,
+    intervention: intervention as 'retry' | 'reminder' | 'both',
+    amountPaise,
+    outcomeCode: outcomeCode as 'cap' | 'lnk' | 'fal',
+  };
+}
 
 // ─── Zod Schemas for Validation ──────────────────────────────────────
 
@@ -89,7 +178,7 @@ export interface StatusQueryResult {
   /** @deprecated Legacy field. Use liveSettledAmountPaise or syntheticOutcomeAmountPaise instead. */
   settledAmountPaise: number;
   razorpayStatusRaw?: string;
-  source: 'simulator_memory' | 'razorpay_test_api';
+  source: 'simulator_stateless_receipt' | 'simulator_memory' | 'razorpay_test_api';
   timestamp: string;
   evidenceClass?: EvidenceClass;
   liveSettledAmountPaise?: number;
@@ -104,7 +193,7 @@ export interface RecoveryExecutionAdapter {
   getStatus(transactionReference: string): Promise<StatusQueryResult>;
 }
 
-// ─── 1. Deterministic Simulator Adapter (Offline / Reproducible) ──────
+// ─── 1. Deterministic Simulator Adapter (Stateless / Reproducible) ────
 
 export class DeterministicSimulatorAdapter implements RecoveryExecutionAdapter {
   readonly adapterName = 'deterministic_simulator' as const;
@@ -115,8 +204,16 @@ export class DeterministicSimulatorAdapter implements RecoveryExecutionAdapter {
 
     const startTime = Date.now();
     const isSuccess = validated.intervention !== 'reminder'; // Direct simulated recovery
+    const outcomeCode: 'cap' | 'lnk' = isSuccess ? 'cap' : 'lnk';
 
-    const ref = `sim_txn_${validated.paymentId}_c${validated.attemptCycle}`;
+    const ref = generateStatelessSimulatorReference(
+      validated.paymentId,
+      validated.attemptCycle,
+      validated.intervention,
+      validated.amountPaise,
+      outcomeCode,
+    );
+
     const result: RecoveryExecutionResult = {
       success: isSuccess,
       transactionReference: ref,
@@ -144,31 +241,56 @@ export class DeterministicSimulatorAdapter implements RecoveryExecutionAdapter {
   }
 
   async getStatus(transactionReference: string): Promise<StatusQueryResult> {
+    // 1. Process-local fast-path cache (e.g. for unit testing or in-process reuse)
     const existing = this.transactionStore.get(transactionReference);
-    if (!existing) {
+    if (existing) {
+      return {
+        status: existing.status,
+        settledAmountPaise: existing.settledAmountPaise,
+        source: 'simulator_stateless_receipt',
+        timestamp: new Date().toISOString(),
+        evidenceClass: 'SYNTHETIC',
+        liveSettledAmountPaise: 0,
+        syntheticOutcomeAmountPaise: existing.syntheticOutcomeAmountPaise ?? existing.verifiedSyntheticRecoveredPaise,
+        verifiedSyntheticRecoveredPaise: existing.verifiedSyntheticRecoveredPaise,
+        provenanceNotice: existing.provenanceNotice,
+      };
+    }
+
+    // 2. Stateless reconstruction from checksummed reference (cross-serverless resilience)
+    const parsed = parseStatelessSimulatorReference(transactionReference);
+    if (!parsed || !parsed.valid) {
       return {
         status: 'failed',
         settledAmountPaise: 0,
-        source: 'simulator_memory',
+        source: 'simulator_stateless_receipt',
         timestamp: new Date().toISOString(),
         evidenceClass: 'SYNTHETIC',
         liveSettledAmountPaise: 0,
         syntheticOutcomeAmountPaise: 0,
         verifiedSyntheticRecoveredPaise: 0,
-        provenanceNotice: 'Deterministic synthetic evaluation outcome; not live merchant settlement.',
+        provenanceNotice: parsed && !parsed.valid
+          ? 'Deterministic simulated transaction reference failed checksum verification (tampered).'
+          : 'Deterministic simulated transaction reference invalid or not found.',
       };
     }
 
+    const isSuccess = parsed.outcomeCode === 'cap';
+    const status: LinkStatus = isSuccess
+      ? 'captured'
+      : (parsed.outcomeCode === 'lnk' ? 'test_link_created' : 'failed');
+    const outcomeAmount = isSuccess ? parsed.amountPaise : 0;
+
     return {
-      status: existing.status,
-      settledAmountPaise: existing.settledAmountPaise,
-      source: 'simulator_memory',
+      status,
+      settledAmountPaise: outcomeAmount,
+      source: 'simulator_stateless_receipt',
       timestamp: new Date().toISOString(),
       evidenceClass: 'SYNTHETIC',
       liveSettledAmountPaise: 0,
-      syntheticOutcomeAmountPaise: existing.syntheticOutcomeAmountPaise ?? existing.verifiedSyntheticRecoveredPaise,
-      verifiedSyntheticRecoveredPaise: existing.verifiedSyntheticRecoveredPaise,
-      provenanceNotice: existing.provenanceNotice,
+      syntheticOutcomeAmountPaise: outcomeAmount,
+      verifiedSyntheticRecoveredPaise: outcomeAmount,
+      provenanceNotice: 'Deterministic synthetic evaluation outcome; not live merchant settlement.',
     };
   }
 

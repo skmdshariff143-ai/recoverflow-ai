@@ -27,6 +27,7 @@ import {
   FileQuestion,
   RotateCw,
   Zap,
+  Activity,
 } from 'lucide-react';
 import type { ExecutedItem } from '@/types';
 import type { AuditRecord } from '@/lib/engine/auditTrail';
@@ -579,34 +580,53 @@ export function PaymentDrilldownModal({
             </div>
 
             {outcomeResult && (
-              <div className="p-3 bg-slate-950 border border-emerald-500/30 rounded-lg space-y-1.5 text-xs font-mono">
+              <div className="p-3 bg-slate-950 border border-emerald-500/30 rounded-lg space-y-2 text-xs font-mono">
                 <div className="flex items-center justify-between text-slate-300">
-                  <span className="text-emerald-400 font-bold">Outcome Polling Result:</span>
+                  <span className="text-emerald-400 font-bold flex items-center gap-1">
+                    <Activity className="w-3.5 h-3.5" /> Outcome Polling Result:
+                  </span>
                   <span className="text-[10px] text-slate-400">actor: outcome_observer</span>
                 </div>
-                <div className="flex justify-between text-slate-300">
+
+                {outcomeResult.status === 'conflict' ? (
+                  <div className="p-2 bg-rose-500/10 border border-rose-500/30 rounded text-rose-300 space-y-1">
+                    <div className="font-bold uppercase tracking-wider text-[11px]">
+                      OUTCOME CONFLICT — HUMAN REVIEW REQUIRED
+                    </div>
+                    <div className="text-[10px] text-rose-200">
+                      Contradictory provider signals detected. No recovered revenue counted.
+                    </div>
+                  </div>
+                ) : outcomeResult.evidenceClass === 'LIVE_TEST_MODE' ? (
+                  <div className="p-2 bg-blue-500/10 border border-blue-500/30 rounded text-blue-300 space-y-1">
+                    <div className="font-bold uppercase tracking-wider text-[11px]">
+                      LIVE TEST-MODE OBJECT CREATED
+                    </div>
+                    <div className="text-[10px] text-blue-200">
+                      ₹0.00 recovered · Awaiting verified test-mode payment outcome.
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-2 bg-amber-500/10 border border-amber-500/30 rounded text-amber-300 space-y-1">
+                    <div className="font-bold uppercase tracking-wider text-[11px]">
+                      SYNTHETIC EVALUATION
+                    </div>
+                    <div className="text-[10px] text-amber-200">
+                      {formatPaiseToINR(outcomeResult.syntheticOutcomeAmountPaise ?? outcomeResult.settledAmountPaise, true)} verified synthetic outcome · ₹0.00 live merchant settlement
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex justify-between text-slate-300 pt-1">
                   <span>Observed Status:</span>
                   <span className="font-bold text-white uppercase">{outcomeResult.status}</span>
-                </div>
-                <div className="flex justify-between text-slate-300">
-                  <span>Outcome Amount:</span>
-                  <span className="font-bold text-emerald-300 flex items-center gap-1.5">
-                    {formatPaiseToINR(outcomeResult.syntheticOutcomeAmountPaise ?? outcomeResult.settledAmountPaise, true)}
-                    <span className="text-[9px] font-mono px-1 py-0.2 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded">
-                      {outcomeResult.evidenceClass ?? 'SYNTHETIC'}
-                    </span>
-                  </span>
-                </div>
-                <div className="flex justify-between text-slate-400 text-[10px]">
-                  <span>Live Settled Amount:</span>
-                  <span>{formatPaiseToINR(outcomeResult.settledAmountPaise, true)}</span>
                 </div>
                 <div className="flex justify-between text-slate-400 text-[10px]">
                   <span>Telemetry Source:</span>
                   <span>{outcomeResult.source}</span>
                 </div>
                 <div className="text-[10px] text-slate-400 pt-1 border-t border-slate-800">
-                  Accounting Invariant: Payment link created counts as ₹0.00 recovered until verified settlement.
+                  Accounting Invariant: All simulator transactions record ₹0.00 live merchant settlement.
                 </div>
               </div>
             )}

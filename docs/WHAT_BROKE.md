@@ -101,3 +101,22 @@ This document provides transparent, specific accounts of real technical obstacle
   Implemented `verifyLedgerIntegrity()` in `hashChainLedger.ts` which iterates through the entire chain, recomputing SHA-256 digests over canonical JSON payloads and reporting `tamperedIndex` alongside detailed error descriptions.
 - **Test Preventing Regression**:  
   `src/lib/engine/__tests__/hashChainLedger.test.ts` explicitly asserts `tamperedIndex: 1` when mutating, deleting, reordering, or inserting blocks.
+
+---
+
+### Incident 7: Serverless Process-Local Memory Disconnect in Deterministic Simulator Observation
+
+- **What Broke**:  
+  When testing against the deployed Vercel production environment, executing a recovery intervention via `POST /api/recovery/execute` returned `outcomeStatus: "synthetic_captured"` with ₹10,000.00 recovered, but querying `GET /api/recovery/status/:reference` immediately returned `status: "failed"` with ₹0.00 recovered and `"transaction reference not found"`.
+- **How It Was Diagnosed**:  
+  `DeterministicSimulatorAdapter` stored simulated receipts in an in-memory JavaScript `Map` (`this.transactionStore`). On Vercel serverless infrastructure, the execute endpoint and the status endpoint execute in isolated, ephemeral Lambda / V8 isolate environments. When the status request was routed to a different serverless instance, its process-local `transactionStore` was empty.
+- **Financial & Evaluation Risk**:  
+  A single payment was reported as synthetically captured during execution but observed as failed with ₹0.00 during status polling, undermining closed-loop recovery claims, batch accounting consistency, and audit ledger integrity.
+- **How It Was Fixed**:  
+  1. **Stateless Checksummed Receipt Architecture**: Redesigned simulator transaction references to be completely self-authenticating:  
+     `sim_txn_<paymentId>_c<attemptCycle>_<intervention>_<amountPaise>_<outcomeCode>_<checksum12>`.  
+  2. **Stateless Outcome Reconstruction**: `DeterministicSimulatorAdapter.getStatus()` extracts the immutable inputs, validates the SHA-256 checksum, and deterministically reconstructs the identical outcome across any serverless instance without requiring shared memory or external databases.  
+  3. **Tamper Rejection (Fail Closed)**: Forged or modified references fail checksum verification and return `status: "failed"`, `liveSettledAmountPaise: 0`, and `syntheticOutcomeAmountPaise: 0`.  
+  4. **Conflict Detection**: `OutcomeObservationManager` detects contradictory provider signals for the same intervention and routes them to `OUTCOME_CONFLICT` without double-crediting revenue.
+- **Test Preventing Regression**:  
+  `src/lib/adapters/__tests__/recoveryAdapter.test.ts` asserts stateless reconstruction across fresh unshared instances, tamper rejection, and 25 parallel concurrent requests; `scripts/verify-outcome-consistency.ts` audits live deployed hosts.

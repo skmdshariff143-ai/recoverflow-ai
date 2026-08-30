@@ -37,6 +37,28 @@ export async function GET(
       source: queryResult.source,
       adapter: adapter.adapterName,
       timestamp: queryResult.timestamp,
+      executionStatus:
+        queryResult.status === 'test_link_created'
+          ? 'link_created'
+          : queryResult.status === 'captured'
+            ? 'executed'
+            : 'failed',
+      outcomeStatus:
+        queryResult.status === 'captured'
+          ? 'synthetic_captured'
+          : queryResult.status === 'test_link_created'
+            ? 'synthetic_not_recovered'
+            : 'unverified',
+      evidenceClass:
+        queryResult.evidenceClass ??
+        (adapter.adapterName === 'razorpay_test_mode' ? 'LIVE_TEST_MODE' : 'SYNTHETIC'),
+      syntheticOutcomeAmountPaise:
+        queryResult.syntheticOutcomeAmountPaise ?? queryResult.verifiedSyntheticRecoveredPaise ?? 0,
+      verifiedSyntheticRecoveredPaise: queryResult.verifiedSyntheticRecoveredPaise ?? 0,
+      liveSettledAmountPaise: queryResult.liveSettledAmountPaise ?? 0,
+      provenanceNotice:
+        queryResult.provenanceNotice ??
+        'Deterministic synthetic evaluation outcome; not live merchant settlement.',
     });
   } catch (err: unknown) {
     return NextResponse.json(

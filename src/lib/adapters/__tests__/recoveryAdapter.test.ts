@@ -78,16 +78,69 @@ describe('Recovery Execution Adapters & Idempotency Store', () => {
       expect(result.evidenceClass).toBe('SYNTHETIC');
     });
 
-    it('getStatus retrieves the exact recorded transaction amount from memory and marks evidence as SYNTHETIC', async () => {
+    it('getStatus retrieves the exact recorded transaction amount statelessly and marks evidence as SYNTHETIC', async () => {
       const result = await adapter.execute(validRequest);
       const query = await adapter.getStatus(result.transactionReference);
 
       expect(query.status).toBe('captured');
-      expect(query.source).toBe('simulator_memory');
+      expect(query.source).toBe('simulator_stateless_receipt');
       expect(query.evidenceClass).toBe('SYNTHETIC');
       expect(query.liveSettledAmountPaise).toBe(0);
       expect(query.syntheticOutcomeAmountPaise).toBe(500_000);
       expect(query.verifiedSyntheticRecoveredPaise).toBe(500_000);
+    });
+
+    it('statelessly reconstructs identical outcome from reference on a brand new adapter instance with empty memory', async () => {
+      const result = await adapter.execute(validRequest);
+
+      // Create a fresh isolated adapter instance with 0 memory
+      const freshIsolatedAdapter = new DeterministicSimulatorAdapter();
+      const query = await freshIsolatedAdapter.getStatus(result.transactionReference);
+
+      expect(query.status).toBe('captured');
+      expect(query.settledAmountPaise).toBe(500_000);
+      expect(query.source).toBe('simulator_stateless_receipt');
+      expect(query.evidenceClass).toBe('SYNTHETIC');
+      expect(query.liveSettledAmountPaise).toBe(0);
+      expect(query.syntheticOutcomeAmountPaise).toBe(500_000);
+      expect(query.verifiedSyntheticRecoveredPaise).toBe(500_000);
+      expect(query.provenanceNotice).toBe(
+        'Deterministic synthetic evaluation outcome; not live merchant settlement.',
+      );
+    });
+
+    it('fails closed and rejects tampered transaction references with forged amounts or checksums', async () => {
+      const result = await adapter.execute(validRequest);
+
+      // Tamper: alter amount or checksum
+      const tamperedRef = result.transactionReference.replace('500000', '99999999');
+      const freshIsolatedAdapter = new DeterministicSimulatorAdapter();
+      const query = await freshIsolatedAdapter.getStatus(tamperedRef);
+
+      expect(query.status).toBe('failed');
+      expect(query.settledAmountPaise).toBe(0);
+      expect(query.liveSettledAmountPaise).toBe(0);
+      expect(query.syntheticOutcomeAmountPaise).toBe(0);
+      expect(query.verifiedSyntheticRecoveredPaise).toBe(0);
+      expect(query.provenanceNotice).toContain('tampered');
+    });
+
+    it('handles 25 concurrent parallel status requests for the same reference and returns identical results across all 25', async () => {
+      const result = await adapter.execute(validRequest);
+      const freshIsolatedAdapter = new DeterministicSimulatorAdapter();
+
+      const queries = await Promise.all(
+        Array.from({ length: 25 }, () => freshIsolatedAdapter.getStatus(result.transactionReference)),
+      );
+
+      expect(queries).toHaveLength(25);
+      for (const q of queries) {
+        expect(q.status).toBe('captured');
+        expect(q.settledAmountPaise).toBe(500_000);
+        expect(q.syntheticOutcomeAmountPaise).toBe(500_000);
+        expect(q.liveSettledAmountPaise).toBe(0);
+        expect(q.evidenceClass).toBe('SYNTHETIC');
+      }
     });
 
     it('getStatus returns failed with zero paise for unknown references', async () => {
