@@ -62,10 +62,17 @@ Given a batch of failed/at-risk payments, predict each payment's probability of 
   - Brier score calculation (0.2248) proving model calibration against guesswork.
 - **Full Batch Orchestration** (`src/lib/engine/runBatch.ts`):
   - Unified single-call function executing the entire pipeline (scoring $\to$ filtering $\to$ ranking $\to$ execution $\to$ calibration).
-- **74 total unit tests** passing across 9 test files.
+### ✅ Milestone 5 — Dashboard UI, Ranked Queue, Drill-Down & Audit Explorer
 
-### ○ Milestone 5 — Dashboard, Drill-down, Audit Explorer (next)
-### ○ Milestone 6 — Polish, README, Screenshots
+- **Interactive Recovery Dashboard** (`src/app/page.tsx`, `src/components/`):
+  - **Top-Level KPI Overview** (`MetricsOverview.tsx`): Financial cards (₹6.88L at risk, ₹1.47L recovered), calibration headline, budget efficiency bar, customer contacts, unnecessary retry rate, and safety stop breakdown.
+  - **Ranked Priority Queue** (`RankedQueueTable.tsx`): Sortable, searchable, and filterable table of all 100 payments with masked IDs, expected values, and accessible status badges.
+  - **Decision Drill-Down Modal** (`PaymentDrilldownModal.tsx`): 100% explainable reasoning trace showing 6-factor score waterfall with plain English rationales, customer reliability profile, quiet-hours window, safety compliance audit, and chronological event log.
+  - **Probabilistic Calibration Visualizer** (`CalibrationVisualizer.tsx`): 5-bin reliability diagram and category calibration comparison table with Brier score metrics.
+  - **Audit Trail Explorer** (`AuditTrailExplorer.tsx`): Searchable, filterable audit event explorer with one-click **CSV** and **JSON** export downloads.
+- **74 unit tests** + **6 Playwright E2E tests** passing.
+
+### ○ Milestone 6 — Polish, README, Screenshots (next)
 
 ---
 

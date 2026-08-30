@@ -48,3 +48,9 @@ export {
 export { computeCalibrationReport } from './calibration';
 
 export { runRecoveryBatch } from './runBatch';
+
+export {
+  generateAuditTrail,
+  exportAuditTrailToCSV,
+} from './auditTrail';
+export type { AuditRecord } from './auditTrail';
