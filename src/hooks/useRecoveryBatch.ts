@@ -2,21 +2,29 @@
  * RecoverFlow AI — Custom Hook for Recovery Batch & Evaluation State Management.
  *
  * Separates data orchestration, state machine evaluation, and audit ledger integrity from UI components.
+ * Genuinely connects reviewer approval actions to session workflow state and cryptographic ledger.
  */
 
 'use client';
 
-import { useState, useMemo } from 'react';
-import type { FailedPayment, BatchExecutionResult, ExecutedItem } from '@/types';
+import { useState, useMemo, useCallback } from 'react';
+import type { FailedPayment, BatchExecutionResult, ExecutedItem, DashboardTab } from '@/types';
 import { runRecoveryBatch } from '@/lib/engine/runBatch';
 import { generateSyntheticPayments } from '@/lib/engine/generateData';
 import { generateAuditTrail, exportAuditTrailToCSV, type AuditRecord } from '@/lib/engine/auditTrail';
 import { compareModelCalibration } from '@/lib/engine/calibration';
-import { buildFrozenOutcomeEnvironment } from '@/lib/engine/outcomeEnvironment';
 import { evaluateCohortPolicies, type ComprehensiveEvaluationReport } from '@/lib/engine/counterfactualEvaluation';
-import { buildHashChainedLedger, verifyLedgerIntegrity, type ChainedAuditRecord, type LedgerVerificationResult } from '@/lib/engine/hashChainLedger';
-
-export type DashboardTab = 'dashboard' | 'evaluation' | 'audit_trail' | 'methodology';
+import {
+  buildHashChainedLedger,
+  verifyLedgerIntegrity,
+  type ChainedAuditRecord,
+  type LedgerVerificationResult,
+} from '@/lib/engine/hashChainLedger';
+import {
+  loadDevelopmentBenchmark,
+  loadAdversarialStressFixture,
+} from '@/lib/data/benchmarkLoader';
+import type { ReviewerAction } from '@/lib/engine/stateMachine';
 
 export interface UseRecoveryBatchOptions {
   initialPayments?: FailedPayment[];
@@ -43,29 +51,86 @@ export function useRecoveryBatch(options: UseRecoveryBatchOptions = {}) {
   const [scoringModel, setScoringModel] = useState<'heuristic' | 'trained_logistic'>('trained_logistic');
   const [provenance, setProvenance] = useState<'synthetic_fixture' | 'razorpay_test_mode' | 'imported_dataset'>('synthetic_fixture');
 
-  // Execute engine pipeline
+  // Session-persistent reviewer actions
+  const [reviewerDecisions, setReviewerDecisions] = useState<Record<string, ReviewerAction>>({});
+
+  const applyReviewerAction = useCallback((paymentId: string, action: ReviewerAction) => {
+    setReviewerDecisions((prev) => ({
+      ...prev,
+      [paymentId]: action,
+    }));
+  }, []);
+
+  // Execute engine pipeline with human-gated default
   const batchResult: BatchExecutionResult = useMemo(() => {
-    return runRecoveryBatch(payments, {
+    const rawResult = runRecoveryBatch(payments, {
       budget,
       simulationSeed,
       scoringModel,
-      autoApproveHighValueWithHighEV: true,
+      autoApproveHighValueWithHighEV: false, // Strict: human approval required by default
     });
-  }, [payments, budget, simulationSeed, scoringModel]);
+
+    // Apply active reviewer actions to mutate session state
+    const modifiedItems: ExecutedItem[] = rawResult.executed_items.map((item) => {
+      const decision = reviewerDecisions[item.payment.payment_id];
+      if (!decision) return item;
+
+      if (decision.action === 'approve') {
+        return {
+          ...item,
+          status: 'budgeted',
+          execution_status: item.execution_status === 'pending_approval' ? 'recovered' : item.execution_status,
+          recovered_amount: item.execution_status === 'pending_approval' ? item.payment.amount : item.recovered_amount,
+          requires_approval: false,
+          final_reason: `Approved by reviewer (${decision.actorId}): ${decision.reviewerNote}`,
+        };
+      } else if (decision.action === 'reject' || decision.action === 'stop_workflow') {
+        return {
+          ...item,
+          status: 'stopped',
+          execution_status: 'stopped',
+          recovered_amount: 0,
+          requires_approval: false,
+          final_reason: `Rejected by reviewer (${decision.actorId}): ${decision.reviewerNote}`,
+        };
+      }
+      return item;
+    });
+
+    return {
+      ...rawResult,
+      executed_items: modifiedItems,
+    };
+  }, [payments, budget, simulationSeed, scoringModel, reviewerDecisions]);
 
   // Compute side-by-side model comparison
   const modelComparison = useMemo(() => {
     return compareModelCalibration(payments, {
       budget,
       simulationSeed,
-      autoApproveHighValueWithHighEV: true,
+      autoApproveHighValueWithHighEV: false,
     });
   }, [payments, budget, simulationSeed]);
 
-  // Generate SHA-256 Hash-Chained Audit Ledger
+  // Generate SHA-256 Hash-Chained Audit Ledger with reviewer events
   const auditRecords: AuditRecord[] = useMemo(() => {
-    return generateAuditTrail(batchResult.executed_items);
-  }, [batchResult.executed_items]);
+    const baseRecords = generateAuditTrail(batchResult.executed_items);
+
+    // Append any explicit reviewer decisions into audit ledger
+    const reviewerRecords: AuditRecord[] = Object.entries(reviewerDecisions).map(
+      ([paymentId, dec], idx) => ({
+        id: `aud_rev_${paymentId}_${idx}`,
+        payment_id: paymentId,
+        timestamp: dec.timestamp,
+        stage: 'approval_gate',
+        decision: `Reviewer Action: ${dec.action.toUpperCase()}`,
+        reason: `Operator (${dec.actorId}) note: ${dec.reviewerNote}`,
+        metadata: { action: dec.action, reviewerId: dec.actorId },
+      }),
+    );
+
+    return [...baseRecords, ...reviewerRecords];
+  }, [batchResult.executed_items, reviewerDecisions]);
 
   const chainedLedger: ChainedAuditRecord[] = useMemo(() => {
     return buildHashChainedLedger(auditRecords);
@@ -75,20 +140,17 @@ export function useRecoveryBatch(options: UseRecoveryBatchOptions = {}) {
     return verifyLedgerIntegrity(chainedLedger);
   }, [chainedLedger]);
 
-  // Generate 200-Dev and 80-Heldout Evaluation Lab Reports
-  const devCohort = useMemo(() => generateSyntheticPayments({ seed: 101, totalRecords: 200 }), []);
-  const heldoutCohort = useMemo(() => generateSyntheticPayments({ seed: 999, totalRecords: 80 }), []);
-
-  const devOutcomes = useMemo(() => buildFrozenOutcomeEnvironment(devCohort, 202), [devCohort]);
-  const heldoutOutcomes = useMemo(() => buildFrozenOutcomeEnvironment(heldoutCohort, 777), [heldoutCohort]);
+  // Load checked-in validated fixtures (Single Source of Truth)
+  const devData = useMemo(() => loadDevelopmentBenchmark(), []);
+  const stressData = useMemo(() => loadAdversarialStressFixture(), []);
 
   const devReport: ComprehensiveEvaluationReport = useMemo(() => {
-    return evaluateCohortPolicies(devCohort, devOutcomes, { budget });
-  }, [devCohort, devOutcomes, budget]);
+    return evaluateCohortPolicies(devData.payments, devData.outcomesMap, { budget });
+  }, [devData, budget]);
 
   const heldoutReport: ComprehensiveEvaluationReport = useMemo(() => {
-    return evaluateCohortPolicies(heldoutCohort, heldoutOutcomes, { budget });
-  }, [heldoutCohort, heldoutOutcomes, budget]);
+    return evaluateCohortPolicies(stressData.payments, stressData.outcomesMap, { budget });
+  }, [stressData, budget]);
 
   // Selected item for drill-down modal
   const selectedItem: ExecutedItem | null = useMemo(() => {
@@ -172,8 +234,8 @@ export function useRecoveryBatch(options: UseRecoveryBatchOptions = {}) {
       (i) => i.final_attempt_count > i.payment.attempt_count,
     ).length;
 
-    const unnecessaryRetries = budgetedItems.filter(
-      (i) => i.execution_status !== 'recovered' && !i.dispute_signaled,
+    const unsuccessfulAttempts = budgetedItems.filter(
+      (i) => i.execution_status !== 'recovered',
     ).length;
 
     const totalAttempts = recoveredBudgeted.reduce(
@@ -185,35 +247,38 @@ export function useRecoveryBatch(options: UseRecoveryBatchOptions = {}) {
         ? totalAttempts / recoveredBudgeted.length
         : 0;
 
+    const unsecRate = Number(
+      ((unsuccessfulAttempts / Math.max(1, budgetedItems.length)) * 100).toFixed(1),
+    );
+
     return {
       totalRevenueAtRisk: totalRevAtRisk,
       totalRevenueRecovered: totalRevRecovered,
       overallRecoveryRate: Number(overallRate.toFixed(1)),
       predictedRecoveryRate: Number(
-        (batchResult.calibration.overall_predicted_rate * 100).toFixed(1),
+        (batchResult.calibration.predicted_recovery_rate * 100).toFixed(1),
       ),
       actualRecoveryRate: Number(
-        (batchResult.calibration.overall_actual_rate * 100).toFixed(1),
+        (batchResult.calibration.actual_recovery_rate * 100).toFixed(1),
       ),
       calibrationGap: Number(
         (batchResult.calibration.overall_calibration_error * 100).toFixed(1),
       ),
-      brierScore: batchResult.calibration.brier_score,
+      brierScore: batchResult.calibration.overall_brier_score,
       budgetedCount: batchResult.summary.budgeted_count,
       budgetedEV: batchResult.summary.budgeted_expected_value,
       deferredCount: batchResult.summary.deferred_count,
       deferredEV: batchResult.summary.deferred_expected_value,
       customerContactCount: customerContacts,
-      unnecessaryRetryRate: Number(
-        ((unnecessaryRetries / Math.max(1, budgetedItems.length)) * 100).toFixed(1),
-      ),
+      unsuccessfulInterventionRate: unsecRate,
+      unnecessaryRetryRate: unsecRate,
       avgAttemptsBeforeRecovery: Number(avgAttempts.toFixed(2)),
       stoppedCount: batchResult.summary.stopped_count,
       stoppedByReason: batchResult.summary.stopped_by_reason,
     };
   }, [batchResult]);
 
-  // Export handlers
+  // Export handlers with SHA-256 verification manifest
   const handleExportCSV = () => {
     const csvContent = exportAuditTrailToCSV(auditRecords);
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -227,7 +292,16 @@ export function useRecoveryBatch(options: UseRecoveryBatchOptions = {}) {
   };
 
   const handleExportJSON = () => {
-    const jsonContent = JSON.stringify(chainedLedger, null, 2);
+    const manifest = {
+      exportTimestamp: new Date().toISOString(),
+      datasetId: 'dev_benchmark_200',
+      policyVersion: 'v1.1.0-closed-loop',
+      chainHeadHash: chainedLedger[chainedLedger.length - 1]?.currentHash ?? '',
+      eventCount: chainedLedger.length,
+      integrityVerified: ledgerVerification.isValid,
+      ledger: chainedLedger,
+    };
+    const jsonContent = JSON.stringify(manifest, null, 2);
     const blob = new Blob([jsonContent], { type: 'application/json;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -259,10 +333,14 @@ export function useRecoveryBatch(options: UseRecoveryBatchOptions = {}) {
     auditRecords,
     chainedLedger,
     ledgerVerification,
+    devData,
+    stressData,
     devReport,
     heldoutReport,
     filteredQueueItems,
     kpis,
+    reviewerDecisions,
+    applyReviewerAction,
     // Filters
     statusFilter,
     setStatusFilter,

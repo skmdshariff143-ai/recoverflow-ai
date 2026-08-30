@@ -10,32 +10,43 @@ import React from 'react';
 import { useRecoveryBatch } from '@/hooks/useRecoveryBatch';
 import { Header } from '@/components/Header';
 import { MetricsOverview } from '@/components/MetricsOverview';
+import { CalibrationVisualizer } from '@/components/CalibrationVisualizer';
 import { RankedQueueTable } from '@/components/RankedQueueTable';
 import { PaymentDrilldownModal } from '@/components/PaymentDrilldownModal';
-import { AuditTrailExplorer } from '@/components/AuditTrailExplorer';
+import { LiveRecoveryRunner } from '@/components/LiveRecoveryRunner';
 import { EvaluationLab } from '@/components/EvaluationLab';
+import { PromiseToPayTracker } from '@/components/PromiseToPayTracker';
+import { AuditTrailExplorer } from '@/components/AuditTrailExplorer';
 import { MethodologyGuide } from '@/components/MethodologyGuide';
 
 export default function Home() {
   const {
+    payments,
     budget,
     setBudget,
     simulationSeed,
     setSimulationSeed,
+    scoringModel,
+    setScoringModel,
+    modelComparison,
     provenance,
     setProvenance,
     activeTab,
     setActiveTab,
+    selectedPaymentId,
     setSelectedPaymentId,
     selectedItem,
     selectedItemAuditRecords,
     batchResult,
     chainedLedger,
     ledgerVerification,
+    devData,
     devReport,
     heldoutReport,
     filteredQueueItems,
     kpis,
+    reviewerDecisions,
+    applyReviewerAction,
     // Filters
     statusFilter,
     setStatusFilter,
@@ -78,6 +89,13 @@ export default function Home() {
         {/* Workspace 1: Dashboard & Ranked Queue */}
         {activeTab === 'dashboard' && (
           <div className="space-y-6">
+            <CalibrationVisualizer
+              calibration={batchResult.calibration}
+              modelComparison={modelComparison}
+              scoringModel={scoringModel}
+              onScoringModelChange={setScoringModel}
+            />
+
             <RankedQueueTable
               items={filteredQueueItems}
               totalCount={batchResult.executed_items.length}
@@ -95,16 +113,29 @@ export default function Home() {
           </div>
         )}
 
-        {/* Workspace 2: Evaluation Lab & Policy Simulator */}
-        {activeTab === 'evaluation' && (
+        {/* Workspace 2: Live Recovery Runner */}
+        {activeTab === 'live_runner' && (
+          <LiveRecoveryRunner
+            payments={payments}
+            outcomesMap={devData.outcomesMap}
+          />
+        )}
+
+        {/* Workspace 3: Evaluation Lab & Policy Simulator */}
+        {activeTab === 'evaluation_lab' && (
           <EvaluationLab
             devReport={devReport}
             heldoutReport={heldoutReport}
           />
         )}
 
-        {/* Workspace 3: Append-Only Cryptographic Audit Ledger */}
-        {activeTab === 'audit_trail' && (
+        {/* Workspace 4: Promise-to-Pay Lifecycle Tracker */}
+        {activeTab === 'promise_to_pay' && (
+          <PromiseToPayTracker />
+        )}
+
+        {/* Workspace 5: Append-Only Cryptographic Audit Ledger */}
+        {activeTab === 'audit_ledger' && (
           <AuditTrailExplorer
             records={chainedLedger}
             verification={ledgerVerification}
@@ -114,30 +145,32 @@ export default function Home() {
           />
         )}
 
-        {/* Workspace 4: Methodology & Judge Guide */}
-        {activeTab === 'methodology' && (
+        {/* Workspace 6: Methodology & Judge Guide */}
+        {activeTab === 'methodology_guide' && (
           <MethodologyGuide />
         )}
       </main>
 
-      {/* ── Explainability Decision Drill-Down Modal ───────────── */}
+      {/* ── Explainable Decision Drill-Down & Reviewer Action Modal ── */}
       {selectedItem && (
         <PaymentDrilldownModal
           item={selectedItem}
           auditRecords={selectedItemAuditRecords}
           onClose={() => setSelectedPaymentId(null)}
+          onApplyReviewerAction={applyReviewerAction}
+          existingReviewerAction={selectedPaymentId ? reviewerDecisions[selectedPaymentId] : undefined}
         />
       )}
 
-      {/* ── Footer ─────────────────────────────────────────────── */}
-      <footer className="border-t border-slate-200 bg-white py-4 text-center text-xs text-slate-500">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>
-            RecoverFlow AI — Razorpay AI Buildathon (Track 3: AI Revenue Recovery)
-          </span>
-          <span className="font-mono text-slate-400">
-            Next.js 16 · Turbopack · SHA-256 Ledger · Bounded Gemini 2.5
-          </span>
+      {/* ── Global Footer ───────────────────────────────────────── */}
+      <footer className="bg-slate-900 border-t border-slate-800 text-slate-400 py-6 text-xs text-center">
+        <div className="max-w-7xl mx-auto px-4 space-y-1">
+          <p className="font-medium text-slate-300">
+            RecoverFlow AI — Autonomous Bounded Revenue Recovery Engine
+          </p>
+          <p className="text-slate-500">
+            Submission for Razorpay AI Buildathon · Track 3: AI Revenue Recovery · Deterministic Calibration &amp; Cryptographic Audit Ledger
+          </p>
         </div>
       </footer>
     </div>

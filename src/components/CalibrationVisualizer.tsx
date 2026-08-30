@@ -32,6 +32,10 @@ export function CalibrationVisualizer({
   scoringModel = 'trained_logistic',
   onScoringModelChange,
 }: CalibrationVisualizerProps) {
+  const binnedMetrics = calibration.binned_metrics ?? calibration.by_bin ?? [];
+  const categoryMetrics = calibration.category_metrics ?? calibration.by_category ?? [];
+  const meanCatError = calibration.mean_category_calibration_error ?? calibration.overall_calibration_error ?? 0;
+
   return (
     <div className="space-y-6">
       {/* ── Model Version Switcher & Calibration Header ─────────── */}
@@ -59,52 +63,68 @@ export function CalibrationVisualizer({
             </p>
           </div>
 
-          <div className="flex items-center flex-wrap gap-3">
-            {/* Model Architecture Toggle */}
-            {onScoringModelChange && (
-              <div className="flex items-center bg-slate-100 p-1 rounded-lg border border-slate-200 text-xs font-semibold">
-                <button
-                  onClick={() => onScoringModelChange('trained_logistic')}
-                  className={`px-3 py-1 rounded-md transition ${
-                    scoringModel === 'trained_logistic'
-                      ? 'bg-white text-indigo-700 shadow-2xs'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  Trained Logistic (v1.1)
-                </button>
-                <button
-                  onClick={() => onScoringModelChange('heuristic')}
-                  className={`px-3 py-1 rounded-md transition ${
-                    scoringModel === 'heuristic'
-                      ? 'bg-white text-indigo-700 shadow-2xs'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  Heuristic (v1.0)
-                </button>
-              </div>
-            )}
+          {/* Model Toggle Buttons */}
+          <div className="flex items-center bg-slate-100 p-1 rounded-lg border border-slate-200 text-xs font-semibold">
+            <button
+              onClick={() => onScoringModelChange?.('heuristic')}
+              className={`px-3 py-1.5 rounded-md transition ${
+                scoringModel === 'heuristic'
+                  ? 'bg-white text-indigo-700 shadow-2xs font-bold'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Heuristic Weights (v1.0)
+            </button>
+            <button
+              onClick={() => onScoringModelChange?.('trained_logistic')}
+              className={`px-3 py-1.5 rounded-md transition ${
+                scoringModel === 'trained_logistic'
+                  ? 'bg-white text-indigo-700 shadow-2xs font-bold'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Trained Logistic (v1.1)
+            </button>
+          </div>
+        </div>
 
-            <div className="flex items-center gap-3 text-xs">
-              <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-2 text-center min-w-[90px]">
-                <span className="block text-slate-500 font-medium text-[10px]">Brier Score</span>
-                <span className="text-base font-bold text-indigo-700">
-                  {calibration.brier_score.toFixed(4)}
-                </span>
+        {/* ── Key Calibration Metrics ─────────────────────────────── */}
+        <div className="mt-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
+              Calibration Overview
+            </span>
+            <div className="mt-1 flex items-baseline gap-3">
+              <div className="text-2xl font-bold text-slate-900">
+                {((calibration.predicted_recovery_rate ?? calibration.overall_predicted_rate) * 100).toFixed(1)}%
+                <span className="text-xs text-slate-500 font-normal ml-1">predicted</span>
               </div>
+              <span className="text-slate-400 font-medium">vs</span>
+              <div className="text-2xl font-bold text-indigo-600">
+                {((calibration.actual_recovery_rate ?? calibration.overall_actual_rate) * 100).toFixed(1)}%
+                <span className="text-xs text-slate-500 font-normal ml-1">actual</span>
+              </div>
+            </div>
+          </div>
 
-              <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-2 text-center min-w-[90px]">
-                <span className="block text-slate-500 font-medium text-[10px]">Mean Cat Error</span>
-                <span className="text-base font-bold text-emerald-700">
-                  {(calibration.mean_category_calibration_error * 100).toFixed(1)}%
-                </span>
-              </div>
+          <div className="flex items-center gap-3">
+            <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-2 text-center min-w-[90px]">
+              <span className="block text-slate-500 font-medium text-[10px]">Brier Score</span>
+              <span className="text-base font-bold text-indigo-700">
+                {(calibration.brier_score ?? calibration.overall_brier_score ?? 0).toFixed(4)}
+              </span>
+            </div>
+
+            <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-2 text-center min-w-[90px]">
+              <span className="block text-slate-500 font-medium text-[10px]">Mean Cat Error</span>
+              <span className="text-base font-bold text-emerald-700">
+                {(meanCatError * 100).toFixed(1)}%
+              </span>
             </div>
           </div>
         </div>
 
-        {/* ── Side-by-Side Model Comparison (Milestone 7a) ───────── */}
+        {/* ── Side-by-Side Model Comparison ───────────────────────── */}
         {modelComparison && (
           <div className="mt-6 bg-gradient-to-r from-slate-900 to-indigo-950 rounded-xl p-4 text-white">
             <div className="flex items-center justify-between border-b border-slate-800 pb-2 mb-3">
@@ -140,11 +160,11 @@ export function CalibrationVisualizer({
                 <span className="text-slate-400 block text-[11px]">Overall Calibration Gap</span>
                 <div className="mt-1 flex items-baseline justify-between">
                   <span className="text-slate-300 font-mono">
-                    v1.0: {(modelComparison.heuristic.overallCalibrationError * 100).toFixed(1)}%
+                    v1.0: {((modelComparison.heuristic.overallCalibrationError ?? modelComparison.heuristic.calibrationError) * 100).toFixed(1)}%
                   </span>
                   <ArrowRight className="w-3 h-3 text-slate-500" />
                   <span className="text-emerald-400 font-bold font-mono">
-                    v1.1: {(modelComparison.trainedLogistic.overallCalibrationError * 100).toFixed(1)}%
+                    v1.1: {((modelComparison.trainedLogistic.overallCalibrationError ?? modelComparison.trainedLogistic.calibrationError) * 100).toFixed(1)}%
                   </span>
                 </div>
                 <span className="text-[10px] text-slate-400 block mt-1">
@@ -156,27 +176,27 @@ export function CalibrationVisualizer({
                 <span className="text-slate-400 block text-[11px]">Recovered Revenue (40 slots)</span>
                 <div className="mt-1 flex items-baseline justify-between">
                   <span className="text-slate-300 font-mono">
-                    ₹{(modelComparison.heuristic.totalRecoveredRevenue / 100).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                    ₹{((modelComparison.heuristic.totalRecoveredRevenue ?? modelComparison.heuristic.recoveredRevenue) / 100).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
                   </span>
                   <ArrowRight className="w-3 h-3 text-slate-500" />
                   <span className="text-emerald-400 font-bold font-mono">
-                    ₹{(modelComparison.trainedLogistic.totalRecoveredRevenue / 100).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                    ₹{((modelComparison.trainedLogistic.totalRecoveredRevenue ?? modelComparison.trainedLogistic.recoveredRevenue) / 100).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
                   </span>
                 </div>
-                <span className="text-[10px] text-slate-400 block mt-1">
-                  EV ranking prioritizes highest-yield invoices first
+                <span className="text-[10px] text-emerald-300 font-semibold block mt-1">
+                  +{modelComparison.trainedLogistic.recoveredCount - modelComparison.heuristic.recoveredCount} additional settled invoices
                 </span>
               </div>
             </div>
           </div>
         )}
 
-        {/* ── 5-Bin Reliability Diagram Visualizer ───────────────── */}
-        <div className="mt-6">
+        {/* ── 5-Bin Reliability Diagram ───────────────────────────── */}
+        <div className="mt-8">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
-              <Layers className="w-4 h-4 text-emerald-600" />
-              5-Bin Reliability Diagram (Predicted vs Actual Recovery)
+            <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
+              <Target className="w-4 h-4 text-indigo-600" />
+              5-Bin Probability Reliability Diagram
             </h3>
             <span className="text-xs text-slate-500">
               Closer bar heights = Higher statistical calibration
@@ -184,15 +204,16 @@ export function CalibrationVisualizer({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-            {calibration.binned_metrics.map((bin) => {
-              const predPercent = Number((bin.avg_predicted_prob * 100).toFixed(1));
+            {binnedMetrics.map((bin) => {
+              const predProb = bin.avg_predicted_prob ?? bin.predicted_avg_probability ?? 0;
+              const predPercent = Number((predProb * 100).toFixed(1));
               const actPercent = Number((bin.actual_recovery_rate * 100).toFixed(1));
               const errPercent = Number((bin.calibration_error * 100).toFixed(1));
               const isWellCalibrated = errPercent <= 15;
 
               return (
                 <div
-                  key={bin.bin_index}
+                  key={bin.bin_label}
                   className="bg-slate-50 rounded-xl border border-slate-200/80 p-3.5 flex flex-col justify-between hover:border-indigo-300 transition"
                 >
                   <div>
@@ -282,11 +303,13 @@ export function CalibrationVisualizer({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-700">
-              {calibration.category_metrics.map((cat) => {
+              {categoryMetrics.map((cat) => {
                 const predRate = (cat.predicted_recovery_rate * 100).toFixed(1);
                 const actRate = (cat.actual_recovery_rate * 100).toFixed(1);
                 const err = (cat.calibration_error * 100).toFixed(1);
                 const isAccurate = cat.calibration_error <= 0.15;
+                const evPaise = cat.expected_value ?? 0;
+                const recPaise = cat.recovered_amount ?? 0;
 
                 return (
                   <tr key={cat.category} className="hover:bg-slate-50/80 transition">
@@ -311,10 +334,10 @@ export function CalibrationVisualizer({
                       </span>
                     </td>
                     <td className="py-2.5 px-3 text-right font-medium text-slate-600">
-                      ₹{(cat.expected_value / 100).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                      ₹{(evPaise / 100).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
                     </td>
                     <td className="py-2.5 px-3 text-right font-bold text-emerald-700">
-                      ₹{(cat.recovered_amount / 100).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                      ₹{(recPaise / 100).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
                     </td>
                   </tr>
                 );

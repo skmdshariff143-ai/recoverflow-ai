@@ -38,12 +38,17 @@ export function computeCalibrationReport(executedItems: ExecutedItem[]): Calibra
   if (budgeted.length === 0) {
     return {
       overall_predicted_rate: 0,
+      predicted_recovery_rate: 0,
       overall_actual_rate: 0,
+      actual_recovery_rate: 0,
       overall_calibration_error: 0,
       brier_score: 0,
+      overall_brier_score: 0,
       mean_category_calibration_error: 0,
       category_metrics: [],
+      by_category: [],
       binned_metrics: [],
+      by_bin: [],
     };
   }
 
@@ -169,12 +174,17 @@ export function computeCalibrationReport(executedItems: ExecutedItem[]): Calibra
 
   return {
     overall_predicted_rate: overallPredictedRate,
+    predicted_recovery_rate: overallPredictedRate,
     overall_actual_rate: overallActualRate,
+    actual_recovery_rate: overallActualRate,
     overall_calibration_error: overallCalibrationError,
     brier_score: brierScore,
+    overall_brier_score: brierScore,
     mean_category_calibration_error: meanCategoryError,
     category_metrics: categoryMetrics,
+    by_category: categoryMetrics,
     binned_metrics: binnedMetrics,
+    by_bin: binnedMetrics,
   };
 }
 
@@ -227,18 +237,22 @@ export function compareModelCalibration(
     heuristic: {
       modelVersion: 'v1.0.0-heuristic',
       brierScore: heuristicCalib.brier_score,
+      calibrationError: heuristicCalib.overall_calibration_error,
       overallCalibrationError: heuristicCalib.overall_calibration_error,
       predictedRecoveryRate: heuristicCalib.overall_predicted_rate,
       actualRecoveryRate: heuristicCalib.overall_actual_rate,
+      recoveredRevenue: heuristicRecoveredRev,
       totalRecoveredRevenue: heuristicRecoveredRev,
       recoveredCount: heuristicRecoveredCount,
     },
     trainedLogistic: {
       modelVersion: 'v1.1.0-logistic-calibrated',
       brierScore: trainedCalib.brier_score,
+      calibrationError: trainedCalib.overall_calibration_error,
       overallCalibrationError: trainedCalib.overall_calibration_error,
       predictedRecoveryRate: trainedCalib.overall_predicted_rate,
       actualRecoveryRate: trainedCalib.overall_actual_rate,
+      recoveredRevenue: trainedRecoveredRev,
       totalRecoveredRevenue: trainedRecoveredRev,
       recoveredCount: trainedRecoveredCount,
     },

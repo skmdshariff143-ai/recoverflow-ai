@@ -9,7 +9,7 @@
  * STRICT FINTECH SAFETY BOUNDARIES:
  *   - Gemini NEVER calculates monetary arithmetic, basis points, or EV.
  *   - Gemini NEVER determines safety eligibility or attempt limits.
- *   - Gemini NEVER executes financial transactions.
+ *   - Gemini NEVER executes financial transactions or state transitions.
  *   - All responses are strictly Zod-validated with structured fallback.
  */
 
@@ -26,7 +26,8 @@ export const DiagnosticResponseSchema = z.object({
   plainExplanation: z.string(),
   isRecoverable: z.boolean(),
   suggestedAction: z.enum(['retry', 'reminder', 'both', 'none']),
-  provider: z.enum(['gemini_2.5_flash', 'deterministic_fallback']),
+  provider: z.string(),
+  fallbackReason: z.string().optional(),
 });
 
 export type DiagnosticResponse = z.infer<typeof DiagnosticResponseSchema>;
@@ -37,7 +38,8 @@ export const CustomerMessageResponseSchema = z.object({
   messageBody: z.string(),
   tone: z.enum(['empathetic', 'direct', 'urgent']),
   complianceNotice: z.string(),
-  provider: z.enum(['gemini_2.5_flash', 'deterministic_fallback']),
+  provider: z.string(),
+  fallbackReason: z.string().optional(),
 });
 
 export type CustomerMessageResponse = z.infer<typeof CustomerMessageResponseSchema>;
@@ -56,7 +58,10 @@ function sanitizeInput(text: string): string {
 /**
  * Deterministic rule-based fallback for gateway error diagnosis.
  */
-export function deterministicDiagnosticFallback(rawError: string): DiagnosticResponse {
+export function deterministicDiagnosticFallback(
+  rawError: string,
+  fallbackReason: string = 'Offline deterministic classifier active',
+): DiagnosticResponse {
   const lower = rawError.toLowerCase();
 
   let category: FailureCategory = 'insufficient_funds';
@@ -101,11 +106,12 @@ export function deterministicDiagnosticFallback(rawError: string): DiagnosticRes
     isRecoverable,
     suggestedAction,
     provider: 'deterministic_fallback',
+    fallbackReason,
   };
 }
 
 /**
- * Diagnose unstructured gateway error logs using Gemini 2.5 with circuit breaker fallback.
+ * Diagnose unstructured gateway error logs using Gemini with structured circuit breaker fallback.
  */
 export async function diagnoseGatewayErrorWithGemini(
   rawGatewayError: string,
@@ -114,13 +120,13 @@ export async function diagnoseGatewayErrorWithGemini(
   const cleanInput = sanitizeInput(rawGatewayError);
 
   if (!apiKey || apiKey.startsWith('AIzaSyYour') || apiKey.length < 10) {
-    return deterministicDiagnosticFallback(cleanInput);
+    return deterministicDiagnosticFallback(cleanInput, 'Gemini API key unconfigured; using deterministic rule classifier');
   }
+
+  const modelName = process.env.GEMINI_MODEL ?? 'gemini-2.5-flash';
 
   try {
     const ai = new GoogleGenAI({ apiKey });
-    const model = process.env.GEMINI_MODEL ?? 'gemini-2.5-flash';
-
     const systemPrompt = `You are a financial risk diagnostic assistant for RecoverFlow AI.
 Analyze the following payment gateway error string and classify it into exactly one of the valid FailureCategory values:
 ${FAILURE_CATEGORIES.join(', ')}
@@ -132,26 +138,30 @@ Strict rules:
 3. Keep plainExplanation concise (under 30 words).`;
 
     const response = await ai.models.generateContent({
-      model,
+      model: modelName,
       contents: [
-        { role: 'user', parts: [{ text: `${systemPrompt}\n\nTarget Gateway Error to diagnose:\n"""${cleanInput}"""` }] },
+        { role: 'user', parts: [{ text: `Target Gateway Error to diagnose:\n"""${cleanInput}"""` }] },
       ],
+      config: {
+        systemInstruction: systemPrompt,
+        responseMimeType: 'application/json',
+      },
     });
 
     const rawText = response.text?.trim() ?? '';
     const jsonMatch = rawText.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      return deterministicDiagnosticFallback(cleanInput);
+      return deterministicDiagnosticFallback(cleanInput, 'Non-JSON model output; fallback activated');
     }
 
     const parsed = JSON.parse(jsonMatch[0]);
     return DiagnosticResponseSchema.parse({
       ...parsed,
-      provider: 'gemini_2.5_flash',
+      provider: `gemini_${modelName.replace(/[^a-zA-Z0-9]/g, '_')}`,
     });
-  } catch {
-    // Graceful fallback on rate-limits, timeouts, or network disconnects
-    return deterministicDiagnosticFallback(cleanInput);
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Unknown error';
+    return deterministicDiagnosticFallback(cleanInput, `Gemini API call failed (${msg}); fallback activated`);
   }
 }
 
@@ -168,35 +178,43 @@ export async function draftCustomerCommunicationWithGemini(
   const cleanName = sanitizeInput(customerName);
   const cleanCat = sanitizeInput(failureCategory.replace(/_/g, ' '));
 
-  // Deterministic standard template fallback
+  // Deterministic standard template fallback without fabricated URLs
   const fallbackTemplate: CustomerMessageResponse = {
     channel,
-    subject: `Notice: Payment Update Required for ${amountINR}`,
-    messageBody: `Hi ${cleanName}, your recent payment of ${amountINR} could not be processed due to a temporary ${cleanCat} issue. Please review and update your payment method to ensure uninterrupted service: https://rzp.io/i/secure_recovery`,
+    subject: `Action Required: Payment Update for Invoice (${amountINR})`,
+    messageBody: `Dear ${cleanName}, your recent payment of ${amountINR} could not be completed due to a temporary ${cleanCat} issue. Please visit your merchant customer portal to retry or update your payment details.`,
     tone: 'empathetic',
-    complianceNotice: 'Standard RBI-compliant payment failure notification. Reply STOP to opt out.',
+    complianceNotice: 'Template constrained by prototype communication policy; requires merchant compliance review before production use. Reply STOP to opt out.',
     provider: 'deterministic_fallback',
+    fallbackReason: 'Default template mode active',
   };
 
   if (!apiKey || apiKey.startsWith('AIzaSyYour') || apiKey.length < 10) {
     return fallbackTemplate;
   }
 
+  const modelName = process.env.GEMINI_MODEL ?? 'gemini-2.5-flash';
+
   try {
     const ai = new GoogleGenAI({ apiKey });
-    const model = process.env.GEMINI_MODEL ?? 'gemini-2.5-flash';
+    const systemPrompt = `You are an automated customer communications assistant for RecoverFlow AI.
+Draft polite, professional payment reminder messages strictly within compliance boundaries.
+Never invent payment links, card numbers, or legal guarantees.
+Return ONLY valid JSON matching:
+{"channel": "${channel}", "subject": string, "messageBody": string, "tone": "empathetic"|"direct"|"urgent", "complianceNotice": string}`;
 
-    const prompt = `Draft a polite, professional, RBI-compliant payment recovery notification for customer "${cleanName}".
+    const userPrompt = `Draft notification for customer "${cleanName}".
 Amount: ${amountINR}
 Failure Reason: ${cleanCat}
-Channel: ${channel}
-
-Return ONLY valid JSON matching:
-{"channel": "${channel}", "subject": string (if email), "messageBody": string, "tone": "empathetic"|"direct"|"urgent", "complianceNotice": string}`;
+Channel: ${channel}`;
 
     const response = await ai.models.generateContent({
-      model,
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      model: modelName,
+      contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
+      config: {
+        systemInstruction: systemPrompt,
+        responseMimeType: 'application/json',
+      },
     });
 
     const rawText = response.text?.trim() ?? '';
@@ -206,9 +224,13 @@ Return ONLY valid JSON matching:
     const parsed = JSON.parse(jsonMatch[0]);
     return CustomerMessageResponseSchema.parse({
       ...parsed,
-      provider: 'gemini_2.5_flash',
+      provider: `gemini_${modelName.replace(/[^a-zA-Z0-9]/g, '_')}`,
     });
-  } catch {
-    return fallbackTemplate;
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Unknown error';
+    return {
+      ...fallbackTemplate,
+      fallbackReason: `Gemini API call failed (${msg}); template fallback returned`,
+    };
   }
 }

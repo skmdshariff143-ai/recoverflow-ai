@@ -119,7 +119,7 @@ cd recoverflow-ai
 # 2. Install dependencies
 npm ci
 
-# 3. Run complete verification gate (lint, types, 112 unit tests, benchmarks, build, 7 E2E tests)
+# 3. Run complete verification gate (lint, types, 116 unit tests, benchmarks, build, 11 E2E tests across 5 viewports)
 npm run verify
 
 # 4. Start local development server
@@ -133,7 +133,7 @@ Open [http://localhost:3000](http://localhost:3000) to view the RecoverFlow AI C
 ## 🧪 Comprehensive Verification Suite
 
 ```bash
-# Run unit tests (112 tests across 16 suites)
+# Run unit tests (116 tests across 17 suites)
 npm test
 
 # Run TypeScript typecheck (0 errors)
@@ -142,7 +142,7 @@ npm run type-check
 # Run ESLint (0 errors, 0 warnings)
 npm run lint
 
-# Run Playwright E2E browser tests (7 tests across Chrome)
+# Run Playwright E2E browser tests (11 tests across 5 viewports)
 npm run test:e2e
 
 # Verify all submission artifacts

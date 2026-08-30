@@ -29,57 +29,62 @@ export const EXECUTION_STATUSES = [
 
 export type ExecutionStatus = (typeof EXECUTION_STATUSES)[number];
 
+export const INTERVENTION_TYPES = ['retry', 'reminder', 'both', 'none'] as const;
+export type InterventionType = (typeof INTERVENTION_TYPES)[number];
+
 export const STOP_REASONS = [
   'customer_opted_out',
   'non_recoverable_category',
   'max_attempts_exceeded',
   'dispute_or_cancellation_signaled',
 ] as const;
-
 export type StopReason = (typeof STOP_REASONS)[number];
 
-export const INTERVENTION_TYPES = ['retry', 'reminder', 'both', 'none'] as const;
-export type InterventionType = (typeof INTERVENTION_TYPES)[number];
+export type ApprovalStatus = 'approved' | 'auto_approved' | 'pending' | 'rejected' | 'not_required';
 
-export const APPROVAL_STATUSES = [
-  'not_required',
-  'approved',
-  'rejected',
-  'pending',
-] as const;
+export type DashboardTab =
+  | 'dashboard'
+  | 'live_runner'
+  | 'evaluation_lab'
+  | 'audit_ledger'
+  | 'promise_to_pay'
+  | 'methodology_guide';
 
-export type ApprovalStatus = (typeof APPROVAL_STATUSES)[number];
+// ─── Pipeline Item Interfaces ───────────────────────────────────────
 
-// ─── Pipeline Item ──────────────────────────────────────────────────
-
-/**
- * An enriched payment record passing through the RecoverFlow AI pipeline.
- */
 export interface PipelineItem {
   payment: FailedPayment;
   score: PaymentScore;
-  status: PipelineItemStatus;
+  safety_eligible?: boolean;
   stop_reason?: StopReason;
   stop_detail?: string;
-  approval_status: ApprovalStatus;
-  approval_note?: string;
-  suggested_intervention: InterventionType;
-  scheduled_contact_time?: string;
+  status: PipelineItemStatus;
   rank?: number;
+  suggested_intervention: InterventionType;
+  scheduled_time?: string;
+  requires_approval?: boolean;
+  approval_status?: ApprovalStatus;
+  approval_note?: string;
+  scheduled_contact_time?: string;
 }
 
-/**
- * An executed payment record with simulated recovery outcomes.
- */
 export interface ExecutedItem extends PipelineItem {
   execution_status: ExecutionStatus;
-  final_attempt_count: number;
   recovered_amount: number;
-  simulated_outcome_detail: string;
+  attempts_taken?: number;
+  final_attempt_count: number;
+  cycle_count?: number;
+  final_reason?: string;
   dispute_signaled?: boolean;
+  simulated_outcome_detail?: string;
+  timeline?: {
+    scheduled_at?: string;
+    executed_at?: string;
+    settled_at?: string;
+  };
 }
 
-// ─── Calibration Domain Types ───────────────────────────────────────
+// ─── Calibration Metrics Interfaces ─────────────────────────────────
 
 export interface CategoryCalibrationMetric {
   category: FailureCategory;
@@ -88,64 +93,59 @@ export interface CategoryCalibrationMetric {
   predicted_recovery_rate: number;
   actual_recovery_rate: number;
   calibration_error: number;
-  expected_value: number;
-  recovered_amount: number;
+  expected_value?: number;
+  recovered_amount?: number;
 }
 
 export interface BinnedCalibrationMetric {
-  bin_index: number;
+  bin_index?: number;
   bin_label: string;
+  bin_min?: number;
+  bin_max?: number;
   min_prob: number;
   max_prob: number;
   sample_count: number;
+  predicted_avg_probability?: number;
   avg_predicted_prob: number;
   actual_recovery_rate: number;
   calibration_error: number;
 }
 
 export interface CalibrationReport {
-  overall_predicted_rate: number;
-  overall_actual_rate: number;
-  overall_calibration_error: number;
+  overall_brier_score: number;
   brier_score: number;
+  overall_calibration_error: number;
+  predicted_recovery_rate: number;
+  overall_predicted_rate: number;
+  actual_recovery_rate: number;
+  overall_actual_rate: number;
   mean_category_calibration_error: number;
+  by_category: CategoryCalibrationMetric[];
   category_metrics: CategoryCalibrationMetric[];
+  by_bin: BinnedCalibrationMetric[];
   binned_metrics: BinnedCalibrationMetric[];
-}
-
-// ─── Pipeline Configuration & Summaries ─────────────────────────────
-
-export interface PipelineOptions {
-  /** Scoring algorithm to use: 'heuristic' (v1.0.0) or 'trained_logistic' (v1.1.0). Default: 'trained_logistic'. */
-  scoringModel?: 'heuristic' | 'trained_logistic';
-  /** Maximum number of contact slots to allocate per cycle. Default: 40. */
-  budget?: number;
-  /** Current simulated reference time. Default: 2025-08-30T10:00:00Z. */
-  referenceDate?: Date;
-  /** Whether to simulate auto-approval for high EV high-value invoices. Default: true. */
-  autoApproveHighValueWithHighEV?: boolean;
-  /** Seed for deterministic stochastic simulation. Default: 42. */
-  simulationSeed?: number;
-  /** Simulated dispute/cancellation probability rate on budgeted items. Default: 0.03. */
-  disputeRate?: number;
 }
 
 export interface ModelComparisonReport {
   heuristic: {
-    modelVersion: string;
+    modelVersion?: string;
     brierScore: number;
+    calibrationError: number;
     overallCalibrationError: number;
     predictedRecoveryRate: number;
     actualRecoveryRate: number;
+    recoveredRevenue: number;
     totalRecoveredRevenue: number;
     recoveredCount: number;
   };
   trainedLogistic: {
-    modelVersion: string;
+    modelVersion?: string;
     brierScore: number;
+    calibrationError: number;
     overallCalibrationError: number;
     predictedRecoveryRate: number;
     actualRecoveryRate: number;
+    recoveredRevenue: number;
     totalRecoveredRevenue: number;
     recoveredCount: number;
   };
@@ -180,4 +180,13 @@ export interface BatchExecutionResult {
   overall_recovery_rate: number;
   executed_items: ExecutedItem[];
   calibration: CalibrationReport;
+}
+
+export interface PipelineOptions {
+  budget?: number;
+  simulationSeed?: number;
+  scoringModel?: 'heuristic' | 'trained_logistic';
+  autoApproveHighValueWithHighEV?: boolean;
+  referenceDate?: Date;
+  disputeRate?: number;
 }

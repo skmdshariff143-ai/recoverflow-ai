@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('RecoverFlow AI — Interactive Dashboard & Drill-Down', () => {
+test.describe('RecoverFlow AI — Interactive Workspaces & Drill-Down', () => {
 
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
@@ -13,8 +13,8 @@ test.describe('RecoverFlow AI — Interactive Dashboard & Drill-Down', () => {
     // Verify KPI metric cards render
     await expect(page.getByText('Total Revenue at Risk')).toBeVisible();
     await expect(page.getByText(/Simulated Recovered/i)).toBeVisible();
-    await expect(page.getByText('Predicted vs Actual Rate')).toBeVisible();
-    await expect(page.getByText('Budget Efficiency')).toBeVisible();
+    await expect(page.getByText(/Predicted vs Actual/i)).toBeVisible();
+    await expect(page.getByText(/Budget Efficiency/i)).toBeVisible();
 
     // Verify non-zero values are displayed
     await expect(page.getByText(/₹[0-9,]+/).first()).toBeVisible();
@@ -34,12 +34,12 @@ test.describe('RecoverFlow AI — Interactive Dashboard & Drill-Down', () => {
   });
 
   test('clicking a payment row opens the explainable decision drill-down drawer', async ({ page }) => {
-    // Click the first row in the table
-    const firstRow = page.locator('tbody tr').first();
+    // Click the first row in the ranked queue table
+    const firstRow = page.locator('[data-testid="queue-row"]').first();
     await firstRow.click();
 
     // Verify drill-down modal appears
-    await expect(page.getByText(/Score Breakdown & Explainability Waterfall/i)).toBeVisible();
+    await expect(page.getByText(/Deterministic Scoring Waterfall/i)).toBeVisible();
     await expect(page.getByText(/Customer Reliability Profile/i)).toBeVisible();
     await expect(page.getByText(/Chronological Audit Trail/i)).toBeVisible();
 
@@ -48,22 +48,30 @@ test.describe('RecoverFlow AI — Interactive Dashboard & Drill-Down', () => {
 
     // Close drill-down modal
     await page.getByRole('button', { name: /Close Drill-Down/i }).click();
-    await expect(page.getByText(/Score Breakdown & Explainability Waterfall/i)).not.toBeVisible();
+    await expect(page.getByText(/Deterministic Scoring Waterfall/i)).not.toBeVisible();
   });
 
-  test('tab navigation switches to Evaluation Lab and Audit Ledger', async ({ page }) => {
+  test('tab navigation switches across all 6 workspaces seamlessly', async ({ page }) => {
+    // Switch to Live Recovery Runner
+    await page.getByRole('button', { name: /Live Recovery Runner/i }).click();
+    await expect(page.getByText(/Stepped Execution/i)).toBeVisible();
+
     // Switch to Evaluation Lab tab
-    await page.getByRole('button', { name: /Evaluation Lab & Policy Simulator/i }).click();
-    await expect(page.getByText(/Counterfactual Policy Matrix/i)).toBeVisible();
+    await page.getByRole('button', { name: /Evaluation Lab/i }).click();
+    await expect(page.getByText(/Comparative Recovery Policy Matrix/i)).toBeVisible();
     await expect(page.getByText(/Transparent Error Inspector/i)).toBeVisible();
 
+    // Switch to Promise-to-Pay Tracker
+    await page.getByRole('button', { name: /Promise-to-Pay/i }).click();
+    await expect(page.getByText(/Active Commitments/i)).toBeVisible();
+
     // Switch to Audit Trail tab
-    await page.getByRole('button', { name: /Audit Trail & Cryptographic Ledger/i }).click();
+    await page.getByRole('button', { name: /Audit Trail/i }).click();
     await expect(page.getByText(/Append-Only Tamper-Evident Audit Ledger/i)).toBeVisible();
     await expect(page.getByRole('button', { name: /Export CSV/i })).toBeVisible();
 
     // Switch to Methodology Guide tab
-    await page.getByRole('button', { name: /Methodology & Judge Guide/i }).click();
+    await page.getByRole('button', { name: /Methodology/i }).click();
     await expect(page.getByText(/5-Minute Structured Pitch/i)).toBeVisible();
   });
 
@@ -72,8 +80,8 @@ test.describe('RecoverFlow AI — Interactive Dashboard & Drill-Down', () => {
     const statusSelect = page.getByTestId('status-filter');
     await statusSelect.selectOption('recovered');
 
-    // Verify all visible rows show 'Recovered' status
-    const recoveredBadges = page.locator('tbody tr');
+    // Verify all visible rows in ranked queue show 'Recovered' status
+    const recoveredBadges = page.locator('[data-testid="queue-row"]');
     await expect(recoveredBadges.first()).toContainText('Recovered');
   });
 });

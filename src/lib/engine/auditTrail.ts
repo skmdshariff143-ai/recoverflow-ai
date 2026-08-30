@@ -157,7 +157,7 @@ export function generateAuditTrail(executedItems: ExecutedItem[]): AuditRecord[]
               : item.execution_status === 'stopped'
                 ? 'Attempt failed — attempt cap reached (stopped)'
                 : 'Attempt failed — retry scheduled for subsequent cycle',
-        reason: item.simulated_outcome_detail,
+        reason: item.simulated_outcome_detail ?? item.final_reason ?? 'Intervention execution completed',
         metadata: {
           execution_status: item.execution_status,
           recovered_amount: item.recovered_amount,

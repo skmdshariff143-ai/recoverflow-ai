@@ -1,14 +1,9 @@
 /**
- * RecoverFlow AI — Explainable Decision Drill-Down Modal & Reviewer Control Center.
+ * RecoverFlow AI — Explainable Decision Drill-Down & Reviewer Action Panel.
  *
- * Provides a 100% transparent reasoning trace for any selected payment:
- *  - Feature Weight Waterfall & "Why this score" factor explanations
- *  - Reviewer Operational Decision Panel (Approve / Reject / Request Evidence / Stop)
- *  - Live Bounded Gemini AI Diagnostic & RBI-Compliant Communication Assistant
- *  - Safety Compliance & High-Value Approval trace
- *  - Quiet-Hours non-intrusive scheduling window
- *  - Test-mode execution outcome
- *  - Chronological append-only audit trail
+ * Renders the 6-factor deterministic scoring waterfall, customer payment history,
+ * bounded Gemini AI copilot for error diagnosis & drafting messages,
+ * and authenticated human reviewer approval controls with session persistence.
  */
 
 'use client';
@@ -17,7 +12,6 @@ import React, { useState } from 'react';
 import {
   X,
   Sparkles,
-  ShieldCheck,
   CheckCircle2,
   Clock,
   TrendingUp,
@@ -35,23 +29,31 @@ import {
 import type { ExecutedItem } from '@/types';
 import type { AuditRecord } from '@/lib/engine/auditTrail';
 import { formatPaiseToINR } from '@/lib/engine/financial';
+import type { ReviewerAction } from '@/lib/engine/stateMachine';
 
 interface PaymentDrilldownModalProps {
   item: ExecutedItem | null;
   auditRecords: AuditRecord[];
   onClose: () => void;
+  onApplyReviewerAction?: (paymentId: string, action: ReviewerAction) => void;
+  existingReviewerAction?: ReviewerAction;
 }
 
 export function PaymentDrilldownModal({
   item,
   auditRecords,
   onClose,
+  onApplyReviewerAction,
+  existingReviewerAction,
 }: PaymentDrilldownModalProps) {
-  const [activeSubTab, setActiveSubTab] = useState<'decision' | 'ai_copilot' | 'reviewer'>('decision');
-  const [reviewerNote, setReviewerNote] = useState<string>('');
-  const [reviewerStatus, setReviewerStatus] = useState<string | null>(null);
-
-  // AI Copilot state
+  const [reviewerNote, setReviewerNote] = useState<string>(
+    existingReviewerAction?.reviewerNote ?? '',
+  );
+  const [reviewerStatus, setReviewerStatus] = useState<string | null>(
+    existingReviewerAction
+      ? `Recorded: ${existingReviewerAction.action.toUpperCase()} (${existingReviewerAction.reviewerNote})`
+      : null,
+  );
   const [aiDraftLoading, setAiDraftLoading] = useState<boolean>(false);
   const [aiDraftChannel, setAiDraftChannel] = useState<'sms' | 'email' | 'whatsapp'>('email');
   const [aiMessage, setAiMessage] = useState<{
@@ -60,6 +62,18 @@ export function PaymentDrilldownModal({
     tone: string;
     complianceNotice: string;
     provider: string;
+    fallbackReason?: string;
+  } | null>(null);
+
+  const [aiDiagnosisLoading, setAiDiagnosisLoading] = useState<boolean>(false);
+  const [aiDiagnosis, setAiDiagnosis] = useState<{
+    normalizedCategory: string;
+    confidenceScore: number;
+    plainExplanation: string;
+    isRecoverable: boolean;
+    suggestedAction: string;
+    provider: string;
+    fallbackReason?: string;
   } | null>(null);
 
   if (!item) return null;
@@ -67,6 +81,23 @@ export function PaymentDrilldownModal({
   const { payment, score } = item;
   const isRecovered = item.execution_status === 'recovered';
   const isStopped = item.status === 'stopped' || item.execution_status === 'stopped';
+
+  const handleGenerateAiDiagnosis = async () => {
+    setAiDiagnosisLoading(true);
+    try {
+      const res = await fetch('/api/ai/diagnose', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rawGatewayError: payment.raw_gateway_error }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAiDiagnosis(data);
+      }
+    } finally {
+      setAiDiagnosisLoading(false);
+    }
+  };
 
   const handleGenerateAiMessage = async () => {
     setAiDraftLoading(true);
@@ -85,15 +116,29 @@ export function PaymentDrilldownModal({
         const data = await res.json();
         setAiMessage(data);
       }
-    } catch {
-      // Graceful fallback
     } finally {
       setAiDraftLoading(false);
     }
   };
 
-  const handleReviewerAction = (action: string) => {
-    setReviewerStatus(`Action recorded: ${action.toUpperCase()} (${reviewerNote || 'No note'})`);
+  const handleReviewerAction = (action: 'approve' | 'reject' | 'request_evidence') => {
+    if (!reviewerNote.trim()) {
+      alert('Reviewer note is required before recording an action.');
+      return;
+    }
+
+    const reviewerActionObj: ReviewerAction = {
+      action,
+      actorId: 'live_reviewer_officer',
+      timestamp: new Date().toISOString(),
+      reviewerNote: reviewerNote.trim(),
+    };
+
+    if (onApplyReviewerAction) {
+      onApplyReviewerAction(payment.payment_id, reviewerActionObj);
+    }
+
+    setReviewerStatus(`Action applied: ${action.toUpperCase()} (${reviewerNote.trim()})`);
   };
 
   return (
@@ -121,272 +166,261 @@ export function PaymentDrilldownModal({
                 </span>
               )}
             </div>
-
-            <div className="mt-2 flex items-baseline gap-3">
-              <span className="text-2xl font-bold text-white">
-                {formatPaiseToINR(payment.amount, true)}
+            <h3 className="text-xl font-bold mt-1 text-white flex items-center gap-2">
+              {formatPaiseToINR(payment.amount, true)}
+              <span className="text-xs font-normal text-slate-400">
+                ({payment.currency})
               </span>
-              <span className="text-xs text-slate-400 capitalize">
-                {payment.failure_category.replace(/_/g, ' ')}
-              </span>
-            </div>
+            </h3>
           </div>
 
-          <div className="flex items-center gap-2">
-            {/* Status Pill */}
-            {isRecovered ? (
-              <span className="inline-flex items-center gap-1 font-bold text-xs px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                <CheckCircle2 className="w-3.5 h-3.5" /> Recovered
-              </span>
-            ) : isStopped ? (
-              <span className="inline-flex items-center gap-1 font-semibold text-xs px-2.5 py-1 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">
-                <ShieldAlert className="w-3.5 h-3.5" /> Stopped
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1 font-semibold text-xs px-2.5 py-1 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                <Clock className="w-3.5 h-3.5" /> {item.status.replace(/_/g, ' ')}
-              </span>
-            )}
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition cursor-pointer"
+            aria-label="Close modal"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
 
-            <button
-              onClick={onClose}
-              className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
-              aria-label="Close modal"
+        {/* ── Modal Body ───────────────────────────────────────── */}
+        <div className="p-6 space-y-6 overflow-y-auto flex-1 text-xs">
+          {/* Top Status & Recommendation Banner */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-1">
+              <span className="text-slate-500 font-medium block">Predicted Recovery</span>
+              <div className="text-xl font-bold text-indigo-600">
+                {(score.recovery_probability * 100).toFixed(1)}%
+              </div>
+              <span className="text-[10px] text-slate-500 block">
+                EV: {formatPaiseToINR(score.expected_value, true)}
+              </span>
+            </div>
+
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-1">
+              <span className="text-slate-500 font-medium block">Intervention Action</span>
+              <div className="text-sm font-bold text-slate-900 uppercase">
+                {item.suggested_intervention}
+              </div>
+              <span className="text-[10px] text-slate-500 block capitalize">
+                Attempt {item.attempts_taken ?? 1}/3
+              </span>
+            </div>
+
+            <div
+              className={`rounded-xl p-3.5 space-y-1 border ${
+                isRecovered
+                  ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                  : isStopped
+                    ? 'bg-rose-50 border-rose-200 text-rose-900'
+                    : 'bg-indigo-50 border-indigo-200 text-indigo-900'
+              }`}
             >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-
-        {/* ── Sub-Tab Navigation Bar ────────────────────────────── */}
-        <div className="bg-slate-800 px-5 pt-2 flex space-x-6 text-xs font-semibold border-b border-slate-700">
-          <button
-            onClick={() => setActiveSubTab('decision')}
-            className={`pb-2 border-b-2 transition cursor-pointer ${
-              activeSubTab === 'decision'
-                ? 'border-indigo-400 text-white'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            Decision Waterfall &amp; Safety
-          </button>
-          <button
-            onClick={() => setActiveSubTab('ai_copilot')}
-            className={`pb-2 border-b-2 transition cursor-pointer flex items-center gap-1.5 ${
-              activeSubTab === 'ai_copilot'
-                ? 'border-indigo-400 text-white'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <Bot className="w-3.5 h-3.5 text-indigo-400" />
-            Gemini AI Copilot
-          </button>
-          <button
-            onClick={() => setActiveSubTab('reviewer')}
-            className={`pb-2 border-b-2 transition cursor-pointer flex items-center gap-1.5 ${
-              activeSubTab === 'reviewer'
-                ? 'border-indigo-400 text-white'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <UserCheck className="w-3.5 h-3.5 text-emerald-400" />
-            Reviewer Action Gate
-          </button>
-        </div>
-
-        {/* ── Modal Content (Scrollable) ────────────────────────── */}
-        <div className="p-6 overflow-y-auto space-y-6 text-slate-700 text-xs">
-          {/* Subtab 1: Decision Waterfall & Safety */}
-          {activeSubTab === 'decision' && (
-            <div className="space-y-6">
-              {/* 1. Score Breakdown & Explainability Waterfall */}
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                    <Sparkles className="w-4 h-4 text-indigo-600" />
-                    Score Breakdown &amp; Explainability Waterfall
-                  </h3>
-                  <div className="flex items-center gap-3">
-                    <span>
-                      Recovery Probability:{' '}
-                      <strong className="text-indigo-700 text-sm">
-                        {(score.recovery_probability * 100).toFixed(1)}%
-                      </strong>
-                    </span>
-                    <span>
-                      Expected Value:{' '}
-                      <strong className="text-emerald-700 text-sm">
-                        {formatPaiseToINR(score.expected_value, true)}
-                      </strong>
-                    </span>
-                  </div>
-                </div>
-
-                {/* Contributing Factor List */}
-                <div className="space-y-2 pt-1">
-                  {score.explanation.map((f, idx) => {
-                    const isPositive = f.contribution >= 0;
-                    return (
-                      <div
-                        key={idx}
-                        className="flex items-center justify-between bg-white p-2.5 rounded-lg border border-slate-200/80 shadow-2xs"
-                      >
-                        <div className="flex items-center gap-2 flex-1 pr-4">
-                          {isPositive ? (
-                            <TrendingUp className="w-4 h-4 text-emerald-500 shrink-0" />
-                          ) : (
-                            <TrendingDown className="w-4 h-4 text-rose-500 shrink-0" />
-                          )}
-                          <div>
-                            <span className="font-semibold text-slate-800 block">
-                              {f.label}
-                            </span>
-                            <span className="text-[11px] text-slate-500">{f.detail}</span>
-                          </div>
-                        </div>
-
-                        <span
-                          className={`font-mono font-bold text-xs px-2 py-0.5 rounded ${
-                            isPositive
-                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                              : 'bg-rose-50 text-rose-700 border border-rose-200'
-                          }`}
-                        >
-                          {isPositive ? `+${f.contribution.toFixed(3)}` : f.contribution.toFixed(3)}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
+              <span className="font-medium block">Execution Outcome</span>
+              <div className="text-sm font-bold flex items-center gap-1">
+                {isRecovered ? (
+                  <>
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <span>Recovered ({formatPaiseToINR(item.recovered_amount, true)})</span>
+                  </>
+                ) : isStopped ? (
+                  <>
+                    <ShieldAlert className="w-4 h-4 text-rose-600" />
+                    <span>Stopped (Safety Guard)</span>
+                  </>
+                ) : (
+                  <>
+                    <Clock className="w-4 h-4 text-indigo-600" />
+                    <span className="capitalize">{item.execution_status.replace(/_/g, ' ')}</span>
+                  </>
+                )}
               </div>
-
-              {/* 2. Customer Behavior Profile & Raw Error */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-2">
-                  <h4 className="font-bold text-slate-800 flex items-center gap-1.5">
-                    <User className="w-4 h-4 text-slate-600" />
-                    Customer Reliability Profile
-                  </h4>
-                  <div className="grid grid-cols-2 gap-2 text-[11px]">
-                    <div className="bg-slate-50 p-2 rounded">
-                      <span className="text-slate-500 block">On-Time Rate</span>
-                      <span className="font-bold text-slate-900">
-                        {(payment.customer_payment_history.on_time_payment_rate * 100).toFixed(0)}%
-                      </span>
-                    </div>
-                    <div className="bg-slate-50 p-2 rounded">
-                      <span className="text-slate-500 block">Broken Promises</span>
-                      <span className="font-bold text-slate-900">
-                        {payment.customer_payment_history.broken_promise_count}
-                      </span>
-                    </div>
-                    <div className="bg-slate-50 p-2 rounded">
-                      <span className="text-slate-500 block">Tenure</span>
-                      <span className="font-bold text-slate-900">
-                        {payment.customer_payment_history.tenure_months} months
-                      </span>
-                    </div>
-                    <div className="bg-slate-50 p-2 rounded">
-                      <span className="text-slate-500 block">Past Recoveries</span>
-                      <span className="font-bold text-slate-900">
-                        {payment.customer_payment_history.past_recovery_successes} /{' '}
-                        {payment.customer_payment_history.total_transactions}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-2">
-                  <h4 className="font-bold text-slate-800 flex items-center gap-1.5">
-                    <Tag className="w-4 h-4 text-slate-600" />
-                    Gateway Diagnostic &amp; Quiet Hours
-                  </h4>
-                  <div className="space-y-1.5 text-[11px]">
-                    <div>
-                      <span className="text-slate-500 block">Raw Gateway Error:</span>
-                      <code className="text-xs bg-slate-100 px-1.5 py-0.5 rounded text-rose-700 font-mono block overflow-hidden text-ellipsis">
-                        {payment.raw_gateway_error}
-                      </code>
-                    </div>
-                    <div className="pt-1">
-                      <span className="text-slate-500 block">Quiet Hours Window:</span>
-                      <span className="font-medium text-slate-800">
-                        {payment.quiet_hours_window.start}:00 – {payment.quiet_hours_window.end}:00{' '}
-                        ({payment.quiet_hours_window.timezone})
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-slate-500 block">Scheduled Contact Time:</span>
-                      <span className="font-medium text-slate-800">
-                        {item.scheduled_contact_time ?? 'N/A (Stopped)'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* 3. Safety Compliance & Outcome Trace */}
-              <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-3">
-                <h4 className="font-bold text-slate-800 flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                  Safety Verification &amp; Simulated Execution
-                </h4>
-
-                <div className="space-y-2 text-[11px]">
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
-                    <span className="text-slate-500">Customer Opt-Out Check:</span>
-                    <span className="font-bold text-slate-800">
-                      {payment.opt_out ? 'Opted Out (Stopped)' : 'Opted In (Passed)'}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
-                    <span className="text-slate-500">Attempt Cap (≤ 3):</span>
-                    <span className="font-bold text-slate-800">
-                      {item.final_attempt_count} / 3 attempts
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
-                    <span className="text-slate-500">Suggested Intervention:</span>
-                    <span className="font-bold uppercase tracking-wider text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded">
-                      {item.suggested_intervention}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
-                    <span className="text-slate-500">Simulated Outcome Detail:</span>
-                    <span className="font-medium text-slate-900 text-right max-w-sm">
-                      {item.simulated_outcome_detail}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between pt-1">
-                    <span className="text-slate-500">Recovered Revenue:</span>
-                    <span className="font-bold text-sm text-emerald-600">
-                      {formatPaiseToINR(item.recovered_amount, true)}
-                    </span>
-                  </div>
-                </div>
-              </div>
+              <span className="text-[10px] block opacity-80 truncate">
+                {item.final_reason ?? 'Simulated test-mode clearance'}
+              </span>
             </div>
-          )}
+          </div>
 
-          {/* Subtab 2: Bounded Gemini AI Copilot */}
-          {activeSubTab === 'ai_copilot' && (
-            <div className="space-y-4">
-              <div className="bg-indigo-50/60 border border-indigo-200 rounded-xl p-4">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-bold text-indigo-950 flex items-center gap-1.5">
-                    <Bot className="w-4 h-4 text-indigo-600" />
-                    Gemini AI Diagnostic &amp; RBI-Compliant Communication Copilot
-                  </h4>
-                  <span className="text-[10px] font-bold bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded">
-                    Advisory Layer Only
+          {/* 1. Transparent 6-Factor Waterfall Explanation */}
+          <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-3">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+              <h4 className="font-bold text-slate-900 flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-indigo-600" />
+                Deterministic Scoring Waterfall (6 Contributing Factors)
+              </h4>
+              <span className="text-[10px] text-slate-400">Additive Basis Breakdown</span>
+            </div>
+
+            <div className="space-y-2">
+              {score.explanation.map((f, idx) => {
+                const isPositive = f.contribution >= 0;
+                return (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between p-2 rounded-lg bg-slate-50 hover:bg-slate-100 transition"
+                  >
+                    <div className="flex items-center gap-2">
+                      {isPositive ? (
+                        <TrendingUp className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      ) : (
+                        <TrendingDown className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+                      )}
+                      <div>
+                        <span className="font-semibold text-slate-800 block">
+                          {f.label}
+                        </span>
+                        <span className="text-[11px] text-slate-500">{f.detail}</span>
+                      </div>
+                    </div>
+
+                    <span
+                      className={`font-mono font-bold text-xs px-2 py-0.5 rounded ${
+                        isPositive
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          : 'bg-rose-50 text-rose-700 border border-rose-200'
+                      }`}
+                    >
+                      {isPositive ? `+${f.contribution.toFixed(3)}` : f.contribution.toFixed(3)}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 2. Customer Behavior Profile & Raw Error */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-2">
+              <h4 className="font-bold text-slate-800 flex items-center gap-1.5">
+                <User className="w-4 h-4 text-slate-600" />
+                Customer Reliability Profile
+              </h4>
+              <div className="grid grid-cols-2 gap-2 text-[11px]">
+                <div className="bg-slate-50 p-2 rounded">
+                  <span className="text-slate-500 block">On-Time Rate</span>
+                  <span className="font-bold text-slate-900">
+                    {(payment.customer_payment_history.on_time_payment_rate * 100).toFixed(0)}%
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-600 mt-1">
-                  Draft empathetic payment update requests or normalize unstructured error logs without touching financial state.
-                </p>
+                <div className="bg-slate-50 p-2 rounded">
+                  <span className="text-slate-500 block">Broken Promises</span>
+                  <span className="font-bold text-slate-900">
+                    {payment.customer_payment_history.broken_promise_count}
+                  </span>
+                </div>
+                <div className="bg-slate-50 p-2 rounded">
+                  <span className="text-slate-500 block">Tenure</span>
+                  <span className="font-bold text-slate-900">
+                    {payment.customer_payment_history.tenure_months} months
+                  </span>
+                </div>
+                <div className="bg-slate-50 p-2 rounded">
+                  <span className="text-slate-500 block">Past Recoveries</span>
+                  <span className="font-bold text-slate-900">
+                    {payment.customer_payment_history.past_recovery_successes} /{' '}
+                    {payment.customer_payment_history.total_transactions}
+                  </span>
+                </div>
+              </div>
+            </div>
 
-                <div className="mt-4 flex items-center gap-3">
-                  <span className="text-slate-600 font-semibold">Channel:</span>
+            <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-2">
+              <h4 className="font-bold text-slate-800 flex items-center gap-1.5">
+                <Tag className="w-4 h-4 text-slate-600" />
+                Gateway Diagnostic &amp; Quiet Hours
+              </h4>
+              <div className="space-y-1.5 text-[11px]">
+                <div>
+                  <span className="text-slate-500 block">Raw Gateway Error:</span>
+                  <code className="text-xs bg-slate-100 px-1.5 py-0.5 rounded text-rose-700 font-mono block overflow-hidden text-ellipsis">
+                    {payment.raw_gateway_error}
+                  </code>
+                </div>
+
+                <div className="flex items-center justify-between pt-1">
+                  <span className="text-slate-500">Customer Quiet Hours:</span>
+                  <span className="font-mono text-slate-700 font-semibold">
+                    {payment.quiet_hours_window.start}:00 – {payment.quiet_hours_window.end}:00 (
+                    {payment.quiet_hours_window.timezone})
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500">Scheduled Dispatch:</span>
+                  <span className="font-mono text-indigo-700 font-semibold">
+                    {item.scheduled_time
+                      ? new Date(item.scheduled_time).toLocaleTimeString()
+                      : 'Immediate dispatch'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 3. Bounded Gemini AI Copilot */}
+          <div className="bg-gradient-to-br from-indigo-50/70 via-white to-purple-50/50 border border-indigo-200 rounded-xl p-4 space-y-3">
+            <div className="flex items-center justify-between border-b border-indigo-100 pb-2">
+              <div className="flex items-center gap-2">
+                <div className="p-1 rounded-md bg-indigo-600 text-white">
+                  <Bot className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-900">
+                    Bounded Gemini AI Copilot
+                  </h4>
+                  <span className="text-[10px] text-slate-500">
+                    Grounded Advisory Assistant (Zero financial execution authority)
+                  </span>
+                </div>
+              </div>
+              <span className="text-[10px] font-bold bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded border border-indigo-200">
+                ADVISORY ONLY
+              </span>
+            </div>
+
+            {/* AI Action 1: Gateway Error Diagnosis */}
+            <div className="bg-white border border-slate-200 rounded-lg p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-slate-800">
+                  1. Unstructured Gateway Error Normalization:
+                </span>
+                <button
+                  onClick={handleGenerateAiDiagnosis}
+                  disabled={aiDiagnosisLoading}
+                  className="flex items-center gap-1 bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1 rounded text-xs font-semibold shadow-2xs transition cursor-pointer"
+                >
+                  <RotateCw className={`w-3 h-3 ${aiDiagnosisLoading ? 'animate-spin' : ''}`} />
+                  {aiDiagnosisLoading ? 'Diagnosing...' : 'AI Diagnose Error'}
+                </button>
+              </div>
+
+              {aiDiagnosis && (
+                <div className="mt-2 bg-indigo-50/60 border border-indigo-200 rounded p-2.5 space-y-1">
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="font-bold text-indigo-900">
+                      Mapped Category: {aiDiagnosis.normalizedCategory.replace(/_/g, ' ')}
+                    </span>
+                    <span className="text-[10px] text-slate-500">
+                      Provider: {aiDiagnosis.provider}
+                    </span>
+                  </div>
+                  <p className="text-slate-700 text-xs">{aiDiagnosis.plainExplanation}</p>
+                  {aiDiagnosis.fallbackReason && (
+                    <span className="text-[10px] text-amber-700 block italic">
+                      Notice: {aiDiagnosis.fallbackReason}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* AI Action 2: Customer Communication Drafting */}
+            <div className="bg-white border border-slate-200 rounded-lg p-3 space-y-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="font-semibold text-slate-800">
+                  2. Draft Compliant Customer Recovery Notification:
+                </span>
+                <div className="flex items-center gap-2">
                   <select
                     value={aiDraftChannel}
                     onChange={(e) => setAiDraftChannel(e.target.value as 'sms' | 'email' | 'whatsapp')}
@@ -400,95 +434,94 @@ export function PaymentDrilldownModal({
                   <button
                     onClick={handleGenerateAiMessage}
                     disabled={aiDraftLoading}
-                    className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow-2xs transition disabled:opacity-50 cursor-pointer"
+                    className="flex items-center gap-1 bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1 rounded text-xs font-semibold shadow-2xs transition cursor-pointer"
                   >
-                    {aiDraftLoading ? (
-                      <RotateCw className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <Sparkles className="w-3.5 h-3.5" />
-                    )}
-                    Generate Draft Message
+                    <RotateCw className={`w-3 h-3 ${aiDraftLoading ? 'animate-spin' : ''}`} />
+                    {aiDraftLoading ? 'Drafting...' : 'Draft Message'}
                   </button>
                 </div>
-
-                {aiMessage && (
-                  <div className="mt-4 bg-white border border-indigo-200 rounded-lg p-3 space-y-2">
-                    <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
-                      <span className="font-bold text-slate-800">
-                        {aiMessage.subject ?? `Notification for Customer ${payment.customer_id}`}
-                      </span>
-                      <span className="text-[10px] text-indigo-600 font-medium">
-                        Provider: {aiMessage.provider}
-                      </span>
-                    </div>
-                    <p className="text-xs text-slate-700 whitespace-pre-wrap leading-relaxed">
-                      {aiMessage.messageBody}
-                    </p>
-                    <div className="text-[10px] text-slate-500 bg-slate-50 p-1.5 rounded border border-slate-100">
-                      Compliance: {aiMessage.complianceNotice}
-                    </div>
-                  </div>
-                )}
               </div>
-            </div>
-          )}
 
-          {/* Subtab 3: Reviewer Action Gate */}
-          {activeSubTab === 'reviewer' && (
-            <div className="space-y-4">
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
-                <h4 className="font-bold text-slate-900 flex items-center gap-1.5">
-                  <UserCheck className="w-4 h-4 text-emerald-600" />
-                  Human-in-the-Loop Reviewer Controls
-                </h4>
-                <p className="text-[11px] text-slate-600">
-                  Required for high-value enterprise invoices or disputed payments before triggering gateway clearance.
-                </p>
-
-                <div>
-                  <label className="block text-slate-700 font-semibold mb-1">Reviewer Note &amp; Rationale:</label>
-                  <textarea
-                    rows={3}
-                    placeholder="Enter approval rationale, merchant authorization reference, or customer contact notes..."
-                    value={reviewerNote}
-                    onChange={(e) => setReviewerNote(e.target.value)}
-                    className="w-full text-xs p-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800 bg-white"
-                  />
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2 pt-2">
-                  <button
-                    onClick={() => handleReviewerAction('approve')}
-                    className="flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow-2xs transition cursor-pointer"
-                  >
-                    <UserCheck className="w-3.5 h-3.5" /> Approve Recovery
-                  </button>
-
-                  <button
-                    onClick={() => handleReviewerAction('reject')}
-                    className="flex items-center gap-1 bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow-2xs transition cursor-pointer"
-                  >
-                    <UserX className="w-3.5 h-3.5" /> Reject / Stop
-                  </button>
-
-                  <button
-                    onClick={() => handleReviewerAction('request_evidence')}
-                    className="flex items-center gap-1 bg-slate-700 hover:bg-slate-800 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow-2xs transition cursor-pointer"
-                  >
-                    <FileQuestion className="w-3.5 h-3.5" /> Request Evidence
-                  </button>
-                </div>
-
-                {reviewerStatus && (
-                  <div className="bg-emerald-50 border border-emerald-200 text-emerald-900 p-2.5 rounded-lg text-xs font-medium">
-                    {reviewerStatus}
+              {aiMessage && (
+                <div className="mt-3 bg-white border border-indigo-200 rounded-lg p-3 space-y-2">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
+                    <span className="font-bold text-slate-800">
+                      {aiMessage.subject ?? `Notification for Customer ${payment.customer_id}`}
+                    </span>
+                    <span className="text-[10px] text-indigo-600 font-medium">
+                      Provider: {aiMessage.provider}
+                    </span>
                   </div>
-                )}
-              </div>
+                  <p className="text-xs text-slate-700 whitespace-pre-wrap leading-relaxed">
+                    {aiMessage.messageBody}
+                  </p>
+                  <div className="text-[10px] text-slate-500 bg-slate-50 p-1.5 rounded border border-slate-100">
+                    {aiMessage.complianceNotice}
+                  </div>
+                  {aiMessage.fallbackReason && (
+                    <div className="text-[10px] text-amber-700 italic">
+                      Notice: {aiMessage.fallbackReason}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-          )}
+          </div>
 
-          {/* 4. Chronological Audit Trail */}
+          {/* 4. Human-in-the-Loop Reviewer Action Panel */}
+          <div className="bg-white border-2 border-emerald-300 rounded-xl p-4 space-y-3 bg-emerald-50/10">
+            <h4 className="font-bold text-slate-900 flex items-center gap-1.5">
+              <UserCheck className="w-4 h-4 text-emerald-600" />
+              Human-in-the-Loop Reviewer Action Gate
+            </h4>
+            <p className="text-[11px] text-slate-600">
+              Required for high-value enterprise invoices or disputed payments before triggering gateway clearance.
+            </p>
+
+            <div>
+              <label className="block text-slate-700 font-semibold mb-1">
+                Mandatory Reviewer Note &amp; Rationale:
+              </label>
+              <textarea
+                rows={2}
+                placeholder="Enter approval rationale, merchant authorization reference, or customer contact notes..."
+                value={reviewerNote}
+                onChange={(e) => setReviewerNote(e.target.value)}
+                className="w-full text-xs p-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800 bg-white"
+              />
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <button
+                onClick={() => handleReviewerAction('approve')}
+                className="flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow-2xs transition cursor-pointer"
+              >
+                <UserCheck className="w-3.5 h-3.5" /> Approve Recovery
+              </button>
+
+              <button
+                onClick={() => handleReviewerAction('reject')}
+                className="flex items-center gap-1 bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow-2xs transition cursor-pointer"
+              >
+                <UserX className="w-3.5 h-3.5" /> Reject &amp; Stop
+              </button>
+
+              <button
+                onClick={() => handleReviewerAction('request_evidence')}
+                className="flex items-center gap-1 bg-slate-700 hover:bg-slate-800 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow-2xs transition cursor-pointer"
+              >
+                <FileQuestion className="w-3.5 h-3.5" /> Request Evidence
+              </button>
+            </div>
+
+            {reviewerStatus && (
+              <div className="bg-emerald-50 border border-emerald-200 text-emerald-900 p-2.5 rounded-lg text-xs font-medium">
+                {reviewerStatus}
+              </div>
+            )}
+          </div>
+
+          {/* 5. Chronological Audit Trail */}
           <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
             <h4 className="font-bold text-slate-800 flex items-center gap-1.5">
               <History className="w-4 h-4 text-indigo-600" />

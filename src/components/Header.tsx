@@ -15,8 +15,10 @@ import {
   FlaskConical,
   BookOpen,
   Database,
+  Zap,
+  HandCoins,
 } from 'lucide-react';
-import type { DashboardTab } from '@/hooks/useRecoveryBatch';
+import type { DashboardTab } from '@/types/pipeline';
 
 export type DataProvenanceSource = 'synthetic_fixture' | 'razorpay_test_mode' | 'imported_dataset';
 
@@ -113,7 +115,7 @@ export function Header({
                   Razorpay Test Mode (Sim)
                 </option>
                 <option value="imported_dataset" className="bg-slate-900 text-white">
-                  Imported Dataset (Held-out)
+                  Imported Dataset (Stress)
                 </option>
               </select>
             </div>
@@ -126,7 +128,7 @@ export function Header({
           </div>
         </div>
 
-        {/* Tab Navigation */}
+        {/* Tab Navigation across all 6 workspaces */}
         <div className="flex border-t border-slate-800/80 pt-1 -mb-px space-x-6 text-xs font-medium overflow-x-auto">
           <button
             onClick={() => onSelectTab('dashboard')}
@@ -137,43 +139,67 @@ export function Header({
             }`}
           >
             <Activity className="w-4 h-4 text-indigo-400" />
-            <span>Dashboard &amp; Ranked Queue</span>
+            <span>Command Center &amp; Queue</span>
           </button>
 
           <button
-            onClick={() => onSelectTab('evaluation')}
+            onClick={() => onSelectTab('live_runner')}
             className={`pb-2.5 flex items-center gap-2 border-b-2 transition cursor-pointer whitespace-nowrap ${
-              activeTab === 'evaluation'
+              activeTab === 'live_runner'
+                ? 'border-indigo-400 text-white font-semibold'
+                : 'border-transparent text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Zap className="w-4 h-4 text-amber-400" />
+            <span>Live Recovery Runner</span>
+          </button>
+
+          <button
+            onClick={() => onSelectTab('evaluation_lab')}
+            className={`pb-2.5 flex items-center gap-2 border-b-2 transition cursor-pointer whitespace-nowrap ${
+              activeTab === 'evaluation_lab'
                 ? 'border-indigo-400 text-white font-semibold'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
             }`}
           >
             <FlaskConical className="w-4 h-4 text-emerald-400" />
-            <span>Evaluation Lab &amp; Policy Simulator</span>
+            <span>Evaluation Lab &amp; Simulator</span>
           </button>
 
           <button
-            onClick={() => onSelectTab('audit_trail')}
+            onClick={() => onSelectTab('promise_to_pay')}
             className={`pb-2.5 flex items-center gap-2 border-b-2 transition cursor-pointer whitespace-nowrap ${
-              activeTab === 'audit_trail'
+              activeTab === 'promise_to_pay'
+                ? 'border-indigo-400 text-white font-semibold'
+                : 'border-transparent text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <HandCoins className="w-4 h-4 text-purple-400" />
+            <span>Promise-to-Pay Tracker</span>
+          </button>
+
+          <button
+            onClick={() => onSelectTab('audit_ledger')}
+            className={`pb-2.5 flex items-center gap-2 border-b-2 transition cursor-pointer whitespace-nowrap ${
+              activeTab === 'audit_ledger'
                 ? 'border-indigo-400 text-white font-semibold'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
             }`}
           >
             <FileSpreadsheet className="w-4 h-4 text-cyan-400" />
-            <span>Audit Trail &amp; Cryptographic Ledger</span>
+            <span>Audit Trail &amp; Ledger</span>
           </button>
 
           <button
-            onClick={() => onSelectTab('methodology')}
+            onClick={() => onSelectTab('methodology_guide')}
             className={`pb-2.5 flex items-center gap-2 border-b-2 transition cursor-pointer whitespace-nowrap ${
-              activeTab === 'methodology'
+              activeTab === 'methodology_guide'
                 ? 'border-indigo-400 text-white font-semibold'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
             }`}
           >
             <BookOpen className="w-4 h-4 text-amber-400" />
-            <span>Methodology &amp; Judge Guide</span>
+            <span>Methodology &amp; Guide</span>
           </button>
         </div>
       </div>

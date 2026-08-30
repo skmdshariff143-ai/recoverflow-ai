@@ -140,7 +140,7 @@ export function RankedQueueTable({
 
       {/* ── Table ──────────────────────────────────────────────── */}
       <div className="overflow-x-auto border border-slate-100 rounded-lg">
-        <table className="min-w-full text-xs text-left">
+        <table data-testid="ranked-queue-table" className="min-w-full text-xs text-left">
           <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase tracking-wider">
             <tr>
               <th
@@ -204,6 +204,7 @@ export function RankedQueueTable({
                 return (
                   <tr
                     key={item.payment.payment_id}
+                    data-testid="queue-row"
                     onClick={() => onSelectPayment(item.payment.payment_id)}
                     className="hover:bg-indigo-50/40 cursor-pointer transition"
                   >

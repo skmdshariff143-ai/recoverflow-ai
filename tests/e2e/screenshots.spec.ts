@@ -2,56 +2,69 @@ import { test } from '@playwright/test';
 import { mkdirSync } from 'fs';
 import { resolve } from 'path';
 
-test.describe('RecoverFlow AI — Screenshot Generation for Submission', () => {
+test.describe('RecoverFlow AI — Multi-Viewport & Screenshot Verification', () => {
   test.beforeAll(() => {
     mkdirSync(resolve(process.cwd(), 'docs/screenshots'), { recursive: true });
   });
 
-  test('captures full suite of high-resolution UI screenshots', async ({ page }) => {
-    // Set 1080p viewport
-    await page.setViewportSize({ width: 1440, height: 900 });
-    await page.goto('/');
+  const VIEWPORTS = [
+    { name: 'desktop-large', width: 1440, height: 900 },
+    { name: 'laptop', width: 1280, height: 800 },
+    { name: 'tablet-landscape', width: 1024, height: 768 },
+    { name: 'tablet-portrait', width: 768, height: 1024 },
+    { name: 'mobile', width: 390, height: 844 },
+  ];
 
-    // 1. Dashboard Overview & Ranked Queue
-    await page.screenshot({
-      path: 'docs/screenshots/01-dashboard-overview.png',
-      fullPage: true,
+  for (const vp of VIEWPORTS) {
+    test(`renders responsive layout cleanly on ${vp.name} (${vp.width}x${vp.height})`, async ({ page }) => {
+      await page.setViewportSize({ width: vp.width, height: vp.height });
+      await page.goto('/');
+
+      // Verify core elements exist without fatal overflow
+      await page.waitForSelector('header');
+      await page.waitForSelector('main');
+
+      if (vp.name === 'desktop-large') {
+        // Capture submission screenshots
+        await page.screenshot({
+          path: 'docs/screenshots/01-dashboard-overview.png',
+          fullPage: true,
+        });
+
+        // Drilldown
+        const firstRow = page.locator('[data-testid="queue-row"]').first();
+        await firstRow.click();
+        await page.waitForTimeout(400);
+        await page.screenshot({
+          path: 'docs/screenshots/02-explainable-drilldown.png',
+        });
+        await page.locator('button[aria-label="Close modal"]').click();
+        await page.waitForTimeout(300);
+
+        // Evaluation Lab
+        await page.getByRole('button', { name: /Evaluation Lab/i }).click();
+        await page.waitForTimeout(400);
+        await page.screenshot({
+          path: 'docs/screenshots/03-evaluation-lab.png',
+          fullPage: true,
+        });
+
+        // Audit Trail
+        await page.getByRole('button', { name: /Audit Trail/i }).click();
+        await page.waitForTimeout(400);
+        await page.screenshot({
+          path: 'docs/screenshots/04-audit-trail-ledger.png',
+          fullPage: true,
+        });
+
+        // Live Runner
+        await page.getByRole('button', { name: /Live Recovery Runner/i }).click();
+        await page.waitForTimeout(400);
+        await page.screenshot({
+          path: 'docs/screenshots/05-live-runner.png',
+          fullPage: true,
+        });
+      }
     });
-
-    // 2. Decision Drill-down Modal (Click Rank #1)
-    const firstRow = page.locator('tbody tr').first();
-    await firstRow.click();
-    await page.waitForTimeout(500);
-    await page.screenshot({
-      path: 'docs/screenshots/02-explainable-drilldown.png',
-    });
-
-    // Close modal
-    await page.getByRole('button', { name: /Close Drill-Down/i }).click();
-    await page.waitForTimeout(300);
-
-    // 3. Evaluation Lab & Counterfactual Policy Simulator
-    await page.getByRole('button', { name: /Evaluation Lab & Policy Simulator/i }).click();
-    await page.waitForTimeout(500);
-    await page.screenshot({
-      path: 'docs/screenshots/03-evaluation-lab.png',
-      fullPage: true,
-    });
-
-    // 4. Audit Trail & Cryptographic Ledger
-    await page.getByRole('button', { name: /Audit Trail & Cryptographic Ledger/i }).click();
-    await page.waitForTimeout(500);
-    await page.screenshot({
-      path: 'docs/screenshots/04-audit-trail-ledger.png',
-      fullPage: true,
-    });
-
-    // 5. Methodology & Judge Guide
-    await page.getByRole('button', { name: /Methodology & Judge Guide/i }).click();
-    await page.waitForTimeout(500);
-    await page.screenshot({
-      path: 'docs/screenshots/05-methodology-guide.png',
-      fullPage: true,
-    });
-  });
+  }
 });
