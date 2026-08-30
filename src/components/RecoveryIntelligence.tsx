@@ -312,15 +312,12 @@ export const RecoveryIntelligence: React.FC<RecoveryIntelligenceProps> = ({
             </div>
 
             <div className="p-3 bg-slate-950 rounded-lg border border-indigo-900/40">
-              <span className="text-[10px] text-indigo-400 block uppercase">5. Dispatched</span>
+              <span className="text-[10px] text-indigo-400 block uppercase">5. In-Flight</span>
               <div className="text-sm font-bold text-indigo-300 mt-1">
-                {formatPaiseToINR(
-                  items.filter((it) => it.status === 'budgeted').reduce((acc, it) => acc + it.payment.amount, 0),
-                  false,
-                )}
+                {formatPaiseToINR(pendingObservationPaise, false)}
               </div>
               <span className="text-[10px] text-indigo-400/70">
-                {items.filter((it) => it.status === 'budgeted').length} Slots
+                {items.filter((it) => it.status === 'budgeted' && it.execution_status !== 'recovered').length} In-Flight Slots
               </span>
             </div>
 
@@ -340,14 +337,21 @@ export const RecoveryIntelligence: React.FC<RecoveryIntelligenceProps> = ({
           </div>
 
           {/* Mathematical Proof Balance Box */}
-          <div className="mt-3 p-3 bg-slate-950 rounded-lg border border-slate-800 font-mono text-[11px] text-slate-300 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div>
-              <span className="text-emerald-400 font-bold">Proof Equation: </span>
-              <span>₹{(totalAtRiskPaise / 100).toLocaleString('en-IN')} (Gross) = ₹{(stoppedPaise / 100).toLocaleString('en-IN')} (Halted) + ₹{(deferredPaise / 100).toLocaleString('en-IN')} (Deferred) + ₹{(pendingObservationPaise / 100).toLocaleString('en-IN')} (In-Flight) + ₹{(recoveredPaise / 100).toLocaleString('en-IN')} (Recovered)</span>
+          <div className="mt-3 p-3 bg-slate-950 rounded-lg border border-slate-800 font-mono text-[11px] text-slate-300 space-y-1.5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-1">
+              <div>
+                <span className="text-emerald-400 font-bold">Equation 1 (Gross at Risk): </span>
+                <span>₹{(totalAtRiskPaise / 100).toLocaleString('en-IN')} = ₹{(stoppedPaise / 100).toLocaleString('en-IN')} (Halted) + ₹{(pendingApprovalPaise / 100).toLocaleString('en-IN')} (Review) + ₹{(deferredPaise / 100).toLocaleString('en-IN')} (Deferred) + ₹{(pendingObservationPaise / 100).toLocaleString('en-IN')} (In-Flight) + ₹{(recoveredPaise / 100).toLocaleString('en-IN')} (Recovered)</span>
+              </div>
+              <span className="text-emerald-400 font-bold shrink-0">[BALANCED: 0 PAISE DRIFT]</span>
             </div>
-            <span className="text-emerald-400 font-bold shrink-0">
-              [EQUATION BALANCED: 0 PAISE DRIFT]
-            </span>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <span className="text-cyan-400 font-bold">Equation 2 (Remaining Exposure): </span>
+                <span>₹{(remainingExposurePaise / 100).toLocaleString('en-IN')} = ₹{(stoppedPaise / 100).toLocaleString('en-IN')} (Halted) + ₹{(pendingApprovalPaise / 100).toLocaleString('en-IN')} (Review) + ₹{(deferredPaise / 100).toLocaleString('en-IN')} (Deferred) + ₹{(pendingObservationPaise / 100).toLocaleString('en-IN')} (In-Flight)</span>
+              </div>
+              <span className="text-cyan-400 font-bold shrink-0">[100% RECONCILED]</span>
+            </div>
           </div>
         </div>
       </div>

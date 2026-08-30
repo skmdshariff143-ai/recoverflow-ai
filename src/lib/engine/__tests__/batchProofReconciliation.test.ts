@@ -26,7 +26,7 @@ describe('Batch Recovery Proof & Invariant Reconciliation', () => {
     outcomeObserverManager.clear();
   });
 
-  it('proves that the batch financial waterfall balances with 100% precision in integer paise', () => {
+  it('proves that the batch financial waterfall balances with exact integer-paise reconciliation', () => {
     const payments = generateSyntheticPayments({ seed: 42, totalRecords: 100 });
     const result = runRecoveryBatch(payments, { budget: 40, simulationSeed: 42 });
 
@@ -48,6 +48,56 @@ describe('Batch Recovery Proof & Invariant Reconciliation', () => {
     expect(result.total_revenue_recovered).toBe(recoveredPaise);
     expect(totalAtRiskPaise).toBe(68769453); // ₹6,87,694.53
     expect(recoveredPaise).toBe(14690025); // ₹1,46,900.25 (18 recovered invoices)
+  });
+
+  it('proves that all 5 batch partitions are mutually exclusive and satisfy both core financial equations', () => {
+    const payments = generateSyntheticPayments({ seed: 42, totalRecords: 100 });
+    const result = runRecoveryBatch(payments, { budget: 40, simulationSeed: 42 });
+
+    const totalAtRiskPaise = payments.reduce((acc, p) => acc + p.amount, 0);
+
+    const safetyHaltedPaise = result.executed_items
+      .filter((it) => it.status === 'stopped')
+      .reduce((acc, it) => acc + it.payment.amount, 0);
+
+    const awaitingApprovalPaise = result.executed_items
+      .filter((it) => it.status === 'pending_approval')
+      .reduce((acc, it) => acc + it.payment.amount, 0);
+
+    const deferredPaise = result.executed_items
+      .filter((it) => it.status === 'deferred')
+      .reduce((acc, it) => acc + it.payment.amount, 0);
+
+    const inFlightPaise = result.executed_items
+      .filter((it) => it.status === 'budgeted' && it.execution_status !== 'recovered')
+      .reduce((acc, it) => acc + it.payment.amount, 0);
+
+    const verifiedSyntheticRecoveredPaise = result.executed_items
+      .filter((it) => it.execution_status === 'recovered')
+      .reduce((acc, it) => acc + it.recovered_amount, 0);
+
+    // Equation 1: Gross at risk = Safety halted + Awaiting approval + Deferred + In flight + Verified synthetic recovered
+    const eq1Sum =
+      safetyHaltedPaise +
+      awaitingApprovalPaise +
+      deferredPaise +
+      inFlightPaise +
+      verifiedSyntheticRecoveredPaise;
+    expect(eq1Sum).toBe(totalAtRiskPaise);
+
+    // Equation 2: Remaining exposure = Safety halted + Awaiting approval + Deferred + In flight
+    const remainingExposurePaise = totalAtRiskPaise - verifiedSyntheticRecoveredPaise;
+    const eq2Sum = safetyHaltedPaise + awaitingApprovalPaise + deferredPaise + inFlightPaise;
+    expect(eq2Sum).toBe(remainingExposurePaise);
+
+    // Exact integer counts & paise check
+    expect(totalAtRiskPaise).toBe(68769453);
+    expect(safetyHaltedPaise).toBe(18748512);
+    expect(awaitingApprovalPaise).toBe(0);
+    expect(deferredPaise).toBe(12914880);
+    expect(inFlightPaise).toBe(22416036);
+    expect(verifiedSyntheticRecoveredPaise).toBe(14690025);
+    expect(remainingExposurePaise).toBe(54079428);
   });
 
   it('ensures simulator adapter marks output with synthetic evidence classification', async () => {
