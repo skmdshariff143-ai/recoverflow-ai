@@ -3,7 +3,8 @@
  *
  * Renders the 6-factor deterministic scoring waterfall, customer payment history,
  * bounded Gemini AI copilot for error diagnosis & drafting messages,
- * and authenticated human reviewer approval controls with session persistence.
+ * live execution dispatch via official test-mode adapter, and authenticated human reviewer
+ * approval controls with session persistence.
  */
 
 'use client';
@@ -25,6 +26,7 @@ import {
   UserX,
   FileQuestion,
   RotateCw,
+  Zap,
 } from 'lucide-react';
 import type { ExecutedItem } from '@/types';
 import type { AuditRecord } from '@/lib/engine/auditTrail';
@@ -58,10 +60,9 @@ export function PaymentDrilldownModal({
   const [aiDraftChannel, setAiDraftChannel] = useState<'sms' | 'email' | 'whatsapp'>('email');
   const [aiMessage, setAiMessage] = useState<{
     subject?: string;
-    messageBody: string;
-    tone: string;
-    complianceNotice: string;
-    provider: string;
+    messageBody?: string;
+    complianceNotice?: string;
+    provider?: string;
     fallbackReason?: string;
   } | null>(null);
 
@@ -70,17 +71,33 @@ export function PaymentDrilldownModal({
     normalizedCategory: string;
     confidenceScore: number;
     plainExplanation: string;
-    isRecoverable: boolean;
-    suggestedAction: string;
     provider: string;
     fallbackReason?: string;
   } | null>(null);
 
+  // Live Execution Dispatch
+  const [selectedAdapter, setSelectedAdapter] = useState<'simulator' | 'razorpay_test_mode'>('simulator');
+  const [executionLoading, setExecutionLoading] = useState<boolean>(false);
+  const [executionResult, setExecutionResult] = useState<{
+    success?: boolean;
+    receipt?: {
+      transactionReference: string;
+      adapterUsed: string;
+      settledAmountPaise: number;
+      status: string;
+      latencyMs: number;
+      rawResponseSummary: string;
+    };
+    idempotencyStatus?: string;
+    error?: string;
+  } | null>(null);
+
   if (!item) return null;
 
-  const { payment, score } = item;
+  const payment = item.payment;
+  const score = item.score;
   const isRecovered = item.execution_status === 'recovered';
-  const isStopped = item.status === 'stopped' || item.execution_status === 'stopped';
+  const isStopped = item.status === 'stopped';
 
   const handleGenerateAiDiagnosis = async () => {
     setAiDiagnosisLoading(true);
@@ -90,10 +107,16 @@ export function PaymentDrilldownModal({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rawGatewayError: payment.raw_gateway_error }),
       });
-      if (res.ok) {
-        const data = await res.json();
-        setAiDiagnosis(data);
-      }
+      const data = await res.json();
+      setAiDiagnosis(data);
+    } catch {
+      setAiDiagnosis({
+        normalizedCategory: payment.failure_category,
+        confidenceScore: 0.85,
+        plainExplanation: `Deterministic rule classifier mapped '${payment.raw_gateway_error.slice(0, 50)}' to ${payment.failure_category}.`,
+        provider: 'deterministic_fallback',
+        fallbackReason: 'Network error; fallback classifier returned',
+      });
     } finally {
       setAiDiagnosisLoading(false);
     }
@@ -112,12 +135,49 @@ export function PaymentDrilldownModal({
           channel: aiDraftChannel,
         }),
       });
-      if (res.ok) {
-        const data = await res.json();
-        setAiMessage(data);
-      }
+      const data = await res.json();
+      setAiMessage(data);
+    } catch {
+      setAiMessage({
+        subject: `Payment Reminder: Invoice Update for ${payment.customer_id}`,
+        messageBody: `Dear Customer ${payment.customer_id}, your recent payment of ${formatPaiseToINR(payment.amount, true)} could not be completed due to a temporary ${payment.failure_category.replace(/_/g, ' ')} issue. Please update your details to retry.`,
+        complianceNotice: 'Policy-constrained prototype draft requiring merchant compliance review before production use. Reply STOP to opt out.',
+        provider: 'deterministic_fallback',
+        fallbackReason: 'Network error; default template returned',
+      });
     } finally {
       setAiDraftLoading(false);
+    }
+  };
+
+  const handleExecuteAdapter = async () => {
+    setExecutionLoading(true);
+    setExecutionResult(null);
+    try {
+      const res = await fetch('/api/recovery/execute', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-recovery-adapter': selectedAdapter,
+        },
+        body: JSON.stringify({
+          paymentId: payment.payment_id,
+          customerId: payment.customer_id,
+          customerName: `Customer ${payment.customer_id}`,
+          customerEmail: `${payment.customer_id}@merchant.com`,
+          amountPaise: payment.amount,
+          currency: 'INR',
+          intervention: item.suggested_intervention === 'none' ? 'retry' : item.suggested_intervention,
+          attemptCycle: item.attempts_taken ?? 1,
+          idempotencyKey: `idemp_${payment.payment_id}_drill_${Date.now()}`,
+        }),
+      });
+      const data = await res.json();
+      setExecutionResult(data);
+    } catch (err: unknown) {
+      setExecutionResult({ error: err instanceof Error ? err.message : 'Execution request failed' });
+    } finally {
+      setExecutionLoading(false);
     }
   };
 
@@ -169,31 +229,40 @@ export function PaymentDrilldownModal({
             <h3 className="text-xl font-bold mt-1 text-white flex items-center gap-2">
               {formatPaiseToINR(payment.amount, true)}
               <span className="text-xs font-normal text-slate-400">
-                ({payment.currency})
+                ({score.recovery_probability * 100}% probability · EV: {formatPaiseToINR(score.expected_value, true)})
               </span>
             </h3>
           </div>
 
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition cursor-pointer"
-            aria-label="Close modal"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* ── Modal Body ───────────────────────────────────────── */}
-        <div className="p-6 space-y-6 overflow-y-auto flex-1 text-xs">
-          {/* Top Status & Recommendation Banner */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {/* ── Modal Scrollable Body ─────────────────────────────── */}
+        <div className="p-6 overflow-y-auto space-y-6 text-xs">
+          {/* Key Metric Highlights */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-1">
-              <span className="text-slate-500 font-medium block">Predicted Recovery</span>
-              <div className="text-xl font-bold text-indigo-600">
-                {(score.recovery_probability * 100).toFixed(1)}%
+              <span className="text-slate-500 font-medium block">Failure Reason</span>
+              <div className="text-sm font-bold text-slate-900 capitalize">
+                {payment.failure_category.replace(/_/g, ' ')}
+              </div>
+              <span className="text-[10px] text-slate-400 font-mono block truncate">
+                {payment.raw_gateway_error}
+              </span>
+            </div>
+
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-1">
+              <span className="text-slate-500 font-medium block">Quiet Hours</span>
+              <div className="text-sm font-bold text-slate-900">
+                {payment.quiet_hours_window.start}:00 – {payment.quiet_hours_window.end}:00
               </div>
               <span className="text-[10px] text-slate-500 block">
-                EV: {formatPaiseToINR(score.expected_value, true)}
+                {payment.quiet_hours_window.timezone}
               </span>
             </div>
 
@@ -298,27 +367,28 @@ export function PaymentDrilldownModal({
               <div className="grid grid-cols-2 gap-2 text-[11px]">
                 <div className="bg-slate-50 p-2 rounded">
                   <span className="text-slate-500 block">On-Time Rate</span>
-                  <span className="font-bold text-slate-900">
-                    {(payment.customer_payment_history.on_time_payment_rate * 100).toFixed(0)}%
+                  <span className="font-bold text-slate-800">
+                    {(payment.customer_payment_history.on_time_payment_rate * 100).toFixed(1)}%
                   </span>
                 </div>
                 <div className="bg-slate-50 p-2 rounded">
                   <span className="text-slate-500 block">Broken Promises</span>
-                  <span className="font-bold text-slate-900">
+                  <span className="font-bold text-slate-800">
                     {payment.customer_payment_history.broken_promise_count}
                   </span>
                 </div>
                 <div className="bg-slate-50 p-2 rounded">
-                  <span className="text-slate-500 block">Tenure</span>
-                  <span className="font-bold text-slate-900">
+                  <span className="text-slate-500 block">Customer Tenure</span>
+                  <span className="font-bold text-slate-800">
                     {payment.customer_payment_history.tenure_months} months
                   </span>
                 </div>
                 <div className="bg-slate-50 p-2 rounded">
                   <span className="text-slate-500 block">Past Recoveries</span>
-                  <span className="font-bold text-slate-900">
+                  <span className="font-bold text-slate-800">
                     {payment.customer_payment_history.past_recovery_successes} /{' '}
-                    {payment.customer_payment_history.total_transactions}
+                    {payment.customer_payment_history.past_recovery_successes +
+                      payment.customer_payment_history.past_recovery_failures}
                   </span>
                 </div>
               </div>
@@ -327,54 +397,112 @@ export function PaymentDrilldownModal({
             <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-2">
               <h4 className="font-bold text-slate-800 flex items-center gap-1.5">
                 <Tag className="w-4 h-4 text-slate-600" />
-                Gateway Diagnostic &amp; Quiet Hours
+                Gateway Metadata &amp; Compliance
               </h4>
               <div className="space-y-1.5 text-[11px]">
-                <div>
-                  <span className="text-slate-500 block">Raw Gateway Error:</span>
-                  <code className="text-xs bg-slate-100 px-1.5 py-0.5 rounded text-rose-700 font-mono block overflow-hidden text-ellipsis">
-                    {payment.raw_gateway_error}
-                  </code>
-                </div>
-
-                <div className="flex items-center justify-between pt-1">
-                  <span className="text-slate-500">Customer Quiet Hours:</span>
-                  <span className="font-mono text-slate-700 font-semibold">
-                    {payment.quiet_hours_window.start}:00 – {payment.quiet_hours_window.end}:00 (
-                    {payment.quiet_hours_window.timezone})
+                <div className="flex justify-between border-b border-slate-100 pb-1">
+                  <span className="text-slate-500">Opt-Out Status:</span>
+                  <span
+                    className={`font-semibold ${
+                      payment.opt_out ? 'text-rose-600 font-bold' : 'text-emerald-600'
+                    }`}
+                  >
+                    {payment.opt_out ? 'Opted Out (Hard Stop)' : 'Active (Eligible)'}
                   </span>
                 </div>
-
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-500">Scheduled Dispatch:</span>
-                  <span className="font-mono text-indigo-700 font-semibold">
-                    {item.scheduled_time
-                      ? new Date(item.scheduled_time).toLocaleTimeString()
-                      : 'Immediate dispatch'}
+                <div className="flex justify-between border-b border-slate-100 pb-1">
+                  <span className="text-slate-500">Tier:</span>
+                  <span className="font-semibold text-slate-800 uppercase">
+                    {payment.invoice_value_tier}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Failure Timestamp:</span>
+                  <span className="font-mono text-slate-700">
+                    {new Date(payment.failure_timestamp).toLocaleString()}
                   </span>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* 3. Bounded Gemini AI Copilot */}
-          <div className="bg-gradient-to-br from-indigo-50/70 via-white to-purple-50/50 border border-indigo-200 rounded-xl p-4 space-y-3">
-            <div className="flex items-center justify-between border-b border-indigo-100 pb-2">
+          {/* 3. Live Server-Side Test-Mode Execution Trigger */}
+          <div className="bg-slate-900 text-white rounded-xl p-4 space-y-3 shadow-md">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-2">
+              <h4 className="font-bold flex items-center gap-1.5 text-amber-300">
+                <Zap className="w-4 h-4 text-amber-400" />
+                Live Execution Adapter Dispatch (`/api/recovery/execute`)
+              </h4>
+              <span className="text-[10px] text-slate-400">Server-Side Sandbox Execution</span>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
               <div className="flex items-center gap-2">
-                <div className="p-1 rounded-md bg-indigo-600 text-white">
-                  <Bot className="w-4 h-4" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-slate-900">
-                    Bounded Gemini AI Copilot
-                  </h4>
-                  <span className="text-[10px] text-slate-500">
-                    Grounded Advisory Assistant (Zero financial execution authority)
-                  </span>
-                </div>
+                <span className="text-slate-400">Adapter:</span>
+                <select
+                  value={selectedAdapter}
+                  onChange={(e) => setSelectedAdapter(e.target.value as 'simulator' | 'razorpay_test_mode')}
+                  className="bg-slate-800 text-slate-100 font-bold px-2.5 py-1 rounded border border-slate-700 text-xs focus:outline-none"
+                >
+                  <option value="simulator">Deterministic Simulator</option>
+                  <option value="razorpay_test_mode">Official Razorpay Test-Mode</option>
+                </select>
               </div>
-              <span className="text-[10px] font-bold bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded border border-indigo-200">
-                ADVISORY ONLY
+
+              <button
+                onClick={handleExecuteAdapter}
+                disabled={executionLoading}
+                className="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-3 py-1.5 rounded-lg text-xs transition cursor-pointer"
+              >
+                <RotateCw className={`w-3.5 h-3.5 ${executionLoading ? 'animate-spin' : ''}`} />
+                {executionLoading ? 'Executing...' : 'Dispatch Live Execution'}
+              </button>
+            </div>
+
+            {executionResult && (
+              <div className="mt-3 p-3 bg-slate-800/90 border border-slate-700 rounded-lg space-y-1.5 text-xs font-mono">
+                {executionResult.error ? (
+                  <div className="text-rose-400 font-bold">Error: {executionResult.error}</div>
+                ) : (
+                  <>
+                    <div className="flex justify-between text-slate-300">
+                      <span>Status:</span>
+                      <span className="font-bold text-emerald-400 uppercase">
+                        {executionResult.receipt?.status}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-slate-300">
+                      <span>Reference:</span>
+                      <span className="text-cyan-300">{executionResult.receipt?.transactionReference}</span>
+                    </div>
+                    <div className="flex justify-between text-slate-300">
+                      <span>Adapter Used:</span>
+                      <span className="text-amber-300">{executionResult.receipt?.adapterUsed}</span>
+                    </div>
+                    <div className="flex justify-between text-slate-300">
+                      <span>Settled Amount:</span>
+                      <span className="font-bold text-white">
+                        {formatPaiseToINR(executionResult.receipt?.settledAmountPaise ?? 0, true)}
+                      </span>
+                    </div>
+                    <div className="text-[10px] text-slate-400 pt-1 border-t border-slate-700">
+                      {executionResult.receipt?.rawResponseSummary}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* 4. Bounded Gemini AI Diagnostic & Communication Copilot */}
+          <div className="bg-gradient-to-br from-indigo-50/70 via-slate-50 to-white border border-indigo-200 rounded-xl p-4 space-y-4">
+            <div className="flex items-center justify-between border-b border-indigo-100 pb-2">
+              <h4 className="font-bold text-indigo-950 flex items-center gap-1.5">
+                <Bot className="w-4 h-4 text-indigo-600" />
+                Bounded Gemini 2.5 AI Diagnostic &amp; Message Copilot
+              </h4>
+              <span className="text-[10px] bg-indigo-100 text-indigo-800 font-semibold px-2 py-0.5 rounded">
+                Advisory Only · Strict Zod Validation
               </span>
             </div>
 
@@ -468,7 +596,7 @@ export function PaymentDrilldownModal({
             </div>
           </div>
 
-          {/* 4. Human-in-the-Loop Reviewer Action Panel */}
+          {/* 5. Human-in-the-Loop Reviewer Action Panel */}
           <div className="bg-white border-2 border-emerald-300 rounded-xl p-4 space-y-3 bg-emerald-50/10">
             <h4 className="font-bold text-slate-900 flex items-center gap-1.5">
               <UserCheck className="w-4 h-4 text-emerald-600" />
@@ -521,7 +649,7 @@ export function PaymentDrilldownModal({
             )}
           </div>
 
-          {/* 5. Chronological Audit Trail */}
+          {/* 6. Chronological Audit Trail */}
           <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
             <h4 className="font-bold text-slate-800 flex items-center gap-1.5">
               <History className="w-4 h-4 text-indigo-600" />
