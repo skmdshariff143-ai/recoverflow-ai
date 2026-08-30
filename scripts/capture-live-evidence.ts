@@ -225,6 +225,11 @@ function generateMarkdownFromEvidence(
   gemini: { host: string; capturedAt: string; captures: Record<string, HttpCapture> },
   razorpay: { host: string; capturedAt: string; captures: Record<string, HttpCapture> },
 ) {
+  const geminiProvider =
+    (gemini.captures.diagnoseNormal.responseBody as Record<string, unknown>)?.provider ??
+    'deterministic_fallback';
+  const isLiveGemini = geminiProvider.toString().startsWith('gemini');
+
   // Generate docs/LIVE_GEMINI_EVIDENCE.md
   const geminiMd = `# RecoverFlow AI — Genuine Live Gemini AI Provenance & Integration Evidence
 
@@ -237,8 +242,8 @@ function generateMarkdownFromEvidence(
 
 ## 1. Provenance & Service Status Summary
 
-- **Gemini Live Status**: Integration implemented with deterministic rule fallback active when cloud API key is unconfigured.
-- **Provider Reported**: \`${(gemini.captures.diagnoseNormal.responseBody as Record<string, unknown>)?.provider ?? 'deterministic_fallback'}\`
+- **Gemini Live Status**: ${isLiveGemini ? 'Gemini inference verified on the deployed application.' : 'Gemini integration implemented; deployed environment currently uses the deterministic fallback.'}
+- **Provider Reported**: \`${geminiProvider}\`
 - **Fallback Disclosure**: \`${(gemini.captures.diagnoseNormal.responseBody as Record<string, unknown>)?.fallbackReason ?? 'None'}\`
 - **Compliance Policy**: Policy-constrained prototype draft requiring merchant compliance review.
 
@@ -272,6 +277,11 @@ ${JSON.stringify(gemini.captures.promptInjection, null, 2)}
   writeFileSync(resolve(process.cwd(), 'docs/LIVE_GEMINI_EVIDENCE.md'), geminiMd, 'utf-8');
   console.log('✓ Generated docs/LIVE_GEMINI_EVIDENCE.md from JSON');
 
+  const rzpAdapterStatus =
+    (razorpay.captures.razorpayExecuteCheck.responseBody as Record<string, Record<string, unknown>>)
+      ?.receipt?.status ?? 'unverified';
+  const isLiveRazorpay = rzpAdapterStatus === 'captured' || rzpAdapterStatus === 'test_link_created';
+
   // Generate docs/LIVE_RAZORPAY_EVIDENCE.md
   const razorpayMd = `# RecoverFlow AI — Genuine Live Recovery Execution Evidence
 
@@ -285,7 +295,7 @@ ${JSON.stringify(gemini.captures.promptInjection, null, 2)}
 ## 1. Truth & Disclosure Summary
 
 - **Simulator Execution**: Verified live on deployed serverless host with status \`${(razorpay.captures.simulatorExecute.responseBody as Record<string, Record<string, unknown>>)?.receipt?.status ?? 'test_link_created'}\`.
-- **Razorpay Sandbox Status**: \`${(razorpay.captures.razorpayExecuteCheck.responseBody as Record<string, Record<string, unknown>>)?.receipt?.rawResponseSummary ?? 'Unconfigured'}\`
+- **Razorpay Sandbox Status**: ${isLiveRazorpay ? 'Razorpay test-mode payment-object creation and status retrieval verified. No recovered money was observed unless paid/captured status is shown.' : 'Razorpay adapter implemented and unit-tested; live test-mode execution remains unverified.'}
 - **Recovery Accounting Guarantee**: ₹0.00 recovered money recorded upon payment link creation.
 - **Webhook Delivery Notice**: Webhook implementation is verified through signed integration tests (\`recoveryAdapter.test.ts\`); live inbound Razorpay delivery was not observed during this automated test-mode execution run.
 - **Idempotency Scope**: Best-effort single-instance memory store; production multi-instance requires distributed Redis/PostgreSQL.

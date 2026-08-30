@@ -2,7 +2,7 @@
 
 > **Evidence Source**: Programmatically captured by `scripts/capture-live-evidence.ts`  
 > **Target Host**: `https://recoverflow-ai-kohl.vercel.app`  
-> **Capture Timestamp**: `2026-08-30T10:22:32.227Z`  
+> **Capture Timestamp**: `2026-08-30T11:06:35.801Z`  
 > **Evidence JSON**: [`docs/evidence/live-razorpay.json`](./evidence/live-razorpay.json)
 
 ---
@@ -10,7 +10,7 @@
 ## 1. Truth & Disclosure Summary
 
 - **Simulator Execution**: Verified live on deployed serverless host with status `test_link_created`.
-- **Razorpay Sandbox Status**: `Razorpay Test-Mode credentials not configured in environment (RAZORPAY_KEY_ID must start with rzp_test_).`
+- **Razorpay Sandbox Status**: Razorpay adapter implemented and unit-tested; live test-mode execution remains unverified.
 - **Recovery Accounting Guarantee**: ₹0.00 recovered money recorded upon payment link creation.
 - **Webhook Delivery Notice**: Webhook implementation is verified through signed integration tests (`recoveryAdapter.test.ts`); live inbound Razorpay delivery was not observed during this automated test-mode execution run.
 - **Idempotency Scope**: Best-effort single-instance memory store; production multi-instance requires distributed Redis/PostgreSQL.
@@ -37,7 +37,7 @@
     "currency": "INR",
     "intervention": "reminder",
     "attemptCycle": 1,
-    "idempotencyKey": "idemp_live_1788085350931"
+    "idempotencyKey": "idemp_live_1788087994756"
   },
   "httpStatus": 200,
   "responseBody": {
@@ -49,15 +49,15 @@
       "settledAmountPaise": 0,
       "status": "test_link_created",
       "latencyMs": 15,
-      "timestamp": "2026-08-30T10:22:32.249Z",
+      "timestamp": "2026-08-30T11:06:36.079Z",
       "rawResponseSummary": "Deterministic simulated execution for reminder (cycle 1). Settlement: PENDING."
     },
-    "serverTimestamp": "2026-08-30T10:22:32.249Z",
+    "serverTimestamp": "2026-08-30T11:06:36.079Z",
     "idempotencyStatus": "new_execution_recorded",
     "securityDisclaimer": "Executed in Test Mode. Zero real financial debit triggered."
   },
-  "timestamp": "2026-08-30T10:22:30.931Z",
-  "latencyMs": 278
+  "timestamp": "2026-08-30T11:06:34.756Z",
+  "latencyMs": 259
 }
 ```
 
@@ -77,10 +77,10 @@
     "settledAmountPaise": 0,
     "source": "simulator_memory",
     "adapter": "deterministic_simulator",
-    "timestamp": "2026-08-30T10:22:32.743Z"
+    "timestamp": "2026-08-30T11:06:36.339Z"
   },
-  "timestamp": "2026-08-30T10:22:31.209Z",
-  "latencyMs": 492
+  "timestamp": "2026-08-30T11:06:35.015Z",
+  "latencyMs": 262
 }
 ```
 
@@ -104,7 +104,7 @@
     "currency": "INR",
     "intervention": "retry",
     "attemptCycle": 1,
-    "idempotencyKey": "idemp_rzp_1788085351701"
+    "idempotencyKey": "idemp_rzp_1788087995277"
   },
   "httpStatus": 200,
   "responseBody": {
@@ -116,16 +116,16 @@
       "settledAmountPaise": 0,
       "status": "failed",
       "latencyMs": 5,
-      "timestamp": "2026-08-30T10:22:33.002Z",
+      "timestamp": "2026-08-30T11:06:36.606Z",
       "rawResponseSummary": "Razorpay Test-Mode credentials not configured in environment (RAZORPAY_KEY_ID must start with rzp_test_).",
       "errorMessage": "RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET missing"
     },
-    "serverTimestamp": "2026-08-30T10:22:33.002Z",
+    "serverTimestamp": "2026-08-30T11:06:36.606Z",
     "idempotencyStatus": "new_execution_recorded",
     "securityDisclaimer": "Executed in Test Mode. Zero real financial debit triggered."
   },
-  "timestamp": "2026-08-30T10:22:31.701Z",
-  "latencyMs": 257
+  "timestamp": "2026-08-30T11:06:35.277Z",
+  "latencyMs": 268
 }
 ```
 
@@ -142,11 +142,11 @@
     "entity": "event",
     "event": "payment_link.paid"
   },
-  "httpStatus": 500,
+  "httpStatus": 400,
   "responseBody": {
-    "error": "Server Configuration Error: RAZORPAY_WEBHOOK_SECRET is not configured. Webhook verification failed closed."
+    "error": "Webhook verification failed: Missing X-Razorpay-Signature header."
   },
-  "timestamp": "2026-08-30T10:22:31.958Z",
-  "latencyMs": 269
+  "timestamp": "2026-08-30T11:06:35.546Z",
+  "latencyMs": 255
 }
 ```
