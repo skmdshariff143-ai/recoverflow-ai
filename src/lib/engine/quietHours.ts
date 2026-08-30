@@ -1,5 +1,5 @@
 /**
- * PayBack AI — Quiet-Hours Scheduler.
+ * RecoverFlow AI — Quiet-Hours Scheduler.
  *
  * Ensures customer communication respects timezone-specific quiet hours.
  * Uses native Intl.DateTimeFormat for accurate timezone conversion

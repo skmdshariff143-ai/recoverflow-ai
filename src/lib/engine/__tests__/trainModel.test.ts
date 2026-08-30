@@ -1,5 +1,5 @@
 /**
- * Unit tests for the PayBack AI Trained Logistic Calibration Model (Milestone 7a).
+ * Unit tests for the RecoverFlow AI Trained Logistic Calibration Model (Milestone 7a).
  *
  * Validates:
  *  1. Determinism: identical training set and hyperparameters produce identical model artifacts.
@@ -93,7 +93,7 @@ describe('trainLogisticRecoveryModel', () => {
     });
 
     console.log('\n╔════════════════════════════════════════════════════════════════════════════╗');
-    console.log('║    PayBack AI — Model Calibration Comparison (Milestone 7a Upgrade)        ║');
+    console.log('║    RecoverFlow AI — Model Calibration Comparison (Milestone 7a Upgrade)        ║');
     console.log('╠════════════════════════════════════════════════════════════════════════════╣');
     console.log(`║  Metric                       Heuristic (v1.0)     Trained Logistic (v1.1) ║`);
     console.log('╟────────────────────────────────────────────────────────────────────────────╢');

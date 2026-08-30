@@ -1,5 +1,5 @@
 /**
- * PayBack AI — Intervention Type Selector.
+ * RecoverFlow AI — Intervention Type Selector.
  *
  * Maps failure categories to recommended recovery interventions:
  *  - 'retry': Pure gateway retry (for infrastructure downtime / network degradation / duplicate collisions).

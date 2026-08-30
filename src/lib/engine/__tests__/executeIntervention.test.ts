@@ -1,5 +1,5 @@
 /**
- * Unit tests for the PayBack AI Test-Mode Intervention Executor.
+ * Unit tests for the RecoverFlow AI Test-Mode Intervention Executor.
  *
  * Validates:
  *  1. Determinism: identical seed produces identical simulated outcomes.

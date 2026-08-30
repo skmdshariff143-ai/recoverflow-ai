@@ -1,5 +1,5 @@
 /**
- * PayBack AI — Pipeline domain types.
+ * RecoverFlow AI — Pipeline domain types.
  *
  * Types for safety filtering, approval gating, quiet-hours scheduling,
  * ranking, budget allocation, test-mode execution, and calibration analysis.
@@ -53,7 +53,7 @@ export type ApprovalStatus = (typeof APPROVAL_STATUSES)[number];
 // ─── Pipeline Item ──────────────────────────────────────────────────
 
 /**
- * An enriched payment record passing through the PayBack AI pipeline.
+ * An enriched payment record passing through the RecoverFlow AI pipeline.
  */
 export interface PipelineItem {
   payment: FailedPayment;

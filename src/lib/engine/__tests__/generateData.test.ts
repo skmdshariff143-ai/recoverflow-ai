@@ -1,5 +1,5 @@
 /**
- * Unit tests for the PayBack AI Synthetic Data Generator.
+ * Unit tests for the RecoverFlow AI Synthetic Data Generator.
  *
  * Validates:
  *  1. Record count (≥100 default, custom, rejects <10).

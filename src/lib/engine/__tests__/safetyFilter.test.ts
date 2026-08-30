@@ -1,5 +1,5 @@
 /**
- * Unit tests for the PayBack AI Safety Filter.
+ * Unit tests for the RecoverFlow AI Safety Filter.
  *
  * Validates non-negotiable safety rules:
  *  1. Opted-out customers are NEVER eligible under any circumstance.

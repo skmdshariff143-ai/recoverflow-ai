@@ -1,5 +1,5 @@
 /**
- * PayBack AI — Ranked Payment Queue Component.
+ * RecoverFlow AI — Ranked Payment Queue Component.
  *
  * Interactive, searchable, sortable, and filterable view of all 100 payments.
  * Clicking any row opens the explainable decision drill-down drawer.

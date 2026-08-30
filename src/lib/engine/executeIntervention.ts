@@ -1,5 +1,5 @@
 /**
- * PayBack AI — Test-Mode Intervention Execution Engine.
+ * RecoverFlow AI — Test-Mode Intervention Execution Engine.
  *
  * Simulates recovery outcomes for budgeted payments stochastically,
  * weighted by the payment's calculated recovery probability.

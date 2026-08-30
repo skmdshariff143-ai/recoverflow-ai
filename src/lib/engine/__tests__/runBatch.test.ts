@@ -1,5 +1,5 @@
 /**
- * Unit & Integration tests for the PayBack AI Full Batch Orchestrator.
+ * Unit & Integration tests for the RecoverFlow AI Full Batch Orchestrator.
  *
  * Validates:
  *  1. End-to-end execution of the full 100-record fixture.
@@ -28,7 +28,7 @@ describe('runRecoveryBatch', () => {
     });
 
     console.log('\n╔════════════════════════════════════════════════════════════════════════════╗');
-    console.log('║        PayBack AI — Empirical Batch Recovery & Calibration Results         ║');
+    console.log('║        RecoverFlow AI — Empirical Batch Recovery & Calibration Results         ║');
     console.log('╠════════════════════════════════════════════════════════════════════════════╣');
     console.log(`║  Total Revenue at Risk:           ₹${(result.total_revenue_at_risk / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 }).padStart(18)}                  ║`);
     console.log(`║  Total Revenue Recovered:         ₹${(result.total_revenue_recovered / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 }).padStart(18)}                  ║`);

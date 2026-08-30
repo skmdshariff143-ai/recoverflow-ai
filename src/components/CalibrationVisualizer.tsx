@@ -1,5 +1,5 @@
 /**
- * PayBack AI — Probabilistic Calibration & Reliability Visualizer.
+ * RecoverFlow AI — Probabilistic Calibration & Reliability Visualizer.
  *
  * Renders the 5-bin Reliability Diagram, Category-Level Calibration Table,
  * and Side-by-Side Model Comparison (Heuristic v1.0 vs Trained Logistic v1.1).

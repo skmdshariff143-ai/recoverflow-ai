@@ -1,5 +1,5 @@
 /**
- * PayBack AI — Safety Rule Filter.
+ * RecoverFlow AI — Safety Rule Filter.
  *
  * Enforces non-negotiable safety rules before any recovery action
  * or budget allocation can occur.

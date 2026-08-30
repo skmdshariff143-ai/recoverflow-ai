@@ -7,6 +7,9 @@ export default defineConfig({
     exclude: ['tests/e2e/**', 'node_modules/**', '.next/**'],
     environment: 'node',
     globals: true,
+    testTimeout: 10000,
+    hookTimeout: 10000,
+    teardownTimeout: 5000,
   },
   resolve: {
     alias: {

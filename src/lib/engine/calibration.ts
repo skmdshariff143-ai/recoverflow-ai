@@ -1,5 +1,5 @@
 /**
- * PayBack AI — Calibration & Probabilistic Validation Engine.
+ * RecoverFlow AI — Calibration & Probabilistic Validation Engine.
  *
  * Compares predicted recovery probabilities against empirical outcomes
  * to evaluate whether the scoring model is statistically calibrated or guesswork.

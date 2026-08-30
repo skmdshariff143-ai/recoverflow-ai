@@ -1,5 +1,5 @@
 /**
- * PayBack AI — Synthetic Failed-Payment Data Generator.
+ * RecoverFlow AI — Synthetic Failed-Payment Data Generator.
  *
  * Produces ≥100 realistic failed-payment records evenly distributed
  * across 10 failure categories. Each record includes a synthetic

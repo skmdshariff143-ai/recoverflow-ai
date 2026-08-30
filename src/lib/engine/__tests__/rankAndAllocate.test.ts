@@ -1,5 +1,5 @@
 /**
- * Unit tests for the PayBack AI Ranking & Budget Allocation Pipeline.
+ * Unit tests for the RecoverFlow AI Ranking & Budget Allocation Pipeline.
  *
  * Validates:
  *  1. Opted-out payments are NEVER budgeted or deferred.
@@ -195,7 +195,7 @@ describe('processRecoveryPipeline', () => {
     const result = processRecoveryPipeline(payments, { budget: 40 });
 
     console.log('\n┌────────────────────────────────────────────────────────┐');
-    console.log('│  PayBack AI Pipeline Status Breakdown (100-record run) │');
+    console.log('│  RecoverFlow AI Pipeline Status Breakdown (100-record run) │');
     console.log('├────────────────────────────────────┬───────────────────┤');
     console.log(`│  Budgeted Items (allocated slots)  │  ${String(result.budgeted_count).padStart(17)} │`);
     console.log(`│  Deferred Items (budget overflow)  │  ${String(result.deferred_count).padStart(17)} │`);
