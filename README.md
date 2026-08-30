@@ -4,7 +4,7 @@
 > **Live Web Application**: [https://recoverflow-ai-kohl.vercel.app](https://recoverflow-ai-kohl.vercel.app)  
 > **GitHub Repository**: [https://github.com/skmdshariff143-ai/recoverflow-ai](https://github.com/skmdshariff143-ai/recoverflow-ai)  
 > **Model & Math Documentation**: [`MODEL.md`](./MODEL.md)  
-> **Forensic Audit & Claim Integrity**: [`docs/CURRENT_STATE_AUDIT.md`](./docs/CURRENT_STATE_AUDIT.md)  
+> **Forensic Audit & Claim Integrity**: [`docs/CLAIM_RECONCILIATION.md`](./docs/CLAIM_RECONCILIATION.md)  
 > **Incident & Post-Mortem Log**: [`docs/WHAT_BROKE.md`](./docs/WHAT_BROKE.md)
 
 ---
@@ -19,7 +19,23 @@ Most automated payment recovery systems rely on **blind rule cascades** (e.g. "r
 3. **Independent Frozen Evaluation**: Completely decouples ground-truth outcomes from predicted probabilities to eliminate circular evaluation bias.
 4. **Closed-Loop Multi-Cycle State Machine**: Manages payments across `DETECTED` $\to$ `DIAGNOSED` $\to$ `SCHEDULED` $\to$ `EXECUTING` $\to$ `OUTCOME_OBSERVED` $\to$ `RECOVERED` / `STOPPED` with quiet-hours scheduling.
 5. **Tamper-Evident SHA-256 Audit Ledger**: Cryptographically links every pipeline decision into an append-only hash chain.
-6. **Bounded Gemini 2.5 AI Copilot**: Grounded advisory assistant for gateway error normalization and policy-constrained prototype customer reminders without financial execution privileges.
+6. **Bounded Gemini 3.6 AI Copilot**: Grounded advisory assistant for gateway error normalization and policy-constrained prototype customer reminders without financial execution privileges.
+7. **Proactive Outcome Observation**: Outbound status polling via `GET /api/recovery/status/:id` and internal actor telemetry (`outcome_observer`, `gateway_webhook`).
+
+---
+
+## 🧭 5-Minute Judge Demonstration Path
+
+1. **Top KPI Cards (0:00 – 1:00)**:  
+   View **Total Revenue at Risk (₹6,87,695)** vs **Simulated Recovered (₹1,46,900)** across the 100-record batch.
+2. **Ranked Priority Queue & Explainability Drawer (1:00 – 2:30)**:  
+   Click on any payment row (e.g., `pay_00001`) to open the **Explainable Decision Drawer** & **Recovery Journey Stepper**. Inspect the 6-factor score breakdown, AI error diagnosis, and human approval gate.
+3. **Live Execution & Outcome Check (2:30 – 3:30)**:  
+   Inside the drawer, trigger **Dispatch Live Execution** and **Run Outcome Check** to observe test-mode link creation and proactive settlement polling.
+4. **Evaluation Lab & Counterfactual Policy Simulator (3:30 – 4:30)**:  
+   Switch to the **Evaluation Lab** tab. Compare RecoverFlow AI against 6 control policies (Fixed Retry, Retry-All, Random) across identical frozen outcomes. View the reconciled Financial Waterfall.
+5. **Audit Ledger & SHA-256 Verification (4:30 – 5:00)**:  
+   Navigate to the **Audit Ledger** tab and click **Verify Ledger Integrity** to observe real-time cryptographic hash-chain validation and mutation detection.
 
 ---
 
@@ -99,9 +115,20 @@ Most automated payment recovery systems rely on **blind rule cascades** (e.g. "r
 | **Monetary Calculations & EV** | Strict Integer-Paise Math (`bps * amountPaise / 10000`) | Deterministic Financial Core |
 | **Safety Invariants & Opt-Outs** | Hard boolean gate before scoring/ranking | Deterministic Safety Filter |
 | **State Machine Transitions** | Explicit transition mapping with idempotency | Deterministic State Engine |
-| **Error Log Normalization** | LLM classification with heuristic fallback | Bounded Gemini 2.5 Copilot |
-| **Customer Reminders** | Policy-constrained prototype draft requiring merchant compliance review | Bounded Gemini 2.5 Copilot |
+| **Error Log Normalization** | LLM classification with heuristic fallback | Bounded Gemini 3.6 Copilot |
+| **Customer Reminders** | Policy-constrained prototype draft requiring merchant compliance review | Bounded Gemini 3.6 Copilot |
 | **Audit Verification** | SHA-256 hash-chain integrity verification | Cryptographic Audit Engine |
+
+---
+
+## 🔧 Environment Variables
+
+| Variable Name | Required / Optional | Purpose |
+|---|---|---|
+| `GEMINI_API_KEY` | Optional | Google AI Studio key for live Gemini 3.6 Flash inference (falls back to deterministic classifier if absent) |
+| `GEMINI_MODEL` | Optional | Defaults to `gemini-3.6-flash` |
+| `RAZORPAY_KEY_ID` | Optional | Razorpay Test-Mode Key (must start with `rzp_test_`; live keys strictly rejected) |
+| `RAZORPAY_KEY_SECRET` | Optional | Razorpay Test-Mode Secret |
 
 ---
 
@@ -119,7 +146,7 @@ cd recoverflow-ai
 # 2. Install dependencies
 npm ci
 
-# 3. Run complete verification gate (lint, types, 116 unit tests, benchmarks, build, 11 E2E tests across 5 viewports)
+# 3. Run complete verification gate (lint, types, 139 unit tests, benchmarks, build, 11 E2E tests across 5 viewports)
 npm run verify
 
 # 4. Start local development server
@@ -133,7 +160,7 @@ Open [http://localhost:3000](http://localhost:3000) to view the RecoverFlow AI C
 ## 🧪 Comprehensive Verification Suite
 
 ```bash
-# Run unit tests (116 tests across 17 suites)
+# Run unit tests (139 tests across 19 suites)
 npm test
 
 # Run TypeScript typecheck (0 errors)
