@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import type { DashboardTab } from '@/types/pipeline';
 
-export type DataProvenanceSource = 'synthetic_fixture' | 'razorpay_test_mode' | 'imported_dataset';
+export type DataProvenanceSource = 'synthetic_fixture' | 'hand_curated_safety' | 'razorpay_test_mode' | 'imported_dataset';
 
 interface HeaderProps {
   activeTab: DashboardTab;
@@ -109,13 +109,16 @@ export function Header({
                 title="Select Active Data Provenance"
               >
                 <option value="synthetic_fixture" className="bg-slate-900 text-white">
-                  Synthetic Fixture (Dev)
+                  Canonical Batch (100 Invoices)
+                </option>
+                <option value="hand_curated_safety" className="bg-slate-900 text-white">
+                  Hand-Curated Safety Fixture (6 Cases)
                 </option>
                 <option value="razorpay_test_mode" className="bg-slate-900 text-white">
-                  Razorpay Test Mode (Sim)
+                  Development Benchmark (200 Dev)
                 </option>
                 <option value="imported_dataset" className="bg-slate-900 text-white">
-                  Imported Dataset (Stress)
+                  Held-Out Stress (80 Adversarial)
                 </option>
               </select>
             </div>

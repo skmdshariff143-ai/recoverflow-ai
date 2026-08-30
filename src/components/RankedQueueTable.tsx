@@ -77,7 +77,7 @@ export function RankedQueueTable({
               Prioritized Recovery Queue ({items.length} of {totalCount} Invoices)
             </h3>
             <span className="text-[10px] font-mono font-bold bg-amber-50 text-amber-800 px-2 py-0.5 rounded border border-amber-200 uppercase">
-              SYNTHETIC
+              {totalCount === 6 ? 'HAND-CURATED SAFETY FIXTURE' : 'SYNTHETIC'}
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">

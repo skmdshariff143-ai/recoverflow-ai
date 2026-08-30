@@ -24,7 +24,10 @@ import {
   loadDevelopmentBenchmark,
   loadAdversarialStressFixture,
 } from '@/lib/data/benchmarkLoader';
+import { JUDGE_SAFETY_SCENARIO_PAYMENTS } from '@/lib/data/judgeSafetyFixture';
 import type { ReviewerAction } from '@/lib/engine/stateMachine';
+
+export type DataProvenanceType = 'synthetic_fixture' | 'hand_curated_safety' | 'razorpay_test_mode' | 'imported_dataset';
 
 export interface UseRecoveryBatchOptions {
   initialPayments?: FailedPayment[];
@@ -33,7 +36,7 @@ export interface UseRecoveryBatchOptions {
 }
 
 export function useRecoveryBatch(options: UseRecoveryBatchOptions = {}) {
-  const [payments] = useState<FailedPayment[]>(() =>
+  const [basePayments] = useState<FailedPayment[]>(() =>
     options.initialPayments ?? generateSyntheticPayments({ seed: 42, totalRecords: 100 }),
   );
   const [budget, setBudget] = useState<number>(options.initialBudget ?? 40);
@@ -49,7 +52,21 @@ export function useRecoveryBatch(options: UseRecoveryBatchOptions = {}) {
   const [sortAsc, setSortAsc] = useState<boolean>(true);
 
   const [scoringModel, setScoringModel] = useState<'heuristic' | 'trained_logistic'>('trained_logistic');
-  const [provenance, setProvenance] = useState<'synthetic_fixture' | 'razorpay_test_mode' | 'imported_dataset'>('synthetic_fixture');
+  const [provenance, setProvenance] = useState<DataProvenanceType>('synthetic_fixture');
+
+  // Dynamically resolve active payment cohort
+  const payments = useMemo(() => {
+    if (provenance === 'hand_curated_safety') {
+      return JUDGE_SAFETY_SCENARIO_PAYMENTS;
+    }
+    if (provenance === 'razorpay_test_mode') {
+      return loadDevelopmentBenchmark().payments;
+    }
+    if (provenance === 'imported_dataset') {
+      return loadAdversarialStressFixture().payments;
+    }
+    return basePayments;
+  }, [provenance, basePayments]);
 
   // Session-persistent reviewer actions
   const [reviewerDecisions, setReviewerDecisions] = useState<Record<string, ReviewerAction>>({});
@@ -64,7 +81,7 @@ export function useRecoveryBatch(options: UseRecoveryBatchOptions = {}) {
   // Execute engine pipeline with human-gated default
   const batchResult: BatchExecutionResult = useMemo(() => {
     const rawResult = runRecoveryBatch(payments, {
-      budget,
+      budget: provenance === 'hand_curated_safety' ? 10 : budget,
       simulationSeed,
       scoringModel,
       autoApproveHighValueWithHighEV: false, // Strict: human approval required by default
