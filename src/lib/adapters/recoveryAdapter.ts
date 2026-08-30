@@ -48,6 +48,15 @@ export const LinkStatusSchema = z.enum([
 
 export type LinkStatus = z.infer<typeof LinkStatusSchema>;
 
+export const EvidenceClassSchema = z.enum([
+  'SYNTHETIC',
+  'LIVE_TEST_MODE',
+  'FALLBACK',
+  'UNVERIFIED',
+]);
+
+export type EvidenceClass = z.infer<typeof EvidenceClassSchema>;
+
 export const RecoveryExecutionResultSchema = z.object({
   success: z.boolean(),
   transactionReference: z.string(),
@@ -59,6 +68,14 @@ export const RecoveryExecutionResultSchema = z.object({
   paymentLinkUrl: z.string().optional(),
   rawResponseSummary: z.string(),
   errorMessage: z.string().optional(),
+  // Normalized provenance & accounting clarification fields
+  executionStatus: z.enum(['executed', 'scheduled', 'failed', 'link_created']).default('executed'),
+  outcomeStatus: z.enum(['synthetic_captured', 'synthetic_not_recovered', 'live_test_mode_created', 'unverified']).default('synthetic_captured'),
+  evidenceClass: EvidenceClassSchema.default('SYNTHETIC'),
+  verifiedSyntheticRecoveredPaise: z.number().int().nonnegative().default(0),
+  liveSettledAmountPaise: z.number().int().nonnegative().default(0),
+  providerReference: z.string().optional(),
+  provenanceNotice: z.string().default('Recovered amount shown here is a deterministic synthetic outcome used for evaluation. It is not live merchant settlement.'),
 });
 
 export type RecoveryExecutionResult = z.infer<typeof RecoveryExecutionResultSchema>;
@@ -69,6 +86,10 @@ export interface StatusQueryResult {
   razorpayStatusRaw?: string;
   source: 'simulator_memory' | 'razorpay_test_api';
   timestamp: string;
+  evidenceClass?: EvidenceClass;
+  liveSettledAmountPaise?: number;
+  verifiedSyntheticRecoveredPaise?: number;
+  provenanceNotice?: string;
 }
 
 export interface RecoveryExecutionAdapter {
@@ -101,6 +122,14 @@ export class DeterministicSimulatorAdapter implements RecoveryExecutionAdapter {
       // Invariant: Zero fake external URLs. Use internal simulation identifier.
       paymentLinkUrl: undefined,
       rawResponseSummary: `Deterministic simulated execution for ${validated.intervention} (cycle ${validated.attemptCycle}). Settlement: ${isSuccess ? 'SYNTHETIC_OUTCOME_VERIFIED' : 'TEST_LINK_CREATED'}. (Note: Deterministic synthetic evaluation outcome, not live merchant settlement).`,
+      // Explicit provenance & settlement segregation
+      executionStatus: isSuccess ? 'executed' : 'link_created',
+      outcomeStatus: isSuccess ? 'synthetic_captured' : 'synthetic_not_recovered',
+      evidenceClass: 'SYNTHETIC',
+      verifiedSyntheticRecoveredPaise: isSuccess ? validated.amountPaise : 0,
+      liveSettledAmountPaise: 0, // Invariant: Exactly 0 real/live merchant settlement
+      providerReference: ref,
+      provenanceNotice: 'Recovered amount shown here is a deterministic synthetic outcome used for evaluation. It is not live merchant settlement. Payment link creation counts as ₹0.00 recovered until verified settlement.',
     };
 
     this.transactionStore.set(ref, result);
@@ -115,6 +144,10 @@ export class DeterministicSimulatorAdapter implements RecoveryExecutionAdapter {
         settledAmountPaise: 0,
         source: 'simulator_memory',
         timestamp: new Date().toISOString(),
+        evidenceClass: 'SYNTHETIC',
+        liveSettledAmountPaise: 0,
+        verifiedSyntheticRecoveredPaise: 0,
+        provenanceNotice: 'Deterministic simulated transaction reference not found.',
       };
     }
 
@@ -123,6 +156,10 @@ export class DeterministicSimulatorAdapter implements RecoveryExecutionAdapter {
       settledAmountPaise: existing.settledAmountPaise,
       source: 'simulator_memory',
       timestamp: new Date().toISOString(),
+      evidenceClass: 'SYNTHETIC',
+      liveSettledAmountPaise: 0,
+      verifiedSyntheticRecoveredPaise: existing.verifiedSyntheticRecoveredPaise,
+      provenanceNotice: existing.provenanceNotice,
     };
   }
 

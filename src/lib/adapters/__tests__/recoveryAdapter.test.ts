@@ -51,21 +51,47 @@ describe('Recovery Execution Adapters & Idempotency Store', () => {
       expect(result.status).toBe('captured');
       expect(result.transactionReference).toContain('sim_txn_');
       expect(result.paymentLinkUrl).toBeUndefined(); // Invariant: no fake URLs
+      // Phase 2 Invariants:
+      expect(result.evidenceClass).toBe('SYNTHETIC');
+      expect(result.outcomeStatus).toBe('synthetic_captured');
+      expect(result.liveSettledAmountPaise).toBe(0);
+      expect(result.verifiedSyntheticRecoveredPaise).toBe(500_000);
+      expect(result.provenanceNotice).toContain('deterministic synthetic outcome used for evaluation');
     });
 
-    it('getStatus retrieves the exact recorded transaction amount from memory', async () => {
+    it('enforces that reminder payment-link creation records zero live settlement and zero synthetic recovered', async () => {
+      const reminderReq: RecoveryExecutionRequest = {
+        ...validRequest,
+        intervention: 'reminder',
+        idempotencyKey: 'idemp_rem_test_001',
+      };
+      const result = await adapter.execute(reminderReq);
+
+      expect(result.status).toBe('test_link_created');
+      expect(result.settledAmountPaise).toBe(0);
+      expect(result.liveSettledAmountPaise).toBe(0);
+      expect(result.verifiedSyntheticRecoveredPaise).toBe(0);
+      expect(result.evidenceClass).toBe('SYNTHETIC');
+    });
+
+    it('getStatus retrieves the exact recorded transaction amount from memory and marks evidence as SYNTHETIC', async () => {
       const result = await adapter.execute(validRequest);
       const query = await adapter.getStatus(result.transactionReference);
 
       expect(query.status).toBe('captured');
       expect(query.settledAmountPaise).toBe(500_000);
       expect(query.source).toBe('simulator_memory');
+      expect(query.evidenceClass).toBe('SYNTHETIC');
+      expect(query.liveSettledAmountPaise).toBe(0);
+      expect(query.verifiedSyntheticRecoveredPaise).toBe(500_000);
     });
 
-    it('getStatus returns failed for unknown references', async () => {
+    it('getStatus returns failed with zero paise for unknown references', async () => {
       const query = await adapter.getStatus('unknown_ref_999');
       expect(query.status).toBe('failed');
       expect(query.settledAmountPaise).toBe(0);
+      expect(query.liveSettledAmountPaise).toBe(0);
+      expect(query.verifiedSyntheticRecoveredPaise).toBe(0);
     });
   });
 
