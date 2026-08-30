@@ -37,13 +37,16 @@ writeFileSync(
 );
 console.log(`✓ Saved data/frozen-outcomes-200.json (${devOutcomes.length} outcome matrices)`);
 
-// ── 3. Held-Out Adversarial Benchmark (80 Frozen Records) ───────────
-console.log('\nGenerating 80 held-out adversarial boundary records (seed=999)...');
-const baseAdversarial = generateSyntheticPayments({ totalRecords: 80, seed: 999 });
+// ── 3. Frozen Internal Adversarial Stress Fixture (80 Records) ─────
+console.log('\nGenerating 80 internal adversarial stress records (seed=999, start=501)...');
+const baseAdversarial = generateSyntheticPayments({ totalRecords: 80, seed: 999, startCounter: 501 });
 
 // Enrich with specific boundary test cases
 const adversarialPayments: FailedPayment[] = baseAdversarial.map((p, idx) => {
-  const mod = { ...p };
+  const mod: FailedPayment = {
+    ...p,
+    customer_payment_history: { ...p.customer_payment_history },
+  };
   if (idx < 8) {
     // Boundary 1: Customer Opt-Out
     mod.opt_out = true;

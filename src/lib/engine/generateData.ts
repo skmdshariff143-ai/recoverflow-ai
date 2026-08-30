@@ -132,6 +132,8 @@ export interface GenerateDataOptions {
   totalRecords?: number;
   /** Numeric seed for deterministic generation. Omit for random. */
   seed?: number;
+  /** Starting index for payment counter. Default: 1. */
+  startCounter?: number;
 }
 
 /**
@@ -142,7 +144,7 @@ export interface GenerateDataOptions {
 export function generateSyntheticPayments(
   options: GenerateDataOptions = {},
 ): FailedPayment[] {
-  const { totalRecords = 100, seed } = options;
+  const { totalRecords = 100, seed, startCounter = 1 } = options;
 
   if (totalRecords < 10) {
     throw new Error('totalRecords must be ≥ 10 (at least 1 per category)');
@@ -153,7 +155,7 @@ export function generateSyntheticPayments(
 
   const records: FailedPayment[] = [];
   const perCategory = Math.ceil(totalRecords / FAILURE_CATEGORIES.length);
-  let paymentCounter = 1;
+  let paymentCounter = startCounter;
 
   for (const category of FAILURE_CATEGORIES) {
     const count = Math.min(perCategory, totalRecords - records.length);
