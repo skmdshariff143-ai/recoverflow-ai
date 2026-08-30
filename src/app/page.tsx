@@ -25,11 +25,11 @@ export default function Home() {
                 (probability + expected value + 6-factor explanations)
               </span>
             </li>
-            <li className="flex items-start gap-2 text-gray-400">
-              <span>○</span>
+            <li className="flex items-start gap-2">
+              <span className="text-green-600 font-bold">✓</span>
               <span>
-                <strong>Milestone 3</strong> — Ranking, Budget Allocation +
-                Safety Rules
+                <strong>Milestone 3</strong> — Ranking, Budget Allocation &amp;
+                Safety Rules (opt-out, attempt cap, approval gate, quiet hours)
               </span>
             </li>
             <li className="flex items-start gap-2 text-gray-400">

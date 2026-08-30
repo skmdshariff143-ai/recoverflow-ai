@@ -34,8 +34,23 @@ Given a batch of failed/at-risk payments, predict each payment's probability of 
   - High-friction / behavioral issues (`insufficient_funds`, `invalid_mandate`): ~26–33% avg.
   - Hard stops & high-risk (`broken_promise_to_pay`, `customer_cancellation`, `permanent_account_closure`): 1.6–8.8% avg.
 
-### ○ Milestone 3 — Ranking + Budget Allocation + Safety Rules (next)
-### ○ Milestone 4 — Test-Mode Execution + Calibration
+### ✅ Milestone 3 — Ranking, Budget Allocation & Safety Rules
+
+- **Safety-Rule Filter** (`src/lib/engine/safetyFilter.ts`):
+  - Hard cap at 3 recovery attempts (`max_attempts_exceeded`).
+  - Zero retries for permanent account closure or hard cancellations (`non_recoverable_category`).
+  - Zero contact for opted-out customers (`customer_opted_out`).
+  - Ineligible items are never deleted; they flow through as audited `stopped` records.
+- **High-Value Approval Gate** (`src/lib/engine/approvalGate.ts`):
+  - High-value invoices gated behind merchant approval (`pending_approval`).
+- **Quiet-Hours Scheduler** (`src/lib/engine/quietHours.ts`):
+  - Timezone-aware contact scheduler ensuring zero customer disturbance during local quiet hours.
+- **Queue Ranking & Budget Allocation** (`src/lib/engine/rankAndAllocate.ts`):
+  - Actionable items ranked strictly descending by `expected_value`.
+  - Limited contact budget (default: 40 slots) allocated to top-ranked items (`budgeted`), remainder safely `deferred`.
+- **62 total unit tests** across safety rules, quiet hours, approval gating, ranking, and budget allocation.
+
+### ○ Milestone 4 — Test-Mode Execution + Calibration (next)
 ### ○ Milestone 5 — Dashboard, Drill-down, Audit Explorer
 ### ○ Milestone 6 — Polish, README, Screenshots
 
