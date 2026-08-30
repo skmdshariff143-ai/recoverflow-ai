@@ -1,0 +1,2010 @@
+[
+  {
+    "payment_id": "pay_00040",
+    "customer_id": "cust_0096",
+    "amount": 461189,
+    "currency": "GBP",
+    "failure_category": "invalid_mandate",
+    "failure_timestamp": "2025-08-24T08:35:22.155Z",
+    "attempt_count": 2,
+    "opt_out": true,
+    "quiet_hours_window": {
+      "start": 16,
+      "end": 1,
+      "timezone": "Europe/Berlin"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "Customer explicitly opted out of auto-debit recovery",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.68,
+      "broken_promise_count": 0,
+      "tenure_months": 21,
+      "total_transactions": 5,
+      "past_recovery_successes": 0,
+      "past_recovery_failures": 0
+    }
+  },
+  {
+    "payment_id": "pay_00036",
+    "customer_id": "cust_0317",
+    "amount": 2397,
+    "currency": "INR",
+    "failure_category": "invalid_mandate",
+    "failure_timestamp": "2025-08-15T17:25:34.951Z",
+    "attempt_count": 0,
+    "opt_out": true,
+    "quiet_hours_window": {
+      "start": 7,
+      "end": 15,
+      "timezone": "Australia/Sydney"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "Customer explicitly opted out of auto-debit recovery",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.59,
+      "broken_promise_count": 1,
+      "tenure_months": 4,
+      "total_transactions": 33,
+      "past_recovery_successes": 3,
+      "past_recovery_failures": 1
+    }
+  },
+  {
+    "payment_id": "pay_00073",
+    "customer_id": "cust_0296",
+    "amount": 457309,
+    "currency": "USD",
+    "failure_category": "broken_promise_to_pay",
+    "failure_timestamp": "2025-08-15T02:14:36.452Z",
+    "attempt_count": 0,
+    "opt_out": true,
+    "quiet_hours_window": {
+      "start": 12,
+      "end": 18,
+      "timezone": "America/New_York"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "Customer explicitly opted out of auto-debit recovery",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.27,
+      "broken_promise_count": 6,
+      "tenure_months": 36,
+      "total_transactions": 5,
+      "past_recovery_successes": 0,
+      "past_recovery_failures": 0
+    }
+  },
+  {
+    "payment_id": "pay_00050",
+    "customer_id": "cust_0383",
+    "amount": 193363,
+    "currency": "INR",
+    "failure_category": "customer_cancellation",
+    "failure_timestamp": "2025-08-08T10:44:03.009Z",
+    "attempt_count": 2,
+    "opt_out": true,
+    "quiet_hours_window": {
+      "start": 14,
+      "end": 22,
+      "timezone": "America/Los_Angeles"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "Customer explicitly opted out of auto-debit recovery",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.37,
+      "broken_promise_count": 3,
+      "tenure_months": 9,
+      "total_transactions": 53,
+      "past_recovery_successes": 3,
+      "past_recovery_failures": 2
+    }
+  },
+  {
+    "payment_id": "pay_00007",
+    "customer_id": "cust_0118",
+    "amount": 167749,
+    "currency": "EUR",
+    "failure_category": "insufficient_funds",
+    "failure_timestamp": "2025-08-28T09:37:48.424Z",
+    "attempt_count": 1,
+    "opt_out": true,
+    "quiet_hours_window": {
+      "start": 12,
+      "end": 20,
+      "timezone": "Asia/Kolkata"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "Customer explicitly opted out of auto-debit recovery",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.74,
+      "broken_promise_count": 2,
+      "tenure_months": 44,
+      "total_transactions": 19,
+      "past_recovery_successes": 0,
+      "past_recovery_failures": 0
+    }
+  },
+  {
+    "payment_id": "pay_00058",
+    "customer_id": "cust_0494",
+    "amount": 361875,
+    "currency": "GBP",
+    "failure_category": "gateway_degradation",
+    "failure_timestamp": "2025-08-12T09:06:24.046Z",
+    "attempt_count": 1,
+    "opt_out": true,
+    "quiet_hours_window": {
+      "start": 8,
+      "end": 16,
+      "timezone": "America/Los_Angeles"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "Customer explicitly opted out of auto-debit recovery",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.72,
+      "broken_promise_count": 1,
+      "tenure_months": 36,
+      "total_transactions": 49,
+      "past_recovery_successes": 9,
+      "past_recovery_failures": 3
+    }
+  },
+  {
+    "payment_id": "pay_00051",
+    "customer_id": "cust_0486",
+    "amount": 238797,
+    "currency": "INR",
+    "failure_category": "customer_cancellation",
+    "failure_timestamp": "2025-08-13T23:32:39.308Z",
+    "attempt_count": 1,
+    "opt_out": true,
+    "quiet_hours_window": {
+      "start": 21,
+      "end": 3,
+      "timezone": "America/New_York"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "Customer explicitly opted out of auto-debit recovery",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.57,
+      "broken_promise_count": 2,
+      "tenure_months": 40,
+      "total_transactions": 24,
+      "past_recovery_successes": 4,
+      "past_recovery_failures": 2
+    }
+  },
+  {
+    "payment_id": "pay_00063",
+    "customer_id": "cust_0124",
+    "amount": 371557,
+    "currency": "EUR",
+    "failure_category": "gateway_degradation",
+    "failure_timestamp": "2025-08-28T04:54:55.649Z",
+    "attempt_count": 0,
+    "opt_out": true,
+    "quiet_hours_window": {
+      "start": 19,
+      "end": 3,
+      "timezone": "Australia/Sydney"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "Customer explicitly opted out of auto-debit recovery",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.82,
+      "broken_promise_count": 0,
+      "tenure_months": 40,
+      "total_transactions": 57,
+      "past_recovery_successes": 6,
+      "past_recovery_failures": 2
+    }
+  },
+  {
+    "payment_id": "pay_00010",
+    "customer_id": "cust_0417",
+    "amount": 269640,
+    "currency": "GBP",
+    "failure_category": "bank_downtime",
+    "failure_timestamp": "2025-08-20T00:34:36.700Z",
+    "attempt_count": 3,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 5,
+      "end": 11,
+      "timezone": "Europe/London"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "Exceeded maximum permitted merchant retry threshold",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.76,
+      "broken_promise_count": 1,
+      "tenure_months": 32,
+      "total_transactions": 42,
+      "past_recovery_successes": 8,
+      "past_recovery_failures": 2
+    }
+  },
+  {
+    "payment_id": "pay_00025",
+    "customer_id": "cust_0065",
+    "amount": 3974,
+    "currency": "GBP",
+    "failure_category": "expired_card",
+    "failure_timestamp": "2025-08-21T08:53:09.781Z",
+    "attempt_count": 3,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 1,
+      "end": 10,
+      "timezone": "Asia/Kolkata"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "Exceeded maximum permitted merchant retry threshold",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.64,
+      "broken_promise_count": 2,
+      "tenure_months": 12,
+      "total_transactions": 39,
+      "past_recovery_successes": 5,
+      "past_recovery_failures": 2
+    }
+  },
+  {
+    "payment_id": "pay_00044",
+    "customer_id": "cust_0275",
+    "amount": 239911,
+    "currency": "GBP",
+    "failure_category": "duplicate_attempt",
+    "failure_timestamp": "2025-08-05T21:02:42.302Z",
+    "attempt_count": 3,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 7,
+      "end": 16,
+      "timezone": "Europe/London"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "Exceeded maximum permitted merchant retry threshold",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.81,
+      "broken_promise_count": 1,
+      "tenure_months": 44,
+      "total_transactions": 81,
+      "past_recovery_successes": 5,
+      "past_recovery_failures": 4
+    }
+  },
+  {
+    "payment_id": "pay_00061",
+    "customer_id": "cust_0363",
+    "amount": 4418583,
+    "currency": "GBP",
+    "failure_category": "gateway_degradation",
+    "failure_timestamp": "2025-08-26T10:51:47.000Z",
+    "attempt_count": 3,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 14,
+      "end": 23,
+      "timezone": "America/New_York"
+    },
+    "invoice_value_tier": "high_value",
+    "raw_gateway_error": "Exceeded maximum permitted merchant retry threshold",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.9,
+      "broken_promise_count": 0,
+      "tenure_months": 16,
+      "total_transactions": 67,
+      "past_recovery_successes": 12,
+      "past_recovery_failures": 3
+    }
+  },
+  {
+    "payment_id": "pay_00022",
+    "customer_id": "cust_0218",
+    "amount": 453694,
+    "currency": "GBP",
+    "failure_category": "auth_failure",
+    "failure_timestamp": "2025-08-25T14:20:19.595Z",
+    "attempt_count": 3,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 23,
+      "end": 5,
+      "timezone": "Europe/London"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "Exceeded maximum permitted merchant retry threshold",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.62,
+      "broken_promise_count": 2,
+      "tenure_months": 17,
+      "total_transactions": 63,
+      "past_recovery_successes": 3,
+      "past_recovery_failures": 0
+    }
+  },
+  {
+    "payment_id": "pay_00064",
+    "customer_id": "cust_0443",
+    "amount": 157546,
+    "currency": "INR",
+    "failure_category": "gateway_degradation",
+    "failure_timestamp": "2025-08-13T07:26:49.476Z",
+    "attempt_count": 3,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 6,
+      "end": 14,
+      "timezone": "Europe/Berlin"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "Exceeded maximum permitted merchant retry threshold",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.82,
+      "broken_promise_count": 1,
+      "tenure_months": 8,
+      "total_transactions": 95,
+      "past_recovery_successes": 10,
+      "past_recovery_failures": 5
+    }
+  },
+  {
+    "payment_id": "pay_00075",
+    "customer_id": "cust_0062",
+    "amount": 380299,
+    "currency": "GBP",
+    "failure_category": "broken_promise_to_pay",
+    "failure_timestamp": "2025-08-08T23:57:21.369Z",
+    "attempt_count": 3,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 3,
+      "end": 11,
+      "timezone": "Australia/Sydney"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "Exceeded maximum permitted merchant retry threshold",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.34,
+      "broken_promise_count": 3,
+      "tenure_months": 5,
+      "total_transactions": 63,
+      "past_recovery_successes": 1,
+      "past_recovery_failures": 1
+    }
+  },
+  {
+    "payment_id": "pay_00077",
+    "customer_id": "cust_0079",
+    "amount": 296582,
+    "currency": "USD",
+    "failure_category": "broken_promise_to_pay",
+    "failure_timestamp": "2025-08-16T10:51:33.329Z",
+    "attempt_count": 3,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 4,
+      "end": 11,
+      "timezone": "Asia/Singapore"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "Exceeded maximum permitted merchant retry threshold",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.32,
+      "broken_promise_count": 3,
+      "tenure_months": 8,
+      "total_transactions": 85,
+      "past_recovery_successes": 15,
+      "past_recovery_failures": 5
+    }
+  },
+  {
+    "payment_id": "pay_00069",
+    "customer_id": "cust_0363",
+    "amount": 243897,
+    "currency": "USD",
+    "failure_category": "permanent_account_closure",
+    "failure_timestamp": "2025-08-10T00:19:57.713Z",
+    "attempt_count": 0,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 16,
+      "end": 1,
+      "timezone": "Asia/Kolkata"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "BANK_ERR_ACCT_TERMINATED: Account permanently shut",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.66,
+      "broken_promise_count": 1,
+      "tenure_months": 41,
+      "total_transactions": 20,
+      "past_recovery_successes": 1,
+      "past_recovery_failures": 1
+    }
+  },
+  {
+    "payment_id": "pay_00042",
+    "customer_id": "cust_0295",
+    "amount": 484,
+    "currency": "EUR",
+    "failure_category": "permanent_account_closure",
+    "failure_timestamp": "2025-08-18T11:23:16.317Z",
+    "attempt_count": 2,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 4,
+      "end": 13,
+      "timezone": "Asia/Tokyo"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "BANK_ERR_ACCT_TERMINATED: Account permanently shut",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.56,
+      "broken_promise_count": 1,
+      "tenure_months": 47,
+      "total_transactions": 90,
+      "past_recovery_successes": 3,
+      "past_recovery_failures": 5
+    }
+  },
+  {
+    "payment_id": "pay_00047",
+    "customer_id": "cust_0338",
+    "amount": 81789,
+    "currency": "EUR",
+    "failure_category": "permanent_account_closure",
+    "failure_timestamp": "2025-08-29T12:49:41.901Z",
+    "attempt_count": 0,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 13,
+      "end": 22,
+      "timezone": "America/Los_Angeles"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "BANK_ERR_ACCT_TERMINATED: Account permanently shut",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.63,
+      "broken_promise_count": 1,
+      "tenure_months": 46,
+      "total_transactions": 74,
+      "past_recovery_successes": 11,
+      "past_recovery_failures": 1
+    }
+  },
+  {
+    "payment_id": "pay_00016",
+    "customer_id": "cust_0126",
+    "amount": 435219,
+    "currency": "USD",
+    "failure_category": "permanent_account_closure",
+    "failure_timestamp": "2025-08-28T14:32:33.441Z",
+    "attempt_count": 1,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 3,
+      "end": 11,
+      "timezone": "Asia/Singapore"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "BANK_ERR_ACCT_TERMINATED: Account permanently shut",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.76,
+      "broken_promise_count": 1,
+      "tenure_months": 10,
+      "total_transactions": 70,
+      "past_recovery_successes": 10,
+      "past_recovery_failures": 6
+    }
+  },
+  {
+    "payment_id": "pay_00062",
+    "customer_id": "cust_0435",
+    "amount": 252516,
+    "currency": "INR",
+    "failure_category": "permanent_account_closure",
+    "failure_timestamp": "2025-08-08T20:07:29.488Z",
+    "attempt_count": 2,
+    "opt_out": true,
+    "quiet_hours_window": {
+      "start": 12,
+      "end": 20,
+      "timezone": "America/Los_Angeles"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "BANK_ERR_ACCT_TERMINATED: Account permanently shut",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.76,
+      "broken_promise_count": 0,
+      "tenure_months": 19,
+      "total_transactions": 22,
+      "past_recovery_successes": 2,
+      "past_recovery_failures": 1
+    }
+  },
+  {
+    "payment_id": "pay_00067",
+    "customer_id": "cust_0120",
+    "amount": 133940,
+    "currency": "GBP",
+    "failure_category": "permanent_account_closure",
+    "failure_timestamp": "2025-08-15T15:42:19.557Z",
+    "attempt_count": 0,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 2,
+      "end": 11,
+      "timezone": "Asia/Singapore"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "BANK_ERR_ACCT_TERMINATED: Account permanently shut",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.67,
+      "broken_promise_count": 0,
+      "tenure_months": 16,
+      "total_transactions": 14,
+      "past_recovery_successes": 1,
+      "past_recovery_failures": 1
+    }
+  },
+  {
+    "payment_id": "pay_00045",
+    "customer_id": "cust_0117",
+    "amount": 353303,
+    "currency": "EUR",
+    "failure_category": "permanent_account_closure",
+    "failure_timestamp": "2025-08-29T15:08:15.619Z",
+    "attempt_count": 0,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 10,
+      "end": 19,
+      "timezone": "Asia/Singapore"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "BANK_ERR_ACCT_TERMINATED: Account permanently shut",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.71,
+      "broken_promise_count": 0,
+      "tenure_months": 27,
+      "total_transactions": 7,
+      "past_recovery_successes": 0,
+      "past_recovery_failures": 0
+    }
+  },
+  {
+    "payment_id": "pay_00024",
+    "customer_id": "cust_0269",
+    "amount": 251681,
+    "currency": "INR",
+    "failure_category": "permanent_account_closure",
+    "failure_timestamp": "2025-08-01T15:10:46.916Z",
+    "attempt_count": 1,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 13,
+      "end": 21,
+      "timezone": "Europe/Berlin"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "BANK_ERR_ACCT_TERMINATED: Account permanently shut",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.59,
+      "broken_promise_count": 2,
+      "tenure_months": 19,
+      "total_transactions": 56,
+      "past_recovery_successes": 7,
+      "past_recovery_failures": 0
+    }
+  },
+  {
+    "payment_id": "pay_00038",
+    "customer_id": "cust_0079",
+    "amount": 27000000,
+    "currency": "EUR",
+    "failure_category": "invalid_mandate",
+    "failure_timestamp": "2025-08-09T15:37:18.706Z",
+    "attempt_count": 1,
+    "opt_out": true,
+    "quiet_hours_window": {
+      "start": 4,
+      "end": 12,
+      "timezone": "Europe/London"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "E_MANDATE_INVALID: e-NACH mandate ID mndt_8371 not found or revoked",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.68,
+      "broken_promise_count": 2,
+      "tenure_months": 24,
+      "total_transactions": 54,
+      "past_recovery_successes": 5,
+      "past_recovery_failures": 3
+    },
+    "customer_tier": "enterprise"
+  },
+  {
+    "payment_id": "pay_00026",
+    "customer_id": "cust_0345",
+    "amount": 27500000,
+    "currency": "GBP",
+    "failure_category": "expired_card",
+    "failure_timestamp": "2025-08-19T07:04:42.281Z",
+    "attempt_count": 0,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 23,
+      "end": 7,
+      "timezone": "Asia/Tokyo"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "ERR_EXP: Instrument validity period has lapsed",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.81,
+      "broken_promise_count": 0,
+      "tenure_months": 5,
+      "total_transactions": 27,
+      "past_recovery_successes": 5,
+      "past_recovery_failures": 0
+    },
+    "customer_tier": "enterprise"
+  },
+  {
+    "payment_id": "pay_00059",
+    "customer_id": "cust_0259",
+    "amount": 28000000,
+    "currency": "USD",
+    "failure_category": "gateway_degradation",
+    "failure_timestamp": "2025-08-13T15:18:12.592Z",
+    "attempt_count": 1,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 11,
+      "end": 18,
+      "timezone": "Europe/London"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "ERR_RATE_LIMIT: Gateway rate limit hit — retry after 60s",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.73,
+      "broken_promise_count": 1,
+      "tenure_months": 47,
+      "total_transactions": 38,
+      "past_recovery_successes": 6,
+      "past_recovery_failures": 0
+    },
+    "customer_tier": "enterprise"
+  },
+  {
+    "payment_id": "pay_00011",
+    "customer_id": "cust_0247",
+    "amount": 28500000,
+    "currency": "GBP",
+    "failure_category": "bank_downtime",
+    "failure_timestamp": "2025-08-06T20:02:21.718Z",
+    "attempt_count": 0,
+    "opt_out": true,
+    "quiet_hours_window": {
+      "start": 3,
+      "end": 10,
+      "timezone": "America/New_York"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "E_BANK_TIMEOUT: Issuing bank did not respond within 30s",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.74,
+      "broken_promise_count": 0,
+      "tenure_months": 43,
+      "total_transactions": 28,
+      "past_recovery_successes": 1,
+      "past_recovery_failures": 0
+    },
+    "customer_tier": "enterprise"
+  },
+  {
+    "payment_id": "pay_00013",
+    "customer_id": "cust_0094",
+    "amount": 29000000,
+    "currency": "GBP",
+    "failure_category": "bank_downtime",
+    "failure_timestamp": "2025-08-26T19:02:24.092Z",
+    "attempt_count": 2,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 2,
+      "end": 8,
+      "timezone": "America/Los_Angeles"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "ERR_CONN_REFUSED: TCP connection to bank gateway refused",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.94,
+      "broken_promise_count": 1,
+      "tenure_months": 19,
+      "total_transactions": 81,
+      "past_recovery_successes": 0,
+      "past_recovery_failures": 5
+    },
+    "customer_tier": "enterprise"
+  },
+  {
+    "payment_id": "pay_00066",
+    "customer_id": "cust_0458",
+    "amount": 29500000,
+    "currency": "INR",
+    "failure_category": "permanent_account_closure",
+    "failure_timestamp": "2025-08-14T03:13:13.474Z",
+    "attempt_count": 1,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 13,
+      "end": 21,
+      "timezone": "Asia/Singapore"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "ACCOUNT_TERMINATED: Bank account closed — no recovery possible",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.45,
+      "broken_promise_count": 2,
+      "tenure_months": 34,
+      "total_transactions": 52,
+      "past_recovery_successes": 9,
+      "past_recovery_failures": 5
+    },
+    "customer_tier": "enterprise"
+  },
+  {
+    "payment_id": "pay_00008",
+    "customer_id": "cust_0366",
+    "amount": 30000000,
+    "currency": "INR",
+    "failure_category": "insufficient_funds",
+    "failure_timestamp": "2025-08-01T21:02:35.439Z",
+    "attempt_count": 0,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 0,
+      "end": 9,
+      "timezone": "Asia/Tokyo"
+    },
+    "invoice_value_tier": "high_value",
+    "raw_gateway_error": "E_INSF: Account balance insufficient for debit of requested amount",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.42,
+      "broken_promise_count": 1,
+      "tenure_months": 36,
+      "total_transactions": 98,
+      "past_recovery_successes": 19,
+      "past_recovery_failures": 2
+    },
+    "customer_tier": "enterprise"
+  },
+  {
+    "payment_id": "pay_00078",
+    "customer_id": "cust_0330",
+    "amount": 30500000,
+    "currency": "USD",
+    "failure_category": "broken_promise_to_pay",
+    "failure_timestamp": "2025-08-19T10:07:01.848Z",
+    "attempt_count": 2,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 15,
+      "end": 23,
+      "timezone": "Europe/Berlin"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "E_PTP_BROKEN: Customer missed promised payment date 2024-06-01",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.34,
+      "broken_promise_count": 3,
+      "tenure_months": 28,
+      "total_transactions": 44,
+      "past_recovery_successes": 0,
+      "past_recovery_failures": 3
+    },
+    "customer_tier": "enterprise"
+  },
+  {
+    "payment_id": "pay_00017",
+    "customer_id": "cust_0098",
+    "amount": 222346,
+    "currency": "USD",
+    "failure_category": "auth_failure",
+    "failure_timestamp": "2025-08-07T11:53:25.882Z",
+    "attempt_count": 0,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start_hour": 22,
+      "end_hour": 8
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "OTP_EXPIRED: One-time password expired before confirmation",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.65,
+      "broken_promise_count": 0,
+      "tenure_months": 37,
+      "total_transactions": 32,
+      "past_recovery_successes": 4,
+      "past_recovery_failures": 1
+    },
+    "customer_timezone": "Asia/Kolkata"
+  },
+  {
+    "payment_id": "pay_00037",
+    "customer_id": "cust_0237",
+    "amount": 483252,
+    "currency": "EUR",
+    "failure_category": "invalid_mandate",
+    "failure_timestamp": "2025-08-20T05:03:59.460Z",
+    "attempt_count": 1,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start_hour": 22,
+      "end_hour": 8
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "ERR_MANDATE: Mandate amount ceiling exceeded",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.57,
+      "broken_promise_count": 1,
+      "tenure_months": 4,
+      "total_transactions": 30,
+      "past_recovery_successes": 1,
+      "past_recovery_failures": 2
+    },
+    "customer_timezone": "Asia/Kolkata"
+  },
+  {
+    "payment_id": "pay_00023",
+    "customer_id": "cust_0446",
+    "amount": 282221,
+    "currency": "INR",
+    "failure_category": "auth_failure",
+    "failure_timestamp": "2025-08-06T12:56:48.689Z",
+    "attempt_count": 2,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start_hour": 22,
+      "end_hour": 8
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "E_3DS_FAIL: 3D-Secure authentication was rejected by cardholder",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.58,
+      "broken_promise_count": 1,
+      "tenure_months": 16,
+      "total_transactions": 8,
+      "past_recovery_successes": 1,
+      "past_recovery_failures": 0
+    },
+    "customer_timezone": "Asia/Kolkata"
+  },
+  {
+    "payment_id": "pay_00046",
+    "customer_id": "cust_0108",
+    "amount": 209142,
+    "currency": "EUR",
+    "failure_category": "duplicate_attempt",
+    "failure_timestamp": "2025-07-31T15:25:02.503Z",
+    "attempt_count": 2,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start_hour": 22,
+      "end_hour": 8
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "ERR_REPEAT: Repeated submission within dedup window (5 min)",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.6,
+      "broken_promise_count": 0,
+      "tenure_months": 2,
+      "total_transactions": 27,
+      "past_recovery_successes": 4,
+      "past_recovery_failures": 1
+    },
+    "customer_timezone": "Asia/Kolkata"
+  },
+  {
+    "payment_id": "pay_00060",
+    "customer_id": "cust_0477",
+    "amount": 57433,
+    "currency": "EUR",
+    "failure_category": "gateway_degradation",
+    "failure_timestamp": "2025-08-27T00:54:11.127Z",
+    "attempt_count": 2,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start_hour": 22,
+      "end_hour": 8
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "E_GW_DEGRADED: Gateway response time exceeded 10s SLA threshold",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.72,
+      "broken_promise_count": 0,
+      "tenure_months": 37,
+      "total_transactions": 83,
+      "past_recovery_successes": 1,
+      "past_recovery_failures": 6
+    },
+    "customer_timezone": "Asia/Kolkata"
+  },
+  {
+    "payment_id": "pay_00055",
+    "customer_id": "cust_0071",
+    "amount": 98584,
+    "currency": "GBP",
+    "failure_category": "customer_cancellation",
+    "failure_timestamp": "2025-08-28T00:47:27.596Z",
+    "attempt_count": 1,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start_hour": 22,
+      "end_hour": 8
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "E_CUST_CANCEL: Customer initiated cancellation during checkout",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.61,
+      "broken_promise_count": 2,
+      "tenure_months": 18,
+      "total_transactions": 94,
+      "past_recovery_successes": 16,
+      "past_recovery_failures": 8
+    },
+    "customer_timezone": "Asia/Kolkata"
+  },
+  {
+    "payment_id": "pay_00019",
+    "customer_id": "cust_0302",
+    "amount": 3652699,
+    "currency": "USD",
+    "failure_category": "auth_failure",
+    "failure_timestamp": "2025-08-21T07:40:37.013Z",
+    "attempt_count": 2,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start_hour": 22,
+      "end_hour": 8
+    },
+    "invoice_value_tier": "high_value",
+    "raw_gateway_error": "E_3DS_FAIL: 3D-Secure authentication was rejected by cardholder",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.78,
+      "broken_promise_count": 2,
+      "tenure_months": 8,
+      "total_transactions": 13,
+      "past_recovery_successes": 2,
+      "past_recovery_failures": 1
+    },
+    "customer_timezone": "Asia/Kolkata"
+  },
+  {
+    "payment_id": "pay_00039",
+    "customer_id": "cust_0172",
+    "amount": 407339,
+    "currency": "EUR",
+    "failure_category": "invalid_mandate",
+    "failure_timestamp": "2025-08-28T07:49:30.480Z",
+    "attempt_count": 0,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start_hour": 22,
+      "end_hour": 8
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "ERR_MANDATE: Mandate amount ceiling exceeded",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.62,
+      "broken_promise_count": 1,
+      "tenure_months": 26,
+      "total_transactions": 81,
+      "past_recovery_successes": 12,
+      "past_recovery_failures": 5
+    },
+    "customer_timezone": "Asia/Kolkata"
+  },
+  {
+    "payment_id": "pay_00029",
+    "customer_id": "cust_0481",
+    "amount": 461082,
+    "currency": "EUR",
+    "failure_category": "broken_promise_to_pay",
+    "failure_timestamp": "2025-08-04T15:06:26.332Z",
+    "attempt_count": 2,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 0,
+      "end": 8,
+      "timezone": "America/Los_Angeles"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "E_CARD_EXPIRED: Card expiry date 03/2024 is in the past",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.15,
+      "broken_promise_count": 3,
+      "tenure_months": 9,
+      "total_transactions": 99,
+      "past_recovery_successes": 9,
+      "past_recovery_failures": 4
+    }
+  },
+  {
+    "payment_id": "pay_00028",
+    "customer_id": "cust_0438",
+    "amount": 457121,
+    "currency": "GBP",
+    "failure_category": "broken_promise_to_pay",
+    "failure_timestamp": "2025-08-17T14:15:55.863Z",
+    "attempt_count": 2,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 23,
+      "end": 8,
+      "timezone": "Asia/Kolkata"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "DECLINED_EXPIRED: Transaction declined — expired card on file",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.15,
+      "broken_promise_count": 3,
+      "tenure_months": 26,
+      "total_transactions": 73,
+      "past_recovery_successes": 14,
+      "past_recovery_failures": 5
+    }
+  },
+  {
+    "payment_id": "pay_00041",
+    "customer_id": "cust_0112",
+    "amount": 12668,
+    "currency": "INR",
+    "failure_category": "broken_promise_to_pay",
+    "failure_timestamp": "2025-08-12T02:09:42.825Z",
+    "attempt_count": 2,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 12,
+      "end": 19,
+      "timezone": "Australia/Sydney"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "ERR_REPEAT: Repeated submission within dedup window (5 min)",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.15,
+      "broken_promise_count": 3,
+      "tenure_months": 47,
+      "total_transactions": 40,
+      "past_recovery_successes": 2,
+      "past_recovery_failures": 3
+    }
+  },
+  {
+    "payment_id": "pay_00057",
+    "customer_id": "cust_0100",
+    "amount": 3362624,
+    "currency": "USD",
+    "failure_category": "broken_promise_to_pay",
+    "failure_timestamp": "2025-08-28T02:33:04.869Z",
+    "attempt_count": 1,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 16,
+      "end": 22,
+      "timezone": "Asia/Kolkata"
+    },
+    "invoice_value_tier": "high_value",
+    "raw_gateway_error": "ERR_RATE_LIMIT: Gateway rate limit hit — retry after 60s",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.15,
+      "broken_promise_count": 3,
+      "tenure_months": 1,
+      "total_transactions": 37,
+      "past_recovery_successes": 3,
+      "past_recovery_failures": 0
+    }
+  },
+  {
+    "payment_id": "pay_00035",
+    "customer_id": "cust_0380",
+    "amount": 227976,
+    "currency": "EUR",
+    "failure_category": "broken_promise_to_pay",
+    "failure_timestamp": "2025-08-19T15:06:12.165Z",
+    "attempt_count": 2,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 17,
+      "end": 2,
+      "timezone": "Asia/Tokyo"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "ERR_MANDATE: Mandate amount ceiling exceeded",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.15,
+      "broken_promise_count": 3,
+      "tenure_months": 42,
+      "total_transactions": 12,
+      "past_recovery_successes": 2,
+      "past_recovery_failures": 0
+    }
+  },
+  {
+    "payment_id": "pay_00005",
+    "customer_id": "cust_0107",
+    "amount": 18166,
+    "currency": "GBP",
+    "failure_category": "broken_promise_to_pay",
+    "failure_timestamp": "2025-08-27T06:35:13.176Z",
+    "attempt_count": 1,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 2,
+      "end": 9,
+      "timezone": "Asia/Singapore"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "ERR_NSF: Non-sufficient funds in linked account",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.15,
+      "broken_promise_count": 3,
+      "tenure_months": 16,
+      "total_transactions": 35,
+      "past_recovery_successes": 6,
+      "past_recovery_failures": 1
+    }
+  },
+  {
+    "payment_id": "pay_00048",
+    "customer_id": "cust_0176",
+    "amount": 462637,
+    "currency": "GBP",
+    "failure_category": "broken_promise_to_pay",
+    "failure_timestamp": "2025-08-03T23:05:22.241Z",
+    "attempt_count": 1,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 21,
+      "end": 4,
+      "timezone": "Europe/Berlin"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "DUPLICATE_PAYMENT: Payment with same reference already processed",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.15,
+      "broken_promise_count": 3,
+      "tenure_months": 29,
+      "total_transactions": 63,
+      "past_recovery_successes": 0,
+      "past_recovery_failures": 1
+    }
+  },
+  {
+    "payment_id": "pay_00033",
+    "customer_id": "cust_0108",
+    "amount": 83854,
+    "currency": "USD",
+    "failure_category": "broken_promise_to_pay",
+    "failure_timestamp": "2025-08-05T16:06:28.566Z",
+    "attempt_count": 1,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 8,
+      "end": 14,
+      "timezone": "Asia/Tokyo"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "ERR_MANDATE: Mandate amount ceiling exceeded",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.15,
+      "broken_promise_count": 3,
+      "tenure_months": 47,
+      "total_transactions": 51,
+      "past_recovery_successes": 3,
+      "past_recovery_failures": 5
+    }
+  },
+  {
+    "payment_id": "pay_00020",
+    "customer_id": "cust_0013",
+    "amount": 4117308,
+    "currency": "USD",
+    "failure_category": "duplicate_attempt",
+    "failure_timestamp": "2025-08-10T05:43:51.256Z",
+    "attempt_count": 0,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 15,
+      "end": 21,
+      "timezone": "Asia/Kolkata"
+    },
+    "invoice_value_tier": "high_value",
+    "raw_gateway_error": "DUPLICATE_TRANSACTION_ID: Payment captured under sub_ref_8829",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.54,
+      "broken_promise_count": 2,
+      "tenure_months": 6,
+      "total_transactions": 43,
+      "past_recovery_successes": 5,
+      "past_recovery_failures": 4
+    }
+  },
+  {
+    "payment_id": "pay_00001",
+    "customer_id": "cust_0270",
+    "amount": 338093,
+    "currency": "GBP",
+    "failure_category": "duplicate_attempt",
+    "failure_timestamp": "2025-08-24T18:37:01.256Z",
+    "attempt_count": 0,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 7,
+      "end": 14,
+      "timezone": "Asia/Kolkata"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "DUPLICATE_TRANSACTION_ID: Payment captured under sub_ref_8829",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.47,
+      "broken_promise_count": 2,
+      "tenure_months": 2,
+      "total_transactions": 70,
+      "past_recovery_successes": 0,
+      "past_recovery_failures": 4
+    }
+  },
+  {
+    "payment_id": "pay_00065",
+    "customer_id": "cust_0325",
+    "amount": 26975,
+    "currency": "USD",
+    "failure_category": "duplicate_attempt",
+    "failure_timestamp": "2025-08-02T13:39:32.570Z",
+    "attempt_count": 2,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 15,
+      "end": 21,
+      "timezone": "America/Los_Angeles"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "DUPLICATE_TRANSACTION_ID: Payment captured under sub_ref_8829",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.61,
+      "broken_promise_count": 2,
+      "tenure_months": 13,
+      "total_transactions": 17,
+      "past_recovery_successes": 0,
+      "past_recovery_failures": 1
+    }
+  },
+  {
+    "payment_id": "pay_00004",
+    "customer_id": "cust_0414",
+    "amount": 598436,
+    "currency": "EUR",
+    "failure_category": "duplicate_attempt",
+    "failure_timestamp": "2025-08-18T18:45:07.089Z",
+    "attempt_count": 1,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 17,
+      "end": 23,
+      "timezone": "Europe/Berlin"
+    },
+    "invoice_value_tier": "high_value",
+    "raw_gateway_error": "DUPLICATE_TRANSACTION_ID: Payment captured under sub_ref_8829",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.48,
+      "broken_promise_count": 1,
+      "tenure_months": 39,
+      "total_transactions": 26,
+      "past_recovery_successes": 3,
+      "past_recovery_failures": 1
+    }
+  },
+  {
+    "payment_id": "pay_00030",
+    "customer_id": "cust_0425",
+    "amount": 372434,
+    "currency": "INR",
+    "failure_category": "duplicate_attempt",
+    "failure_timestamp": "2025-08-20T09:34:20.976Z",
+    "attempt_count": 0,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 1,
+      "end": 9,
+      "timezone": "Asia/Singapore"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "DUPLICATE_TRANSACTION_ID: Payment captured under sub_ref_8829",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.71,
+      "broken_promise_count": 0,
+      "tenure_months": 27,
+      "total_transactions": 45,
+      "past_recovery_successes": 3,
+      "past_recovery_failures": 1
+    }
+  },
+  {
+    "payment_id": "pay_00043",
+    "customer_id": "cust_0128",
+    "amount": 325515,
+    "currency": "GBP",
+    "failure_category": "duplicate_attempt",
+    "failure_timestamp": "2025-08-02T03:58:09.578Z",
+    "attempt_count": 2,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 14,
+      "end": 20,
+      "timezone": "Asia/Tokyo"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "DUPLICATE_TRANSACTION_ID: Payment captured under sub_ref_8829",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.57,
+      "broken_promise_count": 2,
+      "tenure_months": 3,
+      "total_transactions": 53,
+      "past_recovery_successes": 10,
+      "past_recovery_failures": 2
+    }
+  },
+  {
+    "payment_id": "pay_00006",
+    "customer_id": "cust_0307",
+    "amount": 220137,
+    "currency": "INR",
+    "failure_category": "duplicate_attempt",
+    "failure_timestamp": "2025-08-09T14:12:19.042Z",
+    "attempt_count": 2,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 13,
+      "end": 21,
+      "timezone": "Asia/Singapore"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "DUPLICATE_TRANSACTION_ID: Payment captured under sub_ref_8829",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.67,
+      "broken_promise_count": 1,
+      "tenure_months": 14,
+      "total_transactions": 59,
+      "past_recovery_successes": 5,
+      "past_recovery_failures": 2
+    }
+  },
+  {
+    "payment_id": "pay_00074",
+    "customer_id": "cust_0267",
+    "amount": 222953,
+    "currency": "INR",
+    "failure_category": "duplicate_attempt",
+    "failure_timestamp": "2025-08-25T20:40:51.052Z",
+    "attempt_count": 1,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 7,
+      "end": 14,
+      "timezone": "Europe/London"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "DUPLICATE_TRANSACTION_ID: Payment captured under sub_ref_8829",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.34,
+      "broken_promise_count": 6,
+      "tenure_months": 39,
+      "total_transactions": 78,
+      "past_recovery_successes": 10,
+      "past_recovery_failures": 3
+    }
+  },
+  {
+    "payment_id": "pay_00027",
+    "customer_id": "cust_0233",
+    "amount": 156578,
+    "currency": "EUR",
+    "failure_category": "gateway_degradation",
+    "failure_timestamp": "2025-07-31T13:03:17.223Z",
+    "attempt_count": 2,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 8,
+      "end": 17,
+      "timezone": "Asia/Kolkata"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "GATEWAY_TIMEOUT_504: Secondary acquirer pipeline degraded",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.62,
+      "broken_promise_count": 1,
+      "tenure_months": 32,
+      "total_transactions": 13,
+      "past_recovery_successes": 1,
+      "past_recovery_failures": 1
+    }
+  },
+  {
+    "payment_id": "pay_00021",
+    "customer_id": "cust_0252",
+    "amount": 78912,
+    "currency": "GBP",
+    "failure_category": "gateway_degradation",
+    "failure_timestamp": "2025-08-18T23:26:00.103Z",
+    "attempt_count": 2,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 14,
+      "end": 22,
+      "timezone": "Australia/Sydney"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "GATEWAY_TIMEOUT_504: Secondary acquirer pipeline degraded",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.74,
+      "broken_promise_count": 2,
+      "tenure_months": 43,
+      "total_transactions": 99,
+      "past_recovery_successes": 5,
+      "past_recovery_failures": 2
+    }
+  },
+  {
+    "payment_id": "pay_00003",
+    "customer_id": "cust_0094",
+    "amount": 345661,
+    "currency": "USD",
+    "failure_category": "gateway_degradation",
+    "failure_timestamp": "2025-08-18T10:28:10.191Z",
+    "attempt_count": 1,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 16,
+      "end": 22,
+      "timezone": "Asia/Tokyo"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "GATEWAY_TIMEOUT_504: Secondary acquirer pipeline degraded",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.48,
+      "broken_promise_count": 1,
+      "tenure_months": 35,
+      "total_transactions": 41,
+      "past_recovery_successes": 4,
+      "past_recovery_failures": 0
+    }
+  },
+  {
+    "payment_id": "pay_00076",
+    "customer_id": "cust_0146",
+    "amount": 139792,
+    "currency": "GBP",
+    "failure_category": "gateway_degradation",
+    "failure_timestamp": "2025-08-07T08:42:41.092Z",
+    "attempt_count": 1,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 12,
+      "end": 21,
+      "timezone": "Asia/Kolkata"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "GATEWAY_TIMEOUT_504: Secondary acquirer pipeline degraded",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.29,
+      "broken_promise_count": 5,
+      "tenure_months": 40,
+      "total_transactions": 51,
+      "past_recovery_successes": 4,
+      "past_recovery_failures": 0
+    }
+  },
+  {
+    "payment_id": "pay_00015",
+    "customer_id": "cust_0468",
+    "amount": 435260,
+    "currency": "USD",
+    "failure_category": "gateway_degradation",
+    "failure_timestamp": "2025-08-18T08:38:05.711Z",
+    "attempt_count": 1,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 17,
+      "end": 23,
+      "timezone": "Europe/London"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "GATEWAY_TIMEOUT_504: Secondary acquirer pipeline degraded",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.8,
+      "broken_promise_count": 1,
+      "tenure_months": 21,
+      "total_transactions": 35,
+      "past_recovery_successes": 2,
+      "past_recovery_failures": 0
+    }
+  },
+  {
+    "payment_id": "pay_00014",
+    "customer_id": "cust_0297",
+    "amount": 327867,
+    "currency": "EUR",
+    "failure_category": "gateway_degradation",
+    "failure_timestamp": "2025-08-29T17:59:35.801Z",
+    "attempt_count": 1,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 19,
+      "end": 3,
+      "timezone": "America/New_York"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "GATEWAY_TIMEOUT_504: Secondary acquirer pipeline degraded",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.74,
+      "broken_promise_count": 1,
+      "tenure_months": 3,
+      "total_transactions": 46,
+      "past_recovery_successes": 7,
+      "past_recovery_failures": 0
+    }
+  },
+  {
+    "payment_id": "pay_00012",
+    "customer_id": "cust_0177",
+    "amount": 405669,
+    "currency": "EUR",
+    "failure_category": "gateway_degradation",
+    "failure_timestamp": "2025-08-23T23:50:35.127Z",
+    "attempt_count": 0,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 7,
+      "end": 14,
+      "timezone": "America/Los_Angeles"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "GATEWAY_TIMEOUT_504: Secondary acquirer pipeline degraded",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.87,
+      "broken_promise_count": 0,
+      "tenure_months": 4,
+      "total_transactions": 5,
+      "past_recovery_successes": 0,
+      "past_recovery_failures": 0
+    }
+  },
+  {
+    "payment_id": "pay_00054",
+    "customer_id": "cust_0279",
+    "amount": 448341,
+    "currency": "GBP",
+    "failure_category": "gateway_degradation",
+    "failure_timestamp": "2025-08-19T08:36:00.681Z",
+    "attempt_count": 1,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 7,
+      "end": 15,
+      "timezone": "Asia/Kolkata"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "GATEWAY_TIMEOUT_504: Secondary acquirer pipeline degraded",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.47,
+      "broken_promise_count": 0,
+      "tenure_months": 41,
+      "total_transactions": 94,
+      "past_recovery_successes": 16,
+      "past_recovery_failures": 0
+    }
+  },
+  {
+    "payment_id": "pay_00072",
+    "customer_id": "cust_0387",
+    "amount": 80849,
+    "currency": "INR",
+    "failure_category": "customer_cancellation",
+    "failure_timestamp": "2025-08-25T20:53:27.255Z",
+    "attempt_count": 0,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 10,
+      "end": 19,
+      "timezone": "Asia/Kolkata"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "DISPUTE_RAISED: Cardholder notified issuing bank of unauthorized debit",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.5,
+      "broken_promise_count": 1,
+      "tenure_months": 9,
+      "total_transactions": 33,
+      "past_recovery_successes": 1,
+      "past_recovery_failures": 0
+    }
+  },
+  {
+    "payment_id": "pay_00031",
+    "customer_id": "cust_0044",
+    "amount": 2732,
+    "currency": "USD",
+    "failure_category": "customer_cancellation",
+    "failure_timestamp": "2025-08-14T22:17:33.437Z",
+    "attempt_count": 2,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 15,
+      "end": 22,
+      "timezone": "Europe/London"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "DISPUTE_RAISED: Cardholder notified issuing bank of unauthorized debit",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.73,
+      "broken_promise_count": 0,
+      "tenure_months": 33,
+      "total_transactions": 19,
+      "past_recovery_successes": 3,
+      "past_recovery_failures": 0
+    }
+  },
+  {
+    "payment_id": "pay_00052",
+    "customer_id": "cust_0299",
+    "amount": 230720,
+    "currency": "EUR",
+    "failure_category": "customer_cancellation",
+    "failure_timestamp": "2025-08-29T14:26:32.557Z",
+    "attempt_count": 0,
+    "opt_out": true,
+    "quiet_hours_window": {
+      "start": 22,
+      "end": 5,
+      "timezone": "Europe/London"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "DISPUTE_RAISED: Cardholder notified issuing bank of unauthorized debit",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.5,
+      "broken_promise_count": 0,
+      "tenure_months": 35,
+      "total_transactions": 46,
+      "past_recovery_successes": 8,
+      "past_recovery_failures": 2
+    }
+  },
+  {
+    "payment_id": "pay_00068",
+    "customer_id": "cust_0186",
+    "amount": 121182,
+    "currency": "USD",
+    "failure_category": "customer_cancellation",
+    "failure_timestamp": "2025-07-31T19:05:53.507Z",
+    "attempt_count": 0,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 18,
+      "end": 2,
+      "timezone": "Australia/Sydney"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "DISPUTE_RAISED: Cardholder notified issuing bank of unauthorized debit",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.63,
+      "broken_promise_count": 0,
+      "tenure_months": 42,
+      "total_transactions": 20,
+      "past_recovery_successes": 1,
+      "past_recovery_failures": 1
+    }
+  },
+  {
+    "payment_id": "pay_00080",
+    "customer_id": "cust_0067",
+    "amount": 41280,
+    "currency": "USD",
+    "failure_category": "customer_cancellation",
+    "failure_timestamp": "2025-07-31T15:46:32.857Z",
+    "attempt_count": 0,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 21,
+      "end": 3,
+      "timezone": "America/Los_Angeles"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "DISPUTE_RAISED: Cardholder notified issuing bank of unauthorized debit",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.26,
+      "broken_promise_count": 5,
+      "tenure_months": 29,
+      "total_transactions": 80,
+      "past_recovery_successes": 11,
+      "past_recovery_failures": 0
+    }
+  },
+  {
+    "payment_id": "pay_00053",
+    "customer_id": "cust_0172",
+    "amount": 188465,
+    "currency": "USD",
+    "failure_category": "customer_cancellation",
+    "failure_timestamp": "2025-08-21T20:09:19.580Z",
+    "attempt_count": 1,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 13,
+      "end": 22,
+      "timezone": "Europe/Berlin"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "DISPUTE_RAISED: Cardholder notified issuing bank of unauthorized debit",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.47,
+      "broken_promise_count": 3,
+      "tenure_months": 13,
+      "total_transactions": 75,
+      "past_recovery_successes": 1,
+      "past_recovery_failures": 4
+    }
+  },
+  {
+    "payment_id": "pay_00079",
+    "customer_id": "cust_0350",
+    "amount": 598324,
+    "currency": "EUR",
+    "failure_category": "customer_cancellation",
+    "failure_timestamp": "2025-08-15T04:42:28.353Z",
+    "attempt_count": 0,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 20,
+      "end": 2,
+      "timezone": "Asia/Singapore"
+    },
+    "invoice_value_tier": "high_value",
+    "raw_gateway_error": "DISPUTE_RAISED: Cardholder notified issuing bank of unauthorized debit",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.27,
+      "broken_promise_count": 3,
+      "tenure_months": 36,
+      "total_transactions": 31,
+      "past_recovery_successes": 0,
+      "past_recovery_failures": 0
+    }
+  },
+  {
+    "payment_id": "pay_00056",
+    "customer_id": "cust_0082",
+    "amount": 4696248,
+    "currency": "EUR",
+    "failure_category": "customer_cancellation",
+    "failure_timestamp": "2025-08-07T21:39:07.877Z",
+    "attempt_count": 0,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 5,
+      "end": 13,
+      "timezone": "Australia/Sydney"
+    },
+    "invoice_value_tier": "high_value",
+    "raw_gateway_error": "DISPUTE_RAISED: Cardholder notified issuing bank of unauthorized debit",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.55,
+      "broken_promise_count": 1,
+      "tenure_months": 46,
+      "total_transactions": 62,
+      "past_recovery_successes": 6,
+      "past_recovery_failures": 5
+    }
+  },
+  {
+    "payment_id": "pay_00032",
+    "customer_id": "cust_0262",
+    "amount": 11202,
+    "currency": "GBP",
+    "failure_category": "invalid_mandate",
+    "failure_timestamp": "2025-08-01T15:59:36.404Z",
+    "attempt_count": 0,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 20,
+      "end": 2,
+      "timezone": "America/Los_Angeles"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "MANDATE_EXPIRED: E-mandate token requires customer re-authorization",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.68,
+      "broken_promise_count": 1,
+      "tenure_months": 32,
+      "total_transactions": 60,
+      "past_recovery_successes": 7,
+      "past_recovery_failures": 5
+    }
+  },
+  {
+    "payment_id": "pay_00049",
+    "customer_id": "cust_0302",
+    "amount": 354547,
+    "currency": "INR",
+    "failure_category": "invalid_mandate",
+    "failure_timestamp": "2025-08-27T10:22:48.605Z",
+    "attempt_count": 1,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 8,
+      "end": 17,
+      "timezone": "Asia/Kolkata"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "MANDATE_EXPIRED: E-mandate token requires customer re-authorization",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.6,
+      "broken_promise_count": 0,
+      "tenure_months": 9,
+      "total_transactions": 46,
+      "past_recovery_successes": 1,
+      "past_recovery_failures": 4
+    }
+  },
+  {
+    "payment_id": "pay_00070",
+    "customer_id": "cust_0008",
+    "amount": 417580,
+    "currency": "GBP",
+    "failure_category": "invalid_mandate",
+    "failure_timestamp": "2025-08-05T09:05:11.645Z",
+    "attempt_count": 0,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 17,
+      "end": 1,
+      "timezone": "Europe/London"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "MANDATE_EXPIRED: E-mandate token requires customer re-authorization",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.5,
+      "broken_promise_count": 0,
+      "tenure_months": 17,
+      "total_transactions": 100,
+      "past_recovery_successes": 13,
+      "past_recovery_failures": 5
+    }
+  },
+  {
+    "payment_id": "pay_00071",
+    "customer_id": "cust_0035",
+    "amount": 463398,
+    "currency": "USD",
+    "failure_category": "invalid_mandate",
+    "failure_timestamp": "2025-08-22T09:21:42.344Z",
+    "attempt_count": 1,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 5,
+      "end": 12,
+      "timezone": "Europe/Berlin"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "MANDATE_EXPIRED: E-mandate token requires customer re-authorization",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.7,
+      "broken_promise_count": 1,
+      "tenure_months": 44,
+      "total_transactions": 17,
+      "past_recovery_successes": 1,
+      "past_recovery_failures": 0
+    }
+  },
+  {
+    "payment_id": "pay_00034",
+    "customer_id": "cust_0231",
+    "amount": 359457,
+    "currency": "USD",
+    "failure_category": "invalid_mandate",
+    "failure_timestamp": "2025-08-02T04:48:37.777Z",
+    "attempt_count": 1,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 7,
+      "end": 16,
+      "timezone": "Europe/London"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "MANDATE_EXPIRED: E-mandate token requires customer re-authorization",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.8,
+      "broken_promise_count": 0,
+      "tenure_months": 5,
+      "total_transactions": 40,
+      "past_recovery_successes": 6,
+      "past_recovery_failures": 2
+    }
+  },
+  {
+    "payment_id": "pay_00018",
+    "customer_id": "cust_0116",
+    "amount": 460956,
+    "currency": "USD",
+    "failure_category": "invalid_mandate",
+    "failure_timestamp": "2025-08-27T03:18:30.023Z",
+    "attempt_count": 0,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 5,
+      "end": 11,
+      "timezone": "America/Los_Angeles"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "MANDATE_EXPIRED: E-mandate token requires customer re-authorization",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.67,
+      "broken_promise_count": 1,
+      "tenure_months": 13,
+      "total_transactions": 42,
+      "past_recovery_successes": 1,
+      "past_recovery_failures": 0
+    }
+  },
+  {
+    "payment_id": "pay_00009",
+    "customer_id": "cust_0499",
+    "amount": 212216,
+    "currency": "INR",
+    "failure_category": "invalid_mandate",
+    "failure_timestamp": "2025-08-12T19:36:51.413Z",
+    "attempt_count": 2,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 10,
+      "end": 17,
+      "timezone": "Europe/Berlin"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "MANDATE_EXPIRED: E-mandate token requires customer re-authorization",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.79,
+      "broken_promise_count": 0,
+      "tenure_months": 1,
+      "total_transactions": 69,
+      "past_recovery_successes": 1,
+      "past_recovery_failures": 4
+    }
+  },
+  {
+    "payment_id": "pay_00002",
+    "customer_id": "cust_0285",
+    "amount": 363533,
+    "currency": "INR",
+    "failure_category": "invalid_mandate",
+    "failure_timestamp": "2025-07-31T00:24:57.210Z",
+    "attempt_count": 0,
+    "opt_out": false,
+    "quiet_hours_window": {
+      "start": 5,
+      "end": 12,
+      "timezone": "Asia/Singapore"
+    },
+    "invoice_value_tier": "standard",
+    "raw_gateway_error": "MANDATE_EXPIRED: E-mandate token requires customer re-authorization",
+    "customer_payment_history": {
+      "on_time_payment_rate": 0.44,
+      "broken_promise_count": 0,
+      "tenure_months": 10,
+      "total_transactions": 58,
+      "past_recovery_successes": 10,
+      "past_recovery_failures": 5
+    }
+  }
+]

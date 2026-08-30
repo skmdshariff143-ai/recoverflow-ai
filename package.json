@@ -13,7 +13,9 @@
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
     "generate:data": "tsx scripts/generate-synthetic-data.ts",
-    "verify": "npm run lint && npm run type-check && npm run test && npm run build && npm run test:e2e"
+    "generate:benchmark": "tsx scripts/generate-benchmarks.ts",
+    "verify:artifacts": "tsx scripts/verify-artifacts.ts",
+    "verify": "npm run lint && npm run type-check && npm run test && npm run generate:benchmark && npm run build && npm run test:e2e"
   },
   "engines": {
     "node": ">=20"
