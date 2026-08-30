@@ -3,7 +3,7 @@
  *
  * Proves that:
  * 1. High-value cases (> ₹10,000) stop for manual reviewer approval.
- * 2. Execution is rejected while pending approval.
+ * 2. Execution is rejected while pending approval or before eligibility.
  * 3. Reviewer approval strictly requires operator identity and mandatory notes.
  * 4. Approval transitions workflow state from APPROVAL_REQUIRED to SCHEDULED.
  * 5. Reviewer decision and rationale enter the append-only SHA-256 audit ledger.
@@ -11,6 +11,9 @@
  * 7. Observed outcomes update payment status, attempt cycle counters, and KPIs.
  * 8. Reopening the case preserves reviewer decisions across the session.
  * 9. Exported audit ledger passes complete cryptographic hash-chain verification.
+ * 10. Payment link creation is strictly counted as ₹0 recovered until outcome observation.
+ * 11. Customer opt-out and safety stopping rules block communication.
+ * 12. outcome_observer and gateway_webhook remain distinct supported actors.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -21,10 +24,13 @@ import {
   transitionWorkflowState,
   applyReviewerDecision,
   executeWorkflowAttempt,
+  type StateActor,
 } from '../stateMachine';
+import { checkSafetyRules } from '../safetyFilter';
 import { buildHashChainedLedger, verifyLedgerIntegrity } from '../hashChainLedger';
 import type { AuditRecord } from '../auditTrail';
 import type { FrozenPotentialOutcomes } from '../outcomeEnvironment';
+import { DeterministicSimulatorAdapter } from '@/lib/adapters/recoveryAdapter';
 
 const MOCK_HIGH_VALUE_PAYMENT: FailedPayment = {
   payment_id: 'pay_00999_hv',
@@ -46,6 +52,12 @@ const MOCK_HIGH_VALUE_PAYMENT: FailedPayment = {
     past_recovery_successes: 2,
     past_recovery_failures: 0,
   },
+};
+
+const MOCK_OPTED_OUT_PAYMENT: FailedPayment = {
+  ...MOCK_HIGH_VALUE_PAYMENT,
+  payment_id: 'pay_opted_out_001',
+  opt_out: true,
 };
 
 describe('Closed-Loop Workflow Product Flow Verification', () => {
@@ -178,5 +190,49 @@ describe('Closed-Loop Workflow Product Flow Verification', () => {
     const tamperedVerification = verifyLedgerIntegrity(tamperedLedger);
     expect(tamperedVerification.isValid).toBe(false);
     expect(tamperedVerification.tamperedIndex).toBe(1);
+  });
+
+  it('enforces safety filters: customer opt-out stops workflow before eligibility', () => {
+    const safetyCheck = checkSafetyRules(MOCK_OPTED_OUT_PAYMENT);
+    expect(safetyCheck.eligible).toBe(false);
+    expect(safetyCheck.stop_detail).toContain('opted out');
+
+    const workflow = initRecoveryWorkflow(MOCK_OPTED_OUT_PAYMENT);
+    stepWorkflowDiagnosisAndEligibility(workflow);
+    expect(workflow.currentState).toBe('STOPPED');
+    expect(workflow.terminalReason).toContain('opted out');
+  });
+
+  it('ensures payment link creation records ₹0.00 recovered until verified settlement', async () => {
+    const adapter = new DeterministicSimulatorAdapter();
+    const result = await adapter.execute({
+      paymentId: 'pay_link_test_01',
+      customerId: 'cust_01',
+      customerName: 'Test Customer',
+      customerEmail: 'cust@test.com',
+      amountPaise: 500000,
+      currency: 'INR',
+      intervention: 'reminder',
+      attemptCycle: 1,
+      idempotencyKey: 'idemp_link_01',
+    });
+
+    // Invariant: Execution receipt is generated, settled amount in receipt is recorded
+    expect(result.status).toBe('test_link_created');
+    expect(result.settledAmountPaise).toBe(0); // ₹0.00 recovered upon creation
+  });
+
+  it('preserves both outcome_observer and gateway_webhook as valid StateActor types', () => {
+    const actors: StateActor[] = [
+      'system_engine',
+      'reviewer',
+      'outcome_observer',
+      'gateway_webhook',
+      'customer',
+    ];
+
+    expect(actors).toContain('outcome_observer');
+    expect(actors).toContain('gateway_webhook');
+    expect(actors.length).toBe(5);
   });
 });

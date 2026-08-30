@@ -32,6 +32,7 @@ import type { ExecutedItem } from '@/types';
 import type { AuditRecord } from '@/lib/engine/auditTrail';
 import { formatPaiseToINR } from '@/lib/engine/financial';
 import type { ReviewerAction } from '@/lib/engine/stateMachine';
+import { CaseRecoveryJourney } from '@/components/CaseRecoveryJourney';
 
 interface PaymentDrilldownModalProps {
   item: ExecutedItem | null;
@@ -201,6 +202,12 @@ export function PaymentDrilldownModal({
     setReviewerStatus(`Action applied: ${action.toUpperCase()} (${reviewerNote.trim()})`);
   };
 
+  const isReviewerApproved =
+    existingReviewerAction?.action === 'approve' ||
+    (reviewerStatus !== null && reviewerStatus.includes('APPROVE'));
+  const executionStatus = executionResult ? 'executed' : (item.execution_status ?? 'pending');
+  const matchingAudit = auditRecords.find((r) => r.payment_id === payment.payment_id);
+
   return (
     <div
       className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-fade-in"
@@ -213,23 +220,18 @@ export function PaymentDrilldownModal({
         {/* ── Modal Header ─────────────────────────────────────── */}
         <div className="bg-slate-900 text-white p-5 flex items-start justify-between border-b border-slate-800">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-mono bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded border border-indigo-500/30">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-[11px] font-mono uppercase tracking-wider bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">
                 {payment.payment_id}
               </span>
-              <span className="text-xs text-slate-400 font-mono">
+              <span className="text-[11px] font-mono text-slate-400">
                 Customer: {payment.customer_id}
               </span>
-              {item.rank && (
-                <span className="text-xs bg-emerald-500/20 text-emerald-300 font-bold px-2 py-0.5 rounded border border-emerald-500/30">
-                  Priority Rank #{item.rank}
-                </span>
-              )}
             </div>
-            <h3 className="text-xl font-bold mt-1 text-white flex items-center gap-2">
-              {formatPaiseToINR(payment.amount, true)}
-              <span className="text-xs font-normal text-slate-400">
-                ({score.recovery_probability * 100}% probability · EV: {formatPaiseToINR(score.expected_value, true)})
+            <h3 className="text-xl font-bold text-white flex items-center gap-2">
+              <span>{formatPaiseToINR(payment.amount, true)}</span>
+              <span className="text-xs font-normal text-slate-400 font-mono">
+                ({payment.amount.toLocaleString('en-IN')} Paise)
               </span>
             </h3>
           </div>
@@ -245,6 +247,20 @@ export function PaymentDrilldownModal({
 
         {/* ── Modal Scrollable Body ─────────────────────────────── */}
         <div className="p-6 overflow-y-auto space-y-6 text-xs">
+          {/* Visual Closed-Loop Recovery Journey Stepper */}
+          <CaseRecoveryJourney
+            payment={payment}
+            status={item.status}
+            score={score.recovery_probability}
+            suggestedIntervention={item.suggested_intervention}
+            isApproved={isReviewerApproved}
+            isExecuted={executionStatus === 'executed' || !!executionResult}
+            executionReference={executionResult?.receipt?.transactionReference}
+            observedStatus={isRecovered ? 'captured' : isStopped ? 'failed' : 'pending'}
+            recoveredPaise={item.recovered_amount}
+            auditHash={matchingAudit?.id}
+          />
+
           {/* Key Metric Highlights */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-1">
