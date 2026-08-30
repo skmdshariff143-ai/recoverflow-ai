@@ -24,6 +24,8 @@ export default function Home() {
     scoringModel,
     setScoringModel,
     modelComparison,
+    provenance,
+    setProvenance,
     activeTab,
     setActiveTab,
     selectedPaymentId,
@@ -65,6 +67,8 @@ export default function Home() {
         onBudgetChange={setBudget}
         simulationSeed={simulationSeed}
         onReSimulate={handleReSimulate}
+        provenance={provenance}
+        onProvenanceChange={setProvenance}
       />
 
       {/* ── Main Application Workspace ─────────────────────────── */}

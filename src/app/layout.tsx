@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "PayBack AI — Predictive Revenue Recovery",
+  title: "RecoverFlow AI — Bounded, Explainable Recovery Orchestration",
   description:
-    "Predict recovery probability, prioritize by expected value, and prove calibration. Razorpay AI Buildathon Track 3.",
+    "Bounded, explainable recovery orchestration for failed payments. Track 3: AI Revenue Recovery — Razorpay AI Buildathon.",
 };
 
 export default function RootLayout({

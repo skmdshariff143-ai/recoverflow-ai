@@ -1,18 +1,19 @@
-# PayBack AI — Predictive Revenue Recovery & Prioritization Engine
+# RecoverFlow AI — Bounded, Explainable Recovery Orchestration
 
 > **Razorpay AI Buildathon Submission** · Track 3: AI Revenue Recovery  
 > **Live Web Application**: [https://recoverflow-ai-kohl.vercel.app](https://recoverflow-ai-kohl.vercel.app)  
 > **GitHub Repository**: [https://github.com/skmdshariff143-ai/recoverflow-ai](https://github.com/skmdshariff143-ai/recoverflow-ai)  
 > **Model & Math Documentation**: [`MODEL.md`](./MODEL.md)  
+> **Forensic Audit & Data Provenance**: [`docs/CURRENT_STATE_AUDIT.md`](./docs/CURRENT_STATE_AUDIT.md)  
 > **Incident & Recovery Log**: [`docs/WHAT_BROKE.md`](./docs/WHAT_BROKE.md)
 
 ---
 
-## 🎯 The Pitch: Why PayBack AI?
+## 🎯 The Pitch: Why RecoverFlow AI?
 
 Most automated payment recovery systems rely on **blind rule cascades** (e.g. "retry all failed charges after 4 hours, then again after 24 hours"). In high-volume commerce, this wastes gateway fees and retry bandwidth on hopeless failures (closed accounts, hard cancellations), annoys reliable customers with aggressive reminders during temporary bank downtime, and fails to prioritize high-value enterprise invoices.
 
-**PayBack AI** transforms revenue recovery into a **calibrated, explainable prioritization engine**. It ingests payment failure events, evaluates 6 transparent behavioral signals, predicts each invoice's **Recovery Probability** and **Expected Value** ($\text{EV} = P \times \text{Amount}$), allocates a limited recovery budget strictly to highest-value opportunities, enforces airtight safety guardrails, and evaluates **statistical calibration against real outcomes (Brier Score: 0.2248)** to prove the AI isn't guesswork.
+**RecoverFlow AI** transforms revenue recovery into a **bounded, explainable orchestration engine**. It ingests payment failure events, evaluates 6 transparent behavioral signals, predicts each invoice's **Recovery Probability** and **Expected Value** ($\text{EV} = P \times \text{Amount}$), allocates a limited recovery budget strictly to highest-value opportunities, enforces airtight safety guardrails, and evaluates **statistical calibration against test-mode outcomes**.
 
 ---
 
@@ -23,21 +24,21 @@ Most automated payment recovery systems rely on **blind rule cascades** (e.g. "r
 | ![Dashboard Overview](./docs/screenshots/01-dashboard-overview.png) | ![Decision Drilldown](./docs/screenshots/02-explainable-drilldown.png) |
 | **Top KPI metrics, financial cards & ranked queue** | **6-factor score waterfall & plain English reasoning** |
 
-| 3. Probabilistic Calibration Visualizer | 4. Immutable Audit Trail Explorer |
+| 3. Probabilistic Calibration Visualizer | 4. Append-Only Audit Trail Explorer |
 |:---:|:---:|
 | ![Calibration Report](./docs/screenshots/03-calibration-report.png) | ![Audit Trail Explorer](./docs/screenshots/04-audit-trail-explorer.png) |
-| **5-bin reliability diagram proving model calibration** | **Searchable event log with one-click CSV/JSON export** |
+| **5-bin reliability diagram comparing model architectures** | **Searchable event log with one-click CSV/JSON export** |
 
 ---
 
-## 📊 Key Results (100-Payment Batch Run)
+## 📊 Key Results (100-Payment Evaluation Cohort)
 
 - **Total Revenue at Risk**: ₹6,87,694.53 across 100 failed payments.
-- **Total Revenue Recovered**: **₹1,46,900.25** in test-mode execution across 40 priority slots.
+- **Simulated Test-Mode Recovery**: **₹1,46,900.25 (v1.0)** up to **₹2,76,467.00 (v1.1)** across 40 priority slots.
 - **Expected Value Capture**: Allocated **95.7% of all recoverable EV** (₹2,90,773.60) while deferring low-yield long-tail failures.
-- **Calibration Accuracy**: **Brier Score: 0.2248**; high-confidence bucket ($[0.80, 1.00]$) achieved **82.6% predicted vs 83.3% actual (0.7% error)**.
+- **Calibration Accuracy**: **2.98% Calibration Gap** (v1.1 trained model) with 5-bin reliability validation.
 - **Safety Compliance**: **26 safety halts** enforced (9 customer opt-outs, 17 non-recoverable categories, 0 customer contact during quiet hours).
-- **Test Suite**: **74 unit tests** + **6 Playwright E2E tests** passing (100% green).
+- **Test Suite**: **78 unit tests** + **7 Playwright E2E tests** passing (100% green).
 
 ---
 

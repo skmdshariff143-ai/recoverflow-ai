@@ -38,6 +38,7 @@ export function useRecoveryBatch(options: UseRecoveryBatchOptions = {}) {
   const [sortAsc, setSortAsc] = useState<boolean>(true);
 
   const [scoringModel, setScoringModel] = useState<'heuristic' | 'trained_logistic'>('trained_logistic');
+  const [provenance, setProvenance] = useState<'synthetic_fixture' | 'razorpay_test_mode' | 'imported_dataset'>('synthetic_fixture');
 
   // Execute engine pipeline
   const batchResult: BatchExecutionResult = useMemo(() => {
@@ -209,6 +210,8 @@ export function useRecoveryBatch(options: UseRecoveryBatchOptions = {}) {
     scoringModel,
     setScoringModel,
     modelComparison,
+    provenance,
+    setProvenance,
     activeTab,
     setActiveTab,
     selectedPaymentId,

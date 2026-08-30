@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('PayBack AI — Interactive Dashboard & Drill-Down', () => {
+test.describe('RecoverFlow AI — Interactive Dashboard & Drill-Down', () => {
 
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
@@ -8,11 +8,11 @@ test.describe('PayBack AI — Interactive Dashboard & Drill-Down', () => {
 
   test('renders top-level KPI metrics panel with non-zero financial values', async ({ page }) => {
     // Check title
-    await expect(page).toHaveTitle(/PayBack AI/i);
+    await expect(page).toHaveTitle(/RecoverFlow AI/i);
 
     // Verify KPI metric cards render
     await expect(page.getByText('Total Revenue at Risk')).toBeVisible();
-    await expect(page.getByText('Revenue Recovered')).toBeVisible();
+    await expect(page.getByText(/Simulated Recovered/i)).toBeVisible();
     await expect(page.getByText('Predicted vs Actual Rate')).toBeVisible();
     await expect(page.getByText('Budget Efficiency')).toBeVisible();
 
@@ -60,14 +60,14 @@ test.describe('PayBack AI — Interactive Dashboard & Drill-Down', () => {
 
     // Switch to Audit Trail tab
     await page.getByRole('button', { name: /Audit Trail Explorer/i }).click();
-    await expect(page.getByText(/Immutable Audit Trail Explorer/i)).toBeVisible();
+    await expect(page.getByText(/Audit Trail Explorer/i).first()).toBeVisible();
     await expect(page.getByRole('button', { name: /Export CSV/i })).toBeVisible();
     await expect(page.getByRole('button', { name: /Export JSON/i })).toBeVisible();
   });
 
   test('status filter dropdown updates visible table rows', async ({ page }) => {
     // Filter by 'Recovered'
-    const statusSelect = page.locator('select').first();
+    const statusSelect = page.getByTestId('status-filter');
     await statusSelect.selectOption('recovered');
 
     // Verify all visible rows show 'Recovered' status

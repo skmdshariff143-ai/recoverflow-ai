@@ -55,7 +55,7 @@ export function MetricsOverview({ kpis }: MetricsOverviewProps) {
         <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              Revenue Recovered
+              Simulated Recovered (Test Mode)
             </span>
             <div className="p-2 rounded-lg bg-emerald-50 text-emerald-600">
               <CheckCircle2 className="w-4 h-4" />
@@ -93,12 +93,12 @@ export function MetricsOverview({ kpis }: MetricsOverviewProps) {
               <span className="text-xl font-bold text-indigo-600">{kpis.predictedRecoveryRate}%</span>
             </div>
             <div>
-              <span className="block text-xs font-medium text-slate-500">Actual (Recovered)</span>
+              <span className="block text-xs font-medium text-slate-500">Actual (Observed)</span>
               <span className="text-xl font-bold text-emerald-600">{kpis.actualRecoveryRate}%</span>
             </div>
           </div>
           <p className="mt-2 text-xs text-slate-500 text-center">
-            Brier Score: <strong className="text-slate-800">{kpis.brierScore.toFixed(4)}</strong> (Low error proves calibration)
+            Brier Score: <strong className="text-slate-800">{kpis.brierScore.toFixed(4)}</strong> (Observed in reported evaluation)
           </p>
         </div>
 

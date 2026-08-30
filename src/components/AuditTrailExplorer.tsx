@@ -64,7 +64,7 @@ export function AuditTrailExplorer({
         <div>
           <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
             <FileSpreadsheet className="w-5 h-5 text-indigo-600" />
-            Immutable Audit Trail Explorer
+            Append-Only Audit Trail Explorer
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
             Chronological audit log of all {records.length} decisions across scoring, safety, ranking, and execution.

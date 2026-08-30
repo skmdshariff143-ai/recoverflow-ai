@@ -2,7 +2,7 @@ import { test } from '@playwright/test';
 import { mkdirSync } from 'fs';
 import { resolve } from 'path';
 
-test.describe('PayBack AI — Screenshot Generation for Submission', () => {
+test.describe('RecoverFlow AI — Screenshot Generation for Submission', () => {
   test.beforeAll(() => {
     mkdirSync(resolve(process.cwd(), 'docs/screenshots'), { recursive: true });
   });
