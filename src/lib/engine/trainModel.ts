@@ -72,8 +72,9 @@ export function extractFeatureVector(
   const brokenPromiseNorm = Math.min(1, history.broken_promise_count / 3);
 
   // 3. Recency exponential decay [0, 1]
-  const failureTime = new Date(payment.failure_timestamp).getTime();
-  const diffDays = Math.max(0, (refDate.getTime() - failureTime) / (1000 * 60 * 60 * 24));
+  const tsStr = payment.failure_timestamp ?? payment.created_at;
+  const failureTime = tsStr ? new Date(tsStr).getTime() : refDate.getTime();
+  const diffDays = isNaN(failureTime) ? 0 : Math.max(0, (refDate.getTime() - failureTime) / (1000 * 60 * 60 * 24));
   const recencyDecay = Math.exp(-diffDays / 14);
 
   // 4. Tenure fraction [0, 1] (saturated at 36 months)

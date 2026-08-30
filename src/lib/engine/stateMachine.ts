@@ -250,25 +250,136 @@ export function stepWorkflowDiagnosisAndEligibility(
 export function applyReviewerDecision(
   workflow: RecoveryWorkflowInstance,
   action: ReviewerAction,
-): void {
+): StateTransitionEvent {
+  if (!action.reviewerNote || !action.reviewerNote.trim()) {
+    throw new Error(`Reviewer note is required before applying reviewer action ${action.action}`);
+  }
+  if (!action.actorId || !action.actorId.trim()) {
+    throw new Error(`Reviewer actor ID is required`);
+  }
   workflow.reviewerActions.push(action);
 
   if (action.action === 'approve') {
-    transitionWorkflowState(workflow, 'SCHEDULED', 'reviewer', 'REVIEWER_APPROVED', {
+    return transitionWorkflowState(workflow, 'SCHEDULED', 'reviewer', 'REVIEWER_APPROVED', {
       reviewerId: action.actorId,
       note: action.reviewerNote,
     });
   } else if (action.action === 'reject' || action.action === 'stop_workflow') {
-    transitionWorkflowState(workflow, 'STOPPED', 'reviewer', 'REVIEWER_TERMINATED', {
+    const evt = transitionWorkflowState(workflow, 'STOPPED', 'reviewer', 'REVIEWER_TERMINATED', {
       reviewerId: action.actorId,
       note: action.reviewerNote,
     });
     workflow.terminalReason = `Reviewer rejected recovery: ${action.reviewerNote}`;
+    return evt;
   } else if (action.action === 'flag' || action.action === 'request_evidence') {
-    transitionWorkflowState(workflow, 'ESCALATED', 'reviewer', 'REVIEWER_ESCALATED_FOR_EVIDENCE', {
+    return transitionWorkflowState(workflow, 'ESCALATED', 'reviewer', 'REVIEWER_ESCALATED_FOR_EVIDENCE', {
       reviewerId: action.actorId,
       note: action.reviewerNote,
     });
+  }
+  throw new Error(`Unsupported reviewer action: ${action.action}`);
+}
+
+export interface ExecutionAttemptResult {
+  executed: boolean;
+  recovered: boolean;
+  disputed: boolean;
+  settledAmountPaise: number;
+  cycle: number;
+}
+
+/**
+ * Execute a single bounded recovery attempt cycle.
+ */
+export function executeWorkflowAttempt(
+  workflow: RecoveryWorkflowInstance,
+  outcomeMatrix: FrozenPotentialOutcomes,
+  maxAttempts: number = 3,
+): ExecutionAttemptResult {
+  if (workflow.currentState === 'RECOVERED' || workflow.currentState === 'STOPPED') {
+    throw new Error(`Cannot execute workflow in terminal state: ${workflow.currentState}`);
+  }
+
+  if (workflow.currentState === 'APPROVAL_REQUIRED') {
+    throw new Error(`Cannot execute workflow ${workflow.workflowId} while pending human approval`);
+  }
+
+  if (workflow.currentState === 'RETRY_SCHEDULED' || workflow.currentState === 'ESCALATED') {
+    transitionWorkflowState(workflow, 'SCHEDULED', 'system_engine', 'CYCLE_BACKOFF_ELAPSED', {
+      cycle: workflow.cycleCount + 1,
+    });
+  }
+
+  if (workflow.currentState !== 'SCHEDULED') {
+    throw new Error(`Workflow ${workflow.workflowId} is in state ${workflow.currentState}, expected SCHEDULED for execution`);
+  }
+
+  workflow.cycleCount++;
+  transitionWorkflowState(workflow, 'EXECUTING', 'system_engine', 'INTERVENTION_TRIGGERED', {
+    cycle: workflow.cycleCount,
+    intervention: workflow.activeIntervention,
+  });
+
+  // Sample independent ground-truth outcome
+  const outcome =
+    outcomeMatrix.outcomes[workflow.activeIntervention]?.[workflow.cycleCount] ??
+    { recovered: false, settledAmountPaise: 0, disputed: false, reason: 'Failed attempt' };
+
+  transitionWorkflowState(workflow, 'OUTCOME_OBSERVED', 'gateway_webhook', 'OUTCOME_TELEMETRY_RECEIVED', {
+    recovered: outcome.recovered,
+    settledAmountPaise: outcome.settledAmountPaise,
+    disputed: outcome.disputed,
+  });
+
+  if (outcome.disputed) {
+    transitionWorkflowState(workflow, 'STOPPED', 'gateway_webhook', 'DISPUTE_SIGNALED', {
+      reason: 'Customer filed dispute / chargeback during recovery attempt.',
+    });
+    workflow.terminalReason = 'Customer dispute signaled';
+    return {
+      executed: true,
+      recovered: false,
+      disputed: true,
+      settledAmountPaise: 0,
+      cycle: workflow.cycleCount,
+    };
+  }
+
+  if (outcome.recovered) {
+    workflow.recoveredAmountPaise = outcome.settledAmountPaise;
+    transitionWorkflowState(workflow, 'RECOVERED', 'system_engine', 'INVOICE_SETTLED_SUCCESSFULLY', {
+      recoveredAmountPaise: outcome.settledAmountPaise,
+      attemptCycle: workflow.cycleCount,
+    });
+    return {
+      executed: true,
+      recovered: true,
+      disputed: false,
+      settledAmountPaise: outcome.settledAmountPaise,
+      cycle: workflow.cycleCount,
+    };
+  } else {
+    if (workflow.cycleCount >= maxAttempts) {
+      transitionWorkflowState(workflow, 'STOPPED', 'system_engine', 'MAX_ATTEMPTS_EXCEEDED', {
+        maxAttempts,
+      });
+      workflow.terminalReason = 'Exceeded maximum permitted attempts (3)';
+    } else {
+      if (workflow.activeIntervention === 'retry') {
+        workflow.activeIntervention = 'both';
+      }
+      transitionWorkflowState(workflow, 'RETRY_SCHEDULED', 'system_engine', 'SCHEDULED_FOR_RETRY_CYCLE', {
+        nextAttempt: workflow.cycleCount + 1,
+        switchedIntervention: workflow.activeIntervention,
+      });
+    }
+    return {
+      executed: true,
+      recovered: false,
+      disputed: false,
+      settledAmountPaise: 0,
+      cycle: workflow.cycleCount,
+    };
   }
 }
 
