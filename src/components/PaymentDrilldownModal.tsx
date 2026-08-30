@@ -599,13 +599,26 @@ export function PaymentDrilldownModal({
 
           {/* 4. Bounded Gemini AI Diagnostic & Communication Copilot */}
           <div className="bg-gradient-to-br from-indigo-50/70 via-slate-50 to-white border border-indigo-200 rounded-xl p-4 space-y-4">
-            <div className="flex items-center justify-between border-b border-indigo-100 pb-2">
-              <h4 className="font-bold text-indigo-950 flex items-center gap-1.5">
-                <Bot className="w-4 h-4 text-indigo-600" />
-                Bounded Gemini 2.5 AI Diagnostic &amp; Message Copilot
-              </h4>
-              <span className="text-[10px] bg-indigo-100 text-indigo-800 font-semibold px-2 py-0.5 rounded">
-                Advisory Only · Strict Zod Validation
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-indigo-100 pb-2">
+              <div>
+                <h4 className="font-bold text-indigo-950 flex items-center gap-1.5">
+                  <Bot className="w-4 h-4 text-indigo-600" />
+                  Bounded Gemini 3.6 AI Advisory Copilot
+                </h4>
+                <p className="text-[11px] text-slate-500">
+                  Advisory-only intelligence: Gateway error normalization and policy-compliant draft generation.
+                </p>
+              </div>
+              <span className="text-[10px] bg-indigo-100 text-indigo-800 font-semibold px-2 py-0.5 rounded self-start sm:self-center">
+                Strict Zod Schema Enforced
+              </span>
+            </div>
+
+            {/* AI Non-Execution Invariant Notice */}
+            <div className="p-2.5 bg-slate-900 text-slate-300 rounded-lg text-[11px] border border-slate-800 flex items-center justify-between gap-2">
+              <span className="font-mono text-emerald-400">Authority Invariant:</span>
+              <span className="text-slate-400">
+                AI has 0 execution privileges. Cannot modify financial amounts, approve workflows, or trigger gateway debits.
               </span>
             </div>
 
