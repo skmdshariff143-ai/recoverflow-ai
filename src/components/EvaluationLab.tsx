@@ -1,8 +1,9 @@
 /**
- * RecoverFlow AI — Evaluation Lab & Counterfactual Policy Simulator.
+ * RecoverFlow AI — Counterfactual Evaluation Lab Workspace.
  *
- * Provides judge-grade comparative evaluation of RecoverFlow AI against industry
- * control baselines across 200 Development records and 80 Internal Adversarial Stress records.
+ * Provides a rigorous, independent comparative evaluation of RecoverFlow AI's
+ * Expected Value dynamic policy against 6 alternative baselines on identical frozen
+ * ground-truth potential outcome matrices, plus a transparent error inspector.
  */
 
 'use client';
@@ -24,13 +25,16 @@ interface EvaluationLabProps {
   heldoutReport: ComprehensiveEvaluationReport;
 }
 
-export function EvaluationLab({ devReport, heldoutReport }: EvaluationLabProps) {
+export function EvaluationLab({
+  devReport,
+  heldoutReport,
+}: EvaluationLabProps) {
   const [selectedDataset, setSelectedDataset] = useState<'dev' | 'heldout'>('dev');
+  const [errorFilter, setErrorFilter] = useState<'all' | 'false_positive' | 'false_negative' | 'unsafe_attempt' | 'high_value_misclassification'>('all');
   const [errorSearch, setErrorSearch] = useState<string>('');
-  const [errorFilter, setErrorFilter] = useState<string>('all');
 
   const activeReport = selectedDataset === 'dev' ? devReport : heldoutReport;
-  const activeMetadata = selectedDataset === 'dev' ? DATASET_METADATA.dev : DATASET_METADATA.adversarial_stress;
+  const activeMetadata = selectedDataset === 'dev' ? DATASET_METADATA.dev : DATASET_METADATA.heldout;
   const policies = activeReport.policies;
 
   const filteredErrors = useMemo(() => {
@@ -49,12 +53,25 @@ export function EvaluationLab({ devReport, heldoutReport }: EvaluationLabProps) 
   }, [activeReport.errorInspector, errorFilter, errorSearch]);
 
   const rf = policies.recoverflow_ai;
+  const ctrlHighAmount = policies.control_highest_amount;
+  const ctrlHighProb = policies.control_highest_probability;
   const ctrlFixed = policies.control_fixed_retry;
+  const ctrlRandom = policies.control_random_eligible;
   const ctrlRetryAll = policies.control_retry_all;
-  const ctrlHighConf = policies.control_high_confidence_only;
+  const ctrlNoAction = policies.control_no_action;
 
   const grossIncrementalPaise = rf.recoveredAmountPaise - ctrlFixed.recoveredAmountPaise;
   const netIncrementalPaise = rf.netRecoveredPaise - ctrlFixed.netRecoveredPaise;
+
+  const allPoliciesList = [
+    { item: rf, isPrimary: true, tag: 'EQUAL BUDGET', tagColor: 'bg-indigo-100 text-indigo-800' },
+    { item: ctrlHighAmount, isPrimary: false, tag: 'EQUAL BUDGET', tagColor: 'bg-slate-100 text-slate-700' },
+    { item: ctrlHighProb, isPrimary: false, tag: 'EQUAL BUDGET', tagColor: 'bg-slate-100 text-slate-700' },
+    { item: ctrlFixed, isPrimary: false, tag: 'EQUAL BUDGET (BASELINE)', tagColor: 'bg-slate-200 text-slate-800 font-bold' },
+    { item: ctrlRandom, isPrimary: false, tag: 'EQUAL BUDGET', tagColor: 'bg-slate-100 text-slate-700' },
+    { item: ctrlRetryAll, isPrimary: false, tag: 'UNEQUAL CAPACITY (UNCAPPED)', tagColor: 'bg-rose-100 text-rose-800' },
+    { item: ctrlNoAction, isPrimary: false, tag: 'ZERO CAPACITY', tagColor: 'bg-slate-100 text-slate-500' },
+  ];
 
   return (
     <div className="space-y-6">
@@ -167,13 +184,13 @@ export function EvaluationLab({ devReport, heldoutReport }: EvaluationLabProps) 
         </div>
       </div>
 
-      {/* ── Policy Comparison Matrix ─────────────────────────────── */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden p-6 space-y-4">
+      {/* ── Policy Comparison Matrix (7 Policies) ────────────────── */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <BarChart3 className="w-5 h-5 text-indigo-600" />
+            <BarChart3 className="w-4 h-4 text-indigo-600" />
             <h3 className="text-sm font-bold text-slate-900">
-              Comparative Recovery Policy Matrix
+              Comparative Recovery Policy Matrix (7 Evaluated Policies)
             </h3>
           </div>
           <span className="text-xs text-slate-400">
@@ -186,7 +203,7 @@ export function EvaluationLab({ devReport, heldoutReport }: EvaluationLabProps) 
             <thead className="bg-slate-50 text-slate-600 font-semibold uppercase tracking-wider border-b border-slate-200">
               <tr>
                 <th className="py-3 px-4">Recovery Policy</th>
-                <th className="py-3 px-4 text-center">Budget Capacity</th>
+                <th className="py-3 px-4 text-center">Capacity Constraint</th>
                 <th className="py-3 px-4 text-right">Invoices Recovered</th>
                 <th className="py-3 px-4 text-right">Gross Recovered (INR)</th>
                 <th className="py-3 px-4 text-right">Gross Lift vs Control</th>
@@ -196,110 +213,73 @@ export function EvaluationLab({ devReport, heldoutReport }: EvaluationLabProps) 
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-700">
-              {/* 1. RecoverFlow AI */}
-              <tr className="bg-indigo-50/50 font-medium">
-                <td className="py-3 px-4 flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-indigo-600" />
-                  <span className="font-bold text-indigo-950">{rf.policyName}</span>
-                  <span className="text-[10px] bg-indigo-100 text-indigo-800 font-bold px-1.5 py-0.5 rounded">
-                    ACTIVE
-                  </span>
-                </td>
-                <td className="py-3 px-4 text-center font-bold">{rf.interventionsExecuted} slots</td>
-                <td className="py-3 px-4 text-right font-bold text-slate-900">
-                  {rf.recoveredCount} ({rf.countRecoveryRatePercent}%)
-                </td>
-                <td className="py-3 px-4 text-right font-bold text-indigo-700">
-                  {formatPaiseToINR(rf.recoveredAmountPaise, true)}
-                </td>
-                <td className="py-3 px-4 text-right font-bold text-emerald-600">
-                  +{formatPaiseToINR(grossIncrementalPaise, true)}
-                </td>
-                <td className="py-3 px-4 text-right text-slate-500">
-                  {formatPaiseToINR(rf.estimatedCostPaise, true)}
-                </td>
-                <td className="py-3 px-4 text-right font-bold text-slate-900">
-                  {formatPaiseToINR(rf.netRecoveredPaise, true)}
-                </td>
-                <td className="py-3 px-4 text-center font-bold text-emerald-600">
-                  {rf.unsafeInterventionCount} (0%)
-                </td>
-              </tr>
+              {allPoliciesList.map(({ item, isPrimary, tag, tagColor }) => {
+                if (!item) return null;
+                const isBaseline = item.policy === 'control_fixed_retry';
+                const liftPaise = item.recoveredAmountPaise - ctrlFixed.recoveredAmountPaise;
 
-              {/* 2. Fixed Retry Control */}
-              <tr className="hover:bg-slate-50/60">
-                <td className="py-3 px-4 flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-slate-400" />
-                  <span className="font-semibold text-slate-800">{ctrlFixed.policyName}</span>
-                </td>
-                <td className="py-3 px-4 text-center text-slate-600">{ctrlFixed.interventionsExecuted} slots</td>
-                <td className="py-3 px-4 text-right text-slate-700">
-                  {ctrlFixed.recoveredCount} ({ctrlFixed.countRecoveryRatePercent}%)
-                </td>
-                <td className="py-3 px-4 text-right font-semibold text-slate-800">
-                  {formatPaiseToINR(ctrlFixed.recoveredAmountPaise, true)}
-                </td>
-                <td className="py-3 px-4 text-right text-slate-400">— Baseline —</td>
-                <td className="py-3 px-4 text-right text-slate-500">
-                  {formatPaiseToINR(ctrlFixed.estimatedCostPaise, true)}
-                </td>
-                <td className="py-3 px-4 text-right font-semibold text-slate-700">
-                  {formatPaiseToINR(ctrlFixed.netRecoveredPaise, true)}
-                </td>
-                <td className="py-3 px-4 text-center text-slate-600">{ctrlFixed.unsafeInterventionCount}</td>
-              </tr>
-
-              {/* 3. High-Confidence Only */}
-              <tr className="hover:bg-slate-50/60">
-                <td className="py-3 px-4 flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-amber-500" />
-                  <span className="font-semibold text-slate-800">{ctrlHighConf.policyName}</span>
-                </td>
-                <td className="py-3 px-4 text-center text-slate-600">{ctrlHighConf.interventionsExecuted} slots</td>
-                <td className="py-3 px-4 text-right text-slate-700">
-                  {ctrlHighConf.recoveredCount} ({ctrlHighConf.countRecoveryRatePercent}%)
-                </td>
-                <td className="py-3 px-4 text-right font-semibold text-slate-800">
-                  {formatPaiseToINR(ctrlHighConf.recoveredAmountPaise, true)}
-                </td>
-                <td className="py-3 px-4 text-right font-semibold text-slate-600">
-                  {formatPaiseToINR(ctrlHighConf.recoveredAmountPaise - ctrlFixed.recoveredAmountPaise, true)}
-                </td>
-                <td className="py-3 px-4 text-right text-slate-500">
-                  {formatPaiseToINR(ctrlHighConf.estimatedCostPaise, true)}
-                </td>
-                <td className="py-3 px-4 text-right font-semibold text-slate-700">
-                  {formatPaiseToINR(ctrlHighConf.netRecoveredPaise, true)}
-                </td>
-                <td className="py-3 px-4 text-center text-slate-600">{ctrlHighConf.unsafeInterventionCount}</td>
-              </tr>
-
-              {/* 4. Retry-All Unbounded Control */}
-              <tr className="hover:bg-slate-50/60">
-                <td className="py-3 px-4 flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-rose-400" />
-                  <span className="font-semibold text-slate-800">{ctrlRetryAll.policyName}</span>
-                </td>
-                <td className="py-3 px-4 text-center text-slate-600 font-medium text-rose-700">
-                  {ctrlRetryAll.interventionsExecuted} slots (Uncapped)
-                </td>
-                <td className="py-3 px-4 text-right text-slate-700">
-                  {ctrlRetryAll.recoveredCount} ({ctrlRetryAll.countRecoveryRatePercent}%)
-                </td>
-                <td className="py-3 px-4 text-right font-semibold text-slate-800">
-                  {formatPaiseToINR(ctrlRetryAll.recoveredAmountPaise, true)}
-                </td>
-                <td className="py-3 px-4 text-right font-semibold text-slate-600">
-                  {formatPaiseToINR(ctrlRetryAll.recoveredAmountPaise - ctrlFixed.recoveredAmountPaise, true)}
-                </td>
-                <td className="py-3 px-4 text-right text-rose-700 font-bold">
-                  {formatPaiseToINR(ctrlRetryAll.estimatedCostPaise, true)}
-                </td>
-                <td className="py-3 px-4 text-right font-semibold text-slate-700">
-                  {formatPaiseToINR(ctrlRetryAll.netRecoveredPaise, true)}
-                </td>
-                <td className="py-3 px-4 text-center text-slate-600">{ctrlRetryAll.unsafeInterventionCount}</td>
-              </tr>
+                return (
+                  <tr
+                    key={item.policy}
+                    className={
+                      isPrimary
+                        ? 'bg-indigo-50/60 font-medium'
+                        : isBaseline
+                          ? 'bg-slate-50/80 font-medium'
+                          : 'hover:bg-slate-50/50'
+                    }
+                  >
+                    <td className="py-3 px-4 flex items-center gap-2">
+                      <span
+                        className={`h-2 w-2 rounded-full ${
+                          isPrimary
+                            ? 'bg-indigo-600'
+                            : isBaseline
+                              ? 'bg-slate-500'
+                              : 'bg-slate-300'
+                        }`}
+                      />
+                      <span className={isPrimary ? 'font-bold text-indigo-950' : 'font-semibold text-slate-800'}>
+                        {item.policyName}
+                      </span>
+                      {isPrimary && (
+                        <span className="text-[10px] bg-indigo-100 text-indigo-800 font-bold px-1.5 py-0.5 rounded">
+                          ACTIVE
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded ${tagColor}`}>
+                        {tag}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-right font-bold text-slate-900">
+                      {item.recoveredCount} ({item.countRecoveryRatePercent}%)
+                    </td>
+                    <td className="py-3 px-4 text-right font-bold text-indigo-700">
+                      {formatPaiseToINR(item.recoveredAmountPaise, true)}
+                    </td>
+                    <td className="py-3 px-4 text-right font-bold">
+                      {isBaseline ? (
+                        <span className="text-slate-400 font-normal">— Baseline —</span>
+                      ) : liftPaise >= 0 ? (
+                        <span className="text-emerald-600">+{formatPaiseToINR(liftPaise, true)}</span>
+                      ) : (
+                        <span className="text-rose-600">-{formatPaiseToINR(Math.abs(liftPaise), true)}</span>
+                      )}
+                    </td>
+                    <td className="py-3 px-4 text-right text-slate-500">
+                      {formatPaiseToINR(item.estimatedCostPaise, true)}
+                    </td>
+                    <td className="py-3 px-4 text-right font-bold text-slate-900">
+                      {formatPaiseToINR(item.netRecoveredPaise, true)}
+                    </td>
+                    <td className="py-3 px-4 text-center font-bold text-emerald-600">
+                      {item.unsafeInterventionCount} ({item.optOutViolations} opt-out)
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -329,68 +309,76 @@ export function EvaluationLab({ devReport, heldoutReport }: EvaluationLabProps) 
                 className="pl-8 pr-2.5 py-1 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800"
               />
             </div>
-            <select
-              value={errorFilter}
-              onChange={(e) => setErrorFilter(e.target.value)}
-              className="text-xs rounded-lg border border-slate-300 px-2.5 py-1 text-slate-700 focus:outline-none"
-            >
-              <option value="all">All Errors ({activeReport.errorInspector.length})</option>
-              <option value="false_positive">False Positives (High Score Failed)</option>
-              <option value="false_negative">False Negatives (Deferred Recoverable)</option>
-              <option value="high_value_misclassification">Enterprise Misclassifications</option>
-            </select>
+
+            {/* Error type filter buttons */}
+            <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-xs">
+              {(['all', 'false_positive', 'false_negative', 'high_value_misclassification', 'unsafe_attempt'] as const).map(
+                (filter) => (
+                  <button
+                    key={filter}
+                    onClick={() => setErrorFilter(filter)}
+                    className={`px-2.5 py-1 rounded-md text-[11px] capitalize transition ${
+                      errorFilter === filter
+                        ? 'bg-white font-bold text-indigo-700 shadow-2xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    {filter.replace(/_/g, ' ')}
+                  </button>
+                ),
+              )}
+            </div>
           </div>
         </div>
 
-        <div className="mt-4 overflow-x-auto">
-          <table className="min-w-full text-xs text-left">
-            <thead className="bg-slate-50 text-slate-600 font-semibold uppercase tracking-wider">
-              <tr>
-                <th className="py-2 px-3">Payment ID</th>
-                <th className="py-2 px-3">Category</th>
-                <th className="py-2 px-3 text-right">Amount</th>
-                <th className="py-2 px-3 text-right">Predicted P</th>
-                <th className="py-2 px-3 text-center">Actual Outcome</th>
-                <th className="py-2 px-3">Classification &amp; Root-Cause Analysis</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 text-slate-700">
-              {filteredErrors.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="py-4 text-center text-slate-400 text-xs italic">
-                    Zero misclassifications matching active filter criteria.
-                  </td>
-                </tr>
-              ) : (
-                filteredErrors.slice(0, 15).map((err) => (
-                  <tr key={`${err.payment_id}_${err.errorType}`} className="hover:bg-slate-50">
-                    <td className="py-2 px-3 font-mono font-medium text-slate-900">{err.payment_id}</td>
-                    <td className="py-2 px-3 capitalize text-slate-700">
-                      {err.failure_category.replace(/_/g, ' ')}
-                    </td>
-                    <td className="py-2 px-3 text-right font-bold text-slate-900">
-                      {formatPaiseToINR(err.amountPaise, true)}
-                    </td>
-                    <td className="py-2 px-3 text-right font-semibold text-indigo-600">
-                      {(err.predictedProbability * 100).toFixed(1)}%
-                    </td>
-                    <td className="py-2 px-3 text-center">
-                      <span
-                        className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                          err.actualOutcome
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : 'bg-rose-100 text-rose-800'
-                        }`}
-                      >
-                        {err.actualOutcome ? 'RECOVERED' : 'FAILED'}
-                      </span>
-                    </td>
-                    <td className="py-2 px-3 text-slate-600 text-[11px] max-w-xs">{err.explanation}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+        {/* Error Items List */}
+        <div className="space-y-2.5 max-h-96 overflow-y-auto pr-1">
+          {filteredErrors.length === 0 ? (
+            <div className="p-8 text-center text-xs text-slate-400 border border-dashed border-slate-200 rounded-lg">
+              Zero errors found matching the current filter in this benchmark cohort.
+            </div>
+          ) : (
+            filteredErrors.map((err) => (
+              <div
+                key={`${err.payment_id}_${err.errorType}`}
+                className="p-3 bg-slate-50 border border-slate-200/80 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+              >
+                <div className="space-y-1 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono font-bold text-slate-900">{err.payment_id}</span>
+                    <span className="text-slate-400 font-mono">({err.customer_id})</span>
+                    <span
+                      className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
+                        err.errorType === 'false_positive'
+                          ? 'bg-rose-100 text-rose-800'
+                          : err.errorType === 'false_negative'
+                            ? 'bg-amber-100 text-amber-800'
+                            : err.errorType === 'high_value_misclassification'
+                              ? 'bg-purple-100 text-purple-800'
+                              : 'bg-red-200 text-red-900'
+                      }`}
+                    >
+                      {err.errorType.replace(/_/g, ' ')}
+                    </span>
+                    <span className="text-slate-500 font-medium capitalize">
+                      Category: {err.failure_category.replace(/_/g, ' ')}
+                    </span>
+                  </div>
+                  <p className="text-slate-600 text-[11px]">{err.explanation}</p>
+                </div>
+
+                <div className="text-right sm:min-w-[150px]">
+                  <div className="font-bold text-slate-900">{formatPaiseToINR(err.amountPaise, true)}</div>
+                  <div className="text-[11px] text-slate-500">
+                    Pred: {(err.predictedProbability * 100).toFixed(1)}% | Actual:{' '}
+                    <strong className={err.actualOutcome ? 'text-emerald-600' : 'text-rose-600'}>
+                      {err.actualOutcome ? 'Settled' : 'Failed'}
+                    </strong>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>

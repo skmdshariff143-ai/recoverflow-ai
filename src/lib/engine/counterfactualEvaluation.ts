@@ -3,6 +3,15 @@
  *
  * Evaluates recovery policies against identical frozen ground-truth potential outcomes
  * to calculate true incremental yield, intervention efficiency, and safety compliance.
+ *
+ * Evaluates 7 comprehensive policies:
+ *   1. recoverflow_ai: Expected Value prioritization
+ *   2. control_fixed_retry: First-eligible fixed retry
+ *   3. control_random_eligible: Random eligible selection (Equal budget)
+ *   4. control_highest_amount: Highest gross amount first (Equal budget)
+ *   5. control_highest_probability: Highest probability first (Equal budget)
+ *   6. control_retry_all: Retry all eligible payments (Unequal budget capacity)
+ *   7. control_no_action: 0 interventions baseline
  */
 
 import type { FailedPayment, PipelineOptions } from '@/types';
@@ -15,8 +24,10 @@ import { sumPaise } from './financial';
 export type PolicyType =
   | 'recoverflow_ai'
   | 'control_fixed_retry'
+  | 'control_random_eligible'
+  | 'control_highest_amount'
+  | 'control_highest_probability'
   | 'control_retry_all'
-  | 'control_high_confidence_only'
   | 'control_no_action';
 
 export interface PolicyEvaluationResult {
@@ -63,13 +74,36 @@ export interface ComprehensiveEvaluationReport {
   timestamp: string;
 }
 
+export interface MultiSeedBenchmarkDistribution {
+  seedsEvaluated: number[];
+  recoveredPaise: {
+    median: number;
+    min: number;
+    max: number;
+    iqr: number;
+    q1: number;
+    q3: number;
+  };
+  recoveredCount: {
+    median: number;
+    min: number;
+    max: number;
+  };
+  perSeedResults: {
+    seed: number;
+    recoveredAmountPaise: number;
+    recoveredCount: number;
+    brierScore: number;
+  }[];
+}
+
 // Fixed operational intervention cost constants (in integer paise)
 const COST_PER_GATEWAY_RETRY_PAISE = 1200; // ₹12.00
 const COST_PER_REMINDER_PAISE = 500;       // ₹5.00
 const COST_PER_BOTH_PAISE = 1700;           // ₹17.00
 
 /**
- * Execute policy evaluation on a payment cohort with frozen potential outcomes.
+ * Execute policy evaluation on a payment cohort with frozen potential outcomes across 7 policies.
  */
 export function evaluateCohortPolicies(
   payments: FailedPayment[],
@@ -186,212 +220,260 @@ export function evaluateCohortPolicies(
     }
   }
 
-  // ── 2. Control Policy: Fixed Retry (No Prioritization, First 40 Eligible)
+  // Pre-filter eligible payments
+  const eligiblePayments = payments.filter((p) => checkSafetyRules(p).eligible);
+  const eligibleCount = eligiblePayments.length;
+
+  // ── 2. Control Policy: Fixed Retry (First N eligible) ──────────────
   let ctrlRecoveredPaise = 0;
   let ctrlInterventions = 0;
   let ctrlCostPaise = 0;
   let ctrlRecoveredCount = 0;
-  let eligibleCount = 0;
 
-  for (const payment of payments) {
-    const safety = checkSafetyRules(payment);
-    if (!safety.eligible) continue;
-    eligibleCount++;
-
-    if (ctrlInterventions < budget) {
-      ctrlInterventions++;
-      ctrlCostPaise += COST_PER_GATEWAY_RETRY_PAISE;
-      const outcomeMatrix = frozenOutcomes.get(payment.payment_id);
-      const outcome = outcomeMatrix?.outcomes['retry']?.[1];
-      if (outcome?.recovered) {
-        ctrlRecoveredPaise += payment.amount;
-        ctrlRecoveredCount++;
-      }
+  for (const payment of eligiblePayments.slice(0, budget)) {
+    ctrlInterventions++;
+    ctrlCostPaise += COST_PER_GATEWAY_RETRY_PAISE;
+    const outcome = frozenOutcomes.get(payment.payment_id)?.outcomes['retry']?.[1];
+    if (outcome?.recovered) {
+      ctrlRecoveredPaise += payment.amount;
+      ctrlRecoveredCount++;
     }
   }
 
-  // ── 3. Control Policy: Retry-All (Unbounded Budget) ─────────────────
+  // ── 3. Control Policy: Random Eligible Selection ───────────────────
+  let randomRecoveredPaise = 0;
+  let randomInterventions = 0;
+  let randomCostPaise = 0;
+  let randomRecoveredCount = 0;
+
+  // Deterministic pseudo-random stride across eligible payments
+  const randomSample = eligiblePayments
+    .map((p, idx) => ({ p, weight: (idx * 37 + 13) % 100 }))
+    .sort((a, b) => b.weight - a.weight)
+    .slice(0, budget)
+    .map((item) => item.p);
+
+  for (const payment of randomSample) {
+    randomInterventions++;
+    randomCostPaise += COST_PER_GATEWAY_RETRY_PAISE;
+    const outcome = frozenOutcomes.get(payment.payment_id)?.outcomes['retry']?.[1];
+    if (outcome?.recovered) {
+      randomRecoveredPaise += payment.amount;
+      randomRecoveredCount++;
+    }
+  }
+
+  // ── 4. Control Policy: Highest Amount First ────────────────────────
+  let highAmountRecoveredPaise = 0;
+  let highAmountInterventions = 0;
+  let highAmountCostPaise = 0;
+  let highAmountRecoveredCount = 0;
+
+  const highestAmountSample = [...eligiblePayments]
+    .sort((a, b) => b.amount - a.amount)
+    .slice(0, budget);
+
+  for (const payment of highestAmountSample) {
+    highAmountInterventions++;
+    highAmountCostPaise += COST_PER_GATEWAY_RETRY_PAISE;
+    const outcome = frozenOutcomes.get(payment.payment_id)?.outcomes['retry']?.[1];
+    if (outcome?.recovered) {
+      highAmountRecoveredPaise += payment.amount;
+      highAmountRecoveredCount++;
+    }
+  }
+
+  // ── 5. Control Policy: Highest Probability First ───────────────────
+  let highProbRecoveredPaise = 0;
+  let highProbInterventions = 0;
+  let highProbCostPaise = 0;
+  let highProbRecoveredCount = 0;
+
+  const highestProbSample = [...eligiblePayments]
+    .map((p) => ({ p, score: scorePayment(p) }))
+    .sort((a, b) => b.score.recovery_probability - a.score.recovery_probability)
+    .slice(0, budget)
+    .map((item) => item.p);
+
+  for (const payment of highestProbSample) {
+    highProbInterventions++;
+    highProbCostPaise += COST_PER_GATEWAY_RETRY_PAISE;
+    const outcome = frozenOutcomes.get(payment.payment_id)?.outcomes['retry']?.[1];
+    if (outcome?.recovered) {
+      highProbRecoveredPaise += payment.amount;
+      highProbRecoveredCount++;
+    }
+  }
+
+  // ── 6. Control Policy: Retry-All (Unbounded Budget) ─────────────────
   let retryAllRecoveredPaise = 0;
   let retryAllInterventions = 0;
   let retryAllCostPaise = 0;
   let retryAllRecoveredCount = 0;
 
-  for (const payment of payments) {
-    const safety = checkSafetyRules(payment);
-    if (!safety.eligible) continue;
+  for (const payment of eligiblePayments) {
     retryAllInterventions++;
     retryAllCostPaise += COST_PER_GATEWAY_RETRY_PAISE;
-    const outcomeMatrix = frozenOutcomes.get(payment.payment_id);
-    const outcome = outcomeMatrix?.outcomes['retry']?.[1];
+    const outcome = frozenOutcomes.get(payment.payment_id)?.outcomes['retry']?.[1];
     if (outcome?.recovered) {
       retryAllRecoveredPaise += payment.amount;
       retryAllRecoveredCount++;
     }
   }
 
-  // ── 4. Control Policy: High-Confidence Only (Prob >= 0.70) ──────────
-  let highConfRecoveredPaise = 0;
-  let highConfInterventions = 0;
-  let highConfCostPaise = 0;
-  let highConfRecoveredCount = 0;
-
-  for (const payment of payments) {
-    const safety = checkSafetyRules(payment);
-    if (!safety.eligible) continue;
-    const score = scorePayment(payment);
-    if (score.recovery_probability >= 0.70) {
-      highConfInterventions++;
-      highConfCostPaise += COST_PER_GATEWAY_RETRY_PAISE;
-      const outcomeMatrix = frozenOutcomes.get(payment.payment_id);
-      const outcome = outcomeMatrix?.outcomes['retry']?.[1];
-      if (outcome?.recovered) {
-        highConfRecoveredPaise += payment.amount;
-        highConfRecoveredCount++;
-      }
-    }
-  }
-
-  const rfResult: PolicyEvaluationResult = {
-    policy: 'recoverflow_ai',
-    policyName: 'RecoverFlow AI (EV Prioritization)',
+  // Build Structured Policy Results
+  const buildPolicyResult = (
+    policy: PolicyType,
+    name: string,
+    interventions: number,
+    recoveredAmount: number,
+    recoveredCnt: number,
+    costPaise: number,
+    brier: number = 0,
+    unsafeCnt: number = 0,
+    optOutCnt: number = 0,
+  ): PolicyEvaluationResult => ({
+    policy,
+    policyName: name,
     recordsProcessed: payments.length,
     eligibleRecords: eligibleCount,
-    interventionsExecuted: rfInterventions,
+    interventionsExecuted: interventions,
     totalAmountAtRiskPaise,
-    recoveredAmountPaise: rfRecoveredPaise,
-    incrementalRecoveredPaise: rfRecoveredPaise - ctrlRecoveredPaise,
-    countRecoveryRatePercent: Number(((rfRecoveredCount / Math.max(1, rfInterventions)) * 100).toFixed(1)),
-    amountRecoveryRatePercent: Number(((rfRecoveredPaise / totalAmountAtRiskPaise) * 100).toFixed(1)),
-    recoveredCount: rfRecoveredCount,
-    unsafeInterventionCount: rfUnsafe,
-    optOutViolations: rfOptOutViolations,
+    recoveredAmountPaise: recoveredAmount,
+    incrementalRecoveredPaise: recoveredAmount - ctrlRecoveredPaise,
+    countRecoveryRatePercent: Number(((recoveredCnt / Math.max(1, interventions)) * 100).toFixed(1)),
+    amountRecoveryRatePercent: Number(((recoveredAmount / totalAmountAtRiskPaise) * 100).toFixed(1)),
+    recoveredCount: recoveredCnt,
+    unsafeInterventionCount: unsafeCnt,
+    optOutViolations: optOutCnt,
     duplicateExecutions: 0,
-    estimatedCostPaise: rfCostPaise,
-    netRecoveredPaise: rfRecoveredPaise - rfCostPaise,
-    falsePositiveCount: errors.filter((e) => e.errorType === 'false_positive').length,
-    falsePositiveExposurePaise: sumPaise(
-      errors.filter((e) => e.errorType === 'false_positive').map((e) => e.amountPaise),
-    ),
-    falseNegativeCount: errors.filter((e) => e.errorType === 'false_negative').length,
-    unnecessaryInterventionRatePercent: Number(
-      (((rfInterventions - rfRecoveredCount) / Math.max(1, rfInterventions)) * 100).toFixed(1),
-    ),
-    brierScoreOnIndependentOutcomes: Number((rfBrierSum / Math.max(1, rfBrierCount)).toFixed(4)),
-  };
-
-  const ctrlFixedResult: PolicyEvaluationResult = {
-    policy: 'control_fixed_retry',
-    policyName: 'Fixed Retry Control (First 40 Eligible)',
-    recordsProcessed: payments.length,
-    eligibleRecords: eligibleCount,
-    interventionsExecuted: ctrlInterventions,
-    totalAmountAtRiskPaise,
-    recoveredAmountPaise: ctrlRecoveredPaise,
-    incrementalRecoveredPaise: 0,
-    countRecoveryRatePercent: Number(((ctrlRecoveredCount / Math.max(1, ctrlInterventions)) * 100).toFixed(1)),
-    amountRecoveryRatePercent: Number(((ctrlRecoveredPaise / totalAmountAtRiskPaise) * 100).toFixed(1)),
-    recoveredCount: ctrlRecoveredCount,
-    unsafeInterventionCount: 0,
-    optOutViolations: 0,
-    duplicateExecutions: 0,
-    estimatedCostPaise: ctrlCostPaise,
-    netRecoveredPaise: ctrlRecoveredPaise - ctrlCostPaise,
-    falsePositiveCount: 0,
-    falsePositiveExposurePaise: 0,
-    falseNegativeCount: 0,
-    unnecessaryInterventionRatePercent: Number(
-      (((ctrlInterventions - ctrlRecoveredCount) / Math.max(1, ctrlInterventions)) * 100).toFixed(1),
-    ),
-    brierScoreOnIndependentOutcomes: 0,
-  };
-
-  const ctrlRetryAllResult: PolicyEvaluationResult = {
-    policy: 'control_retry_all',
-    policyName: 'Retry-All Control (Unbounded Budget)',
-    recordsProcessed: payments.length,
-    eligibleRecords: eligibleCount,
-    interventionsExecuted: retryAllInterventions,
-    totalAmountAtRiskPaise,
-    recoveredAmountPaise: retryAllRecoveredPaise,
-    incrementalRecoveredPaise: retryAllRecoveredPaise - ctrlRecoveredPaise,
-    countRecoveryRatePercent: Number(((retryAllRecoveredCount / Math.max(1, retryAllInterventions)) * 100).toFixed(1)),
-    amountRecoveryRatePercent: Number(((retryAllRecoveredPaise / totalAmountAtRiskPaise) * 100).toFixed(1)),
-    recoveredCount: retryAllRecoveredCount,
-    unsafeInterventionCount: 0,
-    optOutViolations: 0,
-    duplicateExecutions: 0,
-    estimatedCostPaise: retryAllCostPaise,
-    netRecoveredPaise: retryAllRecoveredPaise - retryAllCostPaise,
-    falsePositiveCount: 0,
-    falsePositiveExposurePaise: 0,
-    falseNegativeCount: 0,
-    unnecessaryInterventionRatePercent: Number(
-      (((retryAllInterventions - retryAllRecoveredCount) / Math.max(1, retryAllInterventions)) * 100).toFixed(1),
-    ),
-    brierScoreOnIndependentOutcomes: 0,
-  };
-
-  const ctrlHighConfResult: PolicyEvaluationResult = {
-    policy: 'control_high_confidence_only',
-    policyName: 'High-Confidence Only (P ≥ 0.70)',
-    recordsProcessed: payments.length,
-    eligibleRecords: eligibleCount,
-    interventionsExecuted: highConfInterventions,
-    totalAmountAtRiskPaise,
-    recoveredAmountPaise: highConfRecoveredPaise,
-    incrementalRecoveredPaise: highConfRecoveredPaise - ctrlRecoveredPaise,
-    countRecoveryRatePercent: Number(((highConfRecoveredCount / Math.max(1, highConfInterventions)) * 100).toFixed(1)),
-    amountRecoveryRatePercent: Number(((highConfRecoveredPaise / totalAmountAtRiskPaise) * 100).toFixed(1)),
-    recoveredCount: highConfRecoveredCount,
-    unsafeInterventionCount: 0,
-    optOutViolations: 0,
-    duplicateExecutions: 0,
-    estimatedCostPaise: highConfCostPaise,
-    netRecoveredPaise: highConfRecoveredPaise - highConfCostPaise,
-    falsePositiveCount: 0,
-    falsePositiveExposurePaise: 0,
-    falseNegativeCount: 0,
-    unnecessaryInterventionRatePercent: Number(
-      (((highConfInterventions - highConfRecoveredCount) / Math.max(1, highConfInterventions)) * 100).toFixed(1),
-    ),
-    brierScoreOnIndependentOutcomes: 0,
-  };
-
-  const ctrlNoActionResult: PolicyEvaluationResult = {
-    policy: 'control_no_action',
-    policyName: 'No-Action Baseline (0 Interventions)',
-    recordsProcessed: payments.length,
-    eligibleRecords: eligibleCount,
-    interventionsExecuted: 0,
-    totalAmountAtRiskPaise,
-    recoveredAmountPaise: 0,
-    incrementalRecoveredPaise: -ctrlRecoveredPaise,
-    countRecoveryRatePercent: 0,
-    amountRecoveryRatePercent: 0,
-    recoveredCount: 0,
-    unsafeInterventionCount: 0,
-    optOutViolations: 0,
-    duplicateExecutions: 0,
-    estimatedCostPaise: 0,
-    netRecoveredPaise: 0,
-    falsePositiveCount: 0,
-    falsePositiveExposurePaise: 0,
-    falseNegativeCount: 0,
-    unnecessaryInterventionRatePercent: 0,
-    brierScoreOnIndependentOutcomes: 0,
-  };
+    estimatedCostPaise: costPaise,
+    netRecoveredPaise: recoveredAmount - costPaise,
+    falsePositiveCount: policy === 'recoverflow_ai' ? errors.filter((e) => e.errorType === 'false_positive').length : 0,
+    falsePositiveExposurePaise: policy === 'recoverflow_ai' ? sumPaise(errors.filter((e) => e.errorType === 'false_positive').map((e) => e.amountPaise)) : 0,
+    falseNegativeCount: policy === 'recoverflow_ai' ? errors.filter((e) => e.errorType === 'false_negative').length : 0,
+    unnecessaryInterventionRatePercent: Number((((interventions - recoveredCnt) / Math.max(1, interventions)) * 100).toFixed(1)),
+    brierScoreOnIndependentOutcomes: brier,
+  });
 
   return {
     datasetName: payments.length === 200 ? 'Development Cohort (200 Records)' : 'Held-Out Adversarial (80 Records)',
     recordCount: payments.length,
     policies: {
-      recoverflow_ai: rfResult,
-      control_fixed_retry: ctrlFixedResult,
-      control_retry_all: ctrlRetryAllResult,
-      control_high_confidence_only: ctrlHighConfResult,
-      control_no_action: ctrlNoActionResult,
+      recoverflow_ai: buildPolicyResult(
+        'recoverflow_ai',
+        'RecoverFlow AI (EV Prioritization)',
+        rfInterventions,
+        rfRecoveredPaise,
+        rfRecoveredCount,
+        rfCostPaise,
+        Number((rfBrierSum / Math.max(1, rfBrierCount)).toFixed(4)),
+        rfUnsafe,
+        rfOptOutViolations,
+      ),
+      control_fixed_retry: buildPolicyResult(
+        'control_fixed_retry',
+        'Fixed Retry Control (First 40 Eligible)',
+        ctrlInterventions,
+        ctrlRecoveredPaise,
+        ctrlRecoveredCount,
+        ctrlCostPaise,
+      ),
+      control_random_eligible: buildPolicyResult(
+        'control_random_eligible',
+        'Random Selection Control (40 Slots)',
+        randomInterventions,
+        randomRecoveredPaise,
+        randomRecoveredCount,
+        randomCostPaise,
+      ),
+      control_highest_amount: buildPolicyResult(
+        'control_highest_amount',
+        'Highest Amount First Control (40 Slots)',
+        highAmountInterventions,
+        highAmountRecoveredPaise,
+        highAmountRecoveredCount,
+        highAmountCostPaise,
+      ),
+      control_highest_probability: buildPolicyResult(
+        'control_highest_probability',
+        'Highest Probability First Control (40 Slots)',
+        highProbInterventions,
+        highProbRecoveredPaise,
+        highProbRecoveredCount,
+        highProbCostPaise,
+      ),
+      control_retry_all: buildPolicyResult(
+        'control_retry_all',
+        'Retry-All Control (Unbounded / Unequal Capacity)',
+        retryAllInterventions,
+        retryAllRecoveredPaise,
+        retryAllRecoveredCount,
+        retryAllCostPaise,
+      ),
+      control_no_action: buildPolicyResult(
+        'control_no_action',
+        'No-Action Baseline (0 Interventions)',
+        0,
+        0,
+        0,
+        0,
+      ),
     },
     errorInspector: errors,
     timestamp: new Date().toISOString(),
+  };
+}
+
+/**
+ * Multi-seed statistical evaluation distribution helper.
+ */
+export function evaluateMultiSeedDistribution(
+  payments: FailedPayment[],
+  frozenOutcomes: Map<string, FrozenPotentialOutcomes>,
+  seeds: number[] = [42, 101, 202, 303, 404, 505, 999],
+): MultiSeedBenchmarkDistribution {
+  const results = seeds.map((seed) => {
+    const report = evaluateCohortPolicies(payments, frozenOutcomes, { simulationSeed: seed });
+    const rf = report.policies.recoverflow_ai;
+    return {
+      seed,
+      recoveredAmountPaise: rf.recoveredAmountPaise,
+      recoveredCount: rf.recoveredCount,
+      brierScore: rf.brierScoreOnIndependentOutcomes,
+    };
+  });
+
+  const amounts = [...results.map((r) => r.recoveredAmountPaise)].sort((a, b) => a - b);
+  const counts = [...results.map((r) => r.recoveredCount)].sort((a, b) => a - b);
+
+  const getPercentile = (arr: number[], p: number) => {
+    const idx = (arr.length - 1) * p;
+    const lower = Math.floor(idx);
+    const upper = Math.ceil(idx);
+    const weight = idx - lower;
+    return Math.round(arr[lower] * (1 - weight) + arr[upper] * weight);
+  };
+
+  const q1 = getPercentile(amounts, 0.25);
+  const median = getPercentile(amounts, 0.50);
+  const q3 = getPercentile(amounts, 0.75);
+
+  return {
+    seedsEvaluated: seeds,
+    recoveredPaise: {
+      median,
+      min: amounts[0],
+      max: amounts[amounts.length - 1],
+      q1,
+      q3,
+      iqr: q3 - q1,
+    },
+    recoveredCount: {
+      median: counts[Math.floor(counts.length / 2)],
+      min: counts[0],
+      max: counts[counts.length - 1],
+    },
+    perSeedResults: results,
   };
 }
