@@ -1,11 +1,18 @@
 /**
- * RecoverFlow AI — Execution Adapter Boundary.
+ * RecoverFlow AI — Execution Adapter Boundary & Razorpay Test-Mode Integration.
  *
  * Defines the contract for recovery workflow execution adapters, supporting both
  * an offline Deterministic Simulator and an official Razorpay Test-Mode API integration.
+ *
+ * Security Invariants:
+ * 1. Live keys ('rzp_live_...') are strictly rejected with an invariant error.
+ * 2. Only test-mode keys ('rzp_test_...') are accepted.
+ * 3. Payment-link creation is NEVER counted as recovered revenue.
+ * 4. Webhook signatures are verified using constant-time HMAC-SHA256 comparison.
  */
 
 import { z } from 'zod';
+import { createHmac, timingSafeEqual } from 'crypto';
 
 // ─── Zod Schemas for Validation ──────────────────────────────────────
 
@@ -25,12 +32,26 @@ export const RecoveryExecutionRequestSchema = z.object({
 
 export type RecoveryExecutionRequest = z.infer<typeof RecoveryExecutionRequestSchema>;
 
+export const LinkStatusSchema = z.enum([
+  'test_link_created',
+  'awaiting_payment',
+  'paid',
+  'captured',
+  'expired',
+  'cancelled',
+  'failed',
+  'timeout',
+  'rate_limited',
+]);
+
+export type LinkStatus = z.infer<typeof LinkStatusSchema>;
+
 export const RecoveryExecutionResultSchema = z.object({
   success: z.boolean(),
   transactionReference: z.string(),
   adapterUsed: z.enum(['deterministic_simulator', 'razorpay_test_mode']),
   settledAmountPaise: z.number().int().nonnegative(),
-  status: z.enum(['captured', 'payment_link_issued', 'failed', 'timeout', 'rate_limited']),
+  status: LinkStatusSchema,
   latencyMs: z.number().nonnegative(),
   timestamp: z.string(),
   paymentLinkUrl: z.string().url().optional(),
@@ -43,7 +64,7 @@ export type RecoveryExecutionResult = z.infer<typeof RecoveryExecutionResultSche
 export interface RecoveryExecutionAdapter {
   readonly adapterName: 'deterministic_simulator' | 'razorpay_test_mode';
   execute(request: RecoveryExecutionRequest): Promise<RecoveryExecutionResult>;
-  getStatus(transactionReference: string): Promise<{ status: string; settledAmountPaise: number }>;
+  getStatus(transactionReference: string): Promise<{ status: LinkStatus; settledAmountPaise: number }>;
 }
 
 // ─── 1. Deterministic Simulator Adapter (Offline / Reproducible) ──────
@@ -55,14 +76,14 @@ export class DeterministicSimulatorAdapter implements RecoveryExecutionAdapter {
     const validated = RecoveryExecutionRequestSchema.parse(request);
 
     const startTime = Date.now();
-    const isSuccess = validated.intervention !== 'reminder'; // Simulate direct clearance
+    const isSuccess = validated.intervention !== 'reminder'; // Direct simulated recovery
 
     return {
       success: isSuccess,
-      transactionReference: `sim_txn_${validated.paymentId}_${validated.attemptCycle}`,
+      transactionReference: `sim_txn_${validated.paymentId}_c${validated.attemptCycle}`,
       adapterUsed: this.adapterName,
       settledAmountPaise: isSuccess ? validated.amountPaise : 0,
-      status: isSuccess ? 'captured' : 'payment_link_issued',
+      status: isSuccess ? 'captured' : 'test_link_created',
       latencyMs: Math.max(15, Date.now() - startTime),
       timestamp: new Date().toISOString(),
       paymentLinkUrl: `https://rzp.io/i/sim_${validated.paymentId}`,
@@ -70,7 +91,7 @@ export class DeterministicSimulatorAdapter implements RecoveryExecutionAdapter {
     };
   }
 
-  async getStatus(_transactionReference: string): Promise<{ status: string; settledAmountPaise: number }> {
+  async getStatus(_transactionReference: string): Promise<{ status: LinkStatus; settledAmountPaise: number }> {
     return {
       status: _transactionReference ? 'captured' : 'failed',
       settledAmountPaise: 500_000,
@@ -86,19 +107,33 @@ export class RazorpayTestModeAdapter implements RecoveryExecutionAdapter {
   private keySecret: string;
 
   constructor(keyId?: string, keySecret?: string) {
-    this.keyId = keyId ?? process.env.RAZORPAY_KEY_ID ?? '';
-    this.keySecret = keySecret ?? process.env.RAZORPAY_KEY_SECRET ?? '';
+    const configuredKey = keyId ?? process.env.RAZORPAY_KEY_ID ?? '';
+    const configuredSecret = keySecret ?? process.env.RAZORPAY_KEY_SECRET ?? '';
+
+    // Security Invariant: Live-mode keys are strictly forbidden
+    if (configuredKey.startsWith('rzp_live_')) {
+      throw new Error(
+        'SECURITY VIOLATION: Live mode Razorpay keys (rzp_live_*) are strictly prohibited. Only test-mode keys (rzp_test_*) are permitted in RecoverFlow AI.',
+      );
+    }
+
+    this.keyId = configuredKey;
+    this.keySecret = configuredSecret;
   }
 
   isConfigured(): boolean {
-    return this.keyId.length > 0 && this.keySecret.length > 0;
+    return (
+      this.keyId.length > 0 &&
+      this.keySecret.length > 0 &&
+      this.keyId.startsWith('rzp_test_')
+    );
   }
 
   async execute(request: RecoveryExecutionRequest): Promise<RecoveryExecutionResult> {
     const validated = RecoveryExecutionRequestSchema.parse(request);
 
     if (!this.isConfigured()) {
-      // Graceful fallback to simulator if credentials are not configured in environment
+      // Graceful fallback to simulator if credentials are not configured
       return {
         success: false,
         transactionReference: `rzp_unconfigured_${validated.paymentId}`,
@@ -107,15 +142,13 @@ export class RazorpayTestModeAdapter implements RecoveryExecutionAdapter {
         status: 'failed',
         latencyMs: 5,
         timestamp: new Date().toISOString(),
-        rawResponseSummary: 'Razorpay Test-Mode credentials not provided in .env.local — running in graceful fallback mode.',
-        errorMessage: 'RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET missing',
+        rawResponseSummary:
+          'Razorpay Test-Mode credentials not provided or invalid in .env.local — running in graceful fallback mode.',
+        errorMessage: 'RAZORPAY_KEY_ID (must start with rzp_test_) or RAZORPAY_KEY_SECRET missing',
       };
     }
 
     const startTime = Date.now();
-
-    // Create a Razorpay Standard Payment Link in Test Mode
-    // API: POST https://api.razorpay.com/v1/payment_links
     const authHeader = `Basic ${Buffer.from(`${this.keyId}:${this.keySecret}`).toString('base64')}`;
 
     try {
@@ -177,8 +210,8 @@ export class RazorpayTestModeAdapter implements RecoveryExecutionAdapter {
         success: true,
         transactionReference: data.id ?? `plink_${validated.paymentId}`,
         adapterUsed: this.adapterName,
-        settledAmountPaise: 0, // Payment link created, awaiting customer settlement
-        status: 'payment_link_issued',
+        settledAmountPaise: 0, // Non-negotiable: Link creation is NOT recovered money
+        status: 'test_link_created',
         latencyMs: Date.now() - startTime,
         timestamp: new Date().toISOString(),
         paymentLinkUrl: data.short_url ?? `https://rzp.io/i/${data.id}`,
@@ -200,11 +233,39 @@ export class RazorpayTestModeAdapter implements RecoveryExecutionAdapter {
     }
   }
 
-  async getStatus(_transactionReference: string): Promise<{ status: string; settledAmountPaise: number }> {
+  async getStatus(_transactionReference: string): Promise<{ status: LinkStatus; settledAmountPaise: number }> {
     return {
-      status: _transactionReference ? 'payment_link_issued' : 'failed',
+      status: _transactionReference ? 'awaiting_payment' : 'failed',
       settledAmountPaise: 0,
     };
+  }
+}
+
+// ─── 3. Webhook Signature Verification ───────────────────────────────
+
+/**
+ * Verifies Razorpay Webhook Signatures using constant-time HMAC-SHA256 comparison.
+ */
+export function verifyRazorpayWebhookSignature(
+  rawBody: string,
+  signature: string,
+  webhookSecret: string,
+): boolean {
+  if (!rawBody || !signature || !webhookSecret) return false;
+
+  try {
+    const expectedSignature = createHmac('sha256', webhookSecret)
+      .update(rawBody)
+      .digest('hex');
+
+    if (signature.length !== expectedSignature.length) return false;
+
+    return timingSafeEqual(
+      Buffer.from(signature, 'utf-8'),
+      Buffer.from(expectedSignature, 'utf-8'),
+    );
+  } catch {
+    return false;
   }
 }
 
@@ -212,8 +273,11 @@ export class RazorpayTestModeAdapter implements RecoveryExecutionAdapter {
  * Factory to return the active execution adapter.
  */
 export function getExecutionAdapter(): RecoveryExecutionAdapter {
-  if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
-    return new RazorpayTestModeAdapter();
+  const key = process.env.RAZORPAY_KEY_ID;
+  const secret = process.env.RAZORPAY_KEY_SECRET;
+
+  if (key && secret && key.startsWith('rzp_test_')) {
+    return new RazorpayTestModeAdapter(key, secret);
   }
   return new DeterministicSimulatorAdapter();
 }
