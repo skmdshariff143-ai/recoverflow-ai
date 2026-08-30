@@ -9,7 +9,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   RecoveryExecutionRequestSchema,
   AdapterTypeSchema,
-  DeterministicSimulatorAdapter,
   RazorpayTestModeAdapter,
   globalSimulatorAdapter,
 } from '@/lib/adapters/recoveryAdapter';

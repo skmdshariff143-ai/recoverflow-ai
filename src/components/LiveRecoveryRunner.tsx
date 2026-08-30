@@ -19,7 +19,6 @@ import {
   UserCheck,
   Zap,
   ShieldCheck,
-  AlertCircle,
 } from 'lucide-react';
 import type { FailedPayment } from '@/types';
 import type {
