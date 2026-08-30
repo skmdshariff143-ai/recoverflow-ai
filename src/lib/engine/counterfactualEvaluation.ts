@@ -9,9 +9,8 @@ import type { FailedPayment, PipelineOptions } from '@/types';
 import { processRecoveryPipeline } from './rankAndAllocate';
 import { checkSafetyRules } from './safetyFilter';
 import { scorePayment } from './scoreRecovery';
-import { scorePaymentWithTrainedModel } from './trainModel';
 import type { FrozenPotentialOutcomes } from './outcomeEnvironment';
-import { calculateExpectedValuePaise, probabilityToBps, sumPaise, validatePaiseAmount } from './financial';
+import { sumPaise } from './financial';
 
 export type PolicyType =
   | 'recoverflow_ai'

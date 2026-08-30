@@ -6,7 +6,6 @@
  */
 
 import { z } from 'zod';
-import type { InterventionType } from '@/types';
 
 // ─── Zod Schemas for Validation ──────────────────────────────────────
 
@@ -71,9 +70,9 @@ export class DeterministicSimulatorAdapter implements RecoveryExecutionAdapter {
     };
   }
 
-  async getStatus(transactionReference: string): Promise<{ status: string; settledAmountPaise: number }> {
+  async getStatus(_transactionReference: string): Promise<{ status: string; settledAmountPaise: number }> {
     return {
-      status: 'captured',
+      status: _transactionReference ? 'captured' : 'failed',
       settledAmountPaise: 500_000,
     };
   }
@@ -201,9 +200,9 @@ export class RazorpayTestModeAdapter implements RecoveryExecutionAdapter {
     }
   }
 
-  async getStatus(transactionReference: string): Promise<{ status: string; settledAmountPaise: number }> {
+  async getStatus(_transactionReference: string): Promise<{ status: string; settledAmountPaise: number }> {
     return {
-      status: 'payment_link_issued',
+      status: _transactionReference ? 'payment_link_issued' : 'failed',
       settledAmountPaise: 0,
     };
   }

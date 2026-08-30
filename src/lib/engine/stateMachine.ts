@@ -35,7 +35,7 @@
  *     └──[ Failed & attempts >= 3 ]► STOPPED (max_attempts_exceeded)
  */
 
-import type { FailedPayment, InterventionType, FailureCategory } from '@/types';
+import type { FailedPayment, InterventionType } from '@/types';
 import { checkSafetyRules } from './safetyFilter';
 import { calculateNextContactTime } from './quietHours';
 import { evaluateApprovalStatus } from './approvalGate';

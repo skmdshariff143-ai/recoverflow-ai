@@ -1,7 +1,7 @@
 /**
- * PayBack AI — Custom Hook for Recovery Batch State Management.
+ * RecoverFlow AI — Custom Hook for Recovery Batch & Evaluation State Management.
  *
- * Separates data orchestration and engine execution from UI components.
+ * Separates data orchestration, state machine evaluation, and audit ledger integrity from UI components.
  */
 
 'use client';
@@ -12,8 +12,11 @@ import { runRecoveryBatch } from '@/lib/engine/runBatch';
 import { generateSyntheticPayments } from '@/lib/engine/generateData';
 import { generateAuditTrail, exportAuditTrailToCSV, type AuditRecord } from '@/lib/engine/auditTrail';
 import { compareModelCalibration } from '@/lib/engine/calibration';
+import { buildFrozenOutcomeEnvironment } from '@/lib/engine/outcomeEnvironment';
+import { evaluateCohortPolicies, type ComprehensiveEvaluationReport } from '@/lib/engine/counterfactualEvaluation';
+import { buildHashChainedLedger, verifyLedgerIntegrity, type ChainedAuditRecord, type LedgerVerificationResult } from '@/lib/engine/hashChainLedger';
 
-export type DashboardTab = 'dashboard' | 'calibration' | 'audit_trail';
+export type DashboardTab = 'dashboard' | 'evaluation' | 'audit_trail' | 'methodology';
 
 export interface UseRecoveryBatchOptions {
   initialPayments?: FailedPayment[];
@@ -59,10 +62,33 @@ export function useRecoveryBatch(options: UseRecoveryBatchOptions = {}) {
     });
   }, [payments, budget, simulationSeed]);
 
-  // Generate audit trail
+  // Generate SHA-256 Hash-Chained Audit Ledger
   const auditRecords: AuditRecord[] = useMemo(() => {
     return generateAuditTrail(batchResult.executed_items);
   }, [batchResult.executed_items]);
+
+  const chainedLedger: ChainedAuditRecord[] = useMemo(() => {
+    return buildHashChainedLedger(auditRecords);
+  }, [auditRecords]);
+
+  const ledgerVerification: LedgerVerificationResult = useMemo(() => {
+    return verifyLedgerIntegrity(chainedLedger);
+  }, [chainedLedger]);
+
+  // Generate 200-Dev and 80-Heldout Evaluation Lab Reports
+  const devCohort = useMemo(() => generateSyntheticPayments({ seed: 101, totalRecords: 200 }), []);
+  const heldoutCohort = useMemo(() => generateSyntheticPayments({ seed: 999, totalRecords: 80 }), []);
+
+  const devOutcomes = useMemo(() => buildFrozenOutcomeEnvironment(devCohort, 202), [devCohort]);
+  const heldoutOutcomes = useMemo(() => buildFrozenOutcomeEnvironment(heldoutCohort, 777), [heldoutCohort]);
+
+  const devReport: ComprehensiveEvaluationReport = useMemo(() => {
+    return evaluateCohortPolicies(devCohort, devOutcomes, { budget });
+  }, [devCohort, devOutcomes, budget]);
+
+  const heldoutReport: ComprehensiveEvaluationReport = useMemo(() => {
+    return evaluateCohortPolicies(heldoutCohort, heldoutOutcomes, { budget });
+  }, [heldoutCohort, heldoutOutcomes, budget]);
 
   // Selected item for drill-down modal
   const selectedItem: ExecutedItem | null = useMemo(() => {
@@ -95,64 +121,74 @@ export function useRecoveryBatch(options: UseRecoveryBatchOptions = {}) {
           return false;
         }
 
-        // Search Query (Payment ID, Customer ID, Error string)
+        // Search Query
         if (searchQuery.trim() !== '') {
           const q = searchQuery.toLowerCase();
           const matchId = item.payment.payment_id.toLowerCase().includes(q);
           const matchCust = item.payment.customer_id.toLowerCase().includes(q);
-          const matchErr = item.payment.raw_gateway_error.toLowerCase().includes(q);
-          const matchCat = item.payment.failure_category.toLowerCase().includes(q);
-          if (!matchId && !matchCust && !matchErr && !matchCat) return false;
+          const matchError = item.payment.raw_gateway_error.toLowerCase().includes(q);
+          if (!matchId && !matchCust && !matchError) return false;
         }
 
         return true;
       })
       .sort((a, b) => {
-        let cmp = 0;
-        if (sortField === 'rank') {
-          const rA = a.rank ?? 9999;
-          const rB = b.rank ?? 9999;
-          cmp = rA - rB;
-        } else if (sortField === 'expected_value') {
-          cmp = b.score.expected_value - a.score.expected_value;
+        let valA: number;
+        let valB: number;
+
+        if (sortField === 'expected_value') {
+          valA = a.score.expected_value;
+          valB = b.score.expected_value;
         } else if (sortField === 'amount') {
-          cmp = b.payment.amount - a.payment.amount;
+          valA = a.payment.amount;
+          valB = b.payment.amount;
         } else if (sortField === 'recovery_probability') {
-          cmp = b.score.recovery_probability - a.score.recovery_probability;
+          valA = a.score.recovery_probability;
+          valB = b.score.recovery_probability;
+        } else {
+          // Default: Rank
+          valA = a.rank ?? 999;
+          valB = b.rank ?? 999;
         }
-        return sortAsc ? cmp : -cmp;
+
+        return sortAsc ? valA - valB : valB - valA;
       });
   }, [batchResult.executed_items, statusFilter, categoryFilter, searchQuery, sortField, sortAsc]);
 
-  // Derived KPI metrics
+  // Derived KPI metrics for headline cards
   const kpis = useMemo(() => {
-    const executedBudgeted = batchResult.executed_items.filter(
-      (i) => i.status === 'budgeted' || i.dispute_signaled,
+    const totalRevAtRisk = batchResult.summary.total_revenue_at_risk;
+    const totalRevRecovered = batchResult.executed_items.reduce(
+      (sum, item) => sum + item.recovered_amount,
+      0,
     );
-    const recoveredCount = batchResult.executed_items.filter(
-      (i) => i.execution_status === 'recovered',
+    const overallRate =
+      totalRevAtRisk > 0 ? (totalRevRecovered / totalRevAtRisk) * 100 : 0;
+
+    const budgetedItems = batchResult.executed_items.filter((i) => i.status === 'budgeted');
+    const recoveredBudgeted = budgetedItems.filter((i) => i.execution_status === 'recovered');
+
+    const customerContacts = batchResult.executed_items.filter(
+      (i) => i.final_attempt_count > i.payment.attempt_count,
     ).length;
-    const failedBudgetedCount = executedBudgeted.length - recoveredCount;
-    const unnecessaryRetryRate =
-      executedBudgeted.length > 0
-        ? Number(((failedBudgetedCount / executedBudgeted.length) * 100).toFixed(1))
+
+    const unnecessaryRetries = budgetedItems.filter(
+      (i) => i.execution_status !== 'recovered' && !i.dispute_signaled,
+    ).length;
+
+    const totalAttempts = recoveredBudgeted.reduce(
+      (sum, i) => sum + (i.final_attempt_count - i.payment.attempt_count),
+      0,
+    );
+    const avgAttempts =
+      recoveredBudgeted.length > 0
+        ? totalAttempts / recoveredBudgeted.length
         : 0;
 
-    const recoveredItems = batchResult.executed_items.filter((i) => i.execution_status === 'recovered');
-    const avgAttemptsBeforeRecovery =
-      recoveredItems.length > 0
-        ? Number(
-            (
-              recoveredItems.reduce((s, i) => s + i.final_attempt_count, 0) /
-              recoveredItems.length
-            ).toFixed(1),
-          )
-        : 1.0;
-
     return {
-      totalRevenueAtRisk: batchResult.total_revenue_at_risk,
-      totalRevenueRecovered: batchResult.total_revenue_recovered,
-      overallRecoveryRate: Number((batchResult.overall_recovery_rate * 100).toFixed(1)),
+      totalRevenueAtRisk: totalRevAtRisk,
+      totalRevenueRecovered: totalRevRecovered,
+      overallRecoveryRate: Number(overallRate.toFixed(1)),
       predictedRecoveryRate: Number(
         (batchResult.calibration.overall_predicted_rate * 100).toFixed(1),
       ),
@@ -164,15 +200,16 @@ export function useRecoveryBatch(options: UseRecoveryBatchOptions = {}) {
       ),
       brierScore: batchResult.calibration.brier_score,
       budgetedCount: batchResult.summary.budgeted_count,
-      deferredCount: batchResult.summary.deferred_count,
       budgetedEV: batchResult.summary.budgeted_expected_value,
+      deferredCount: batchResult.summary.deferred_count,
       deferredEV: batchResult.summary.deferred_expected_value,
-      pendingApprovalCount: batchResult.summary.pending_approval_count,
+      customerContactCount: customerContacts,
+      unnecessaryRetryRate: Number(
+        ((unnecessaryRetries / Math.max(1, budgetedItems.length)) * 100).toFixed(1),
+      ),
+      avgAttemptsBeforeRecovery: Number(avgAttempts.toFixed(2)),
       stoppedCount: batchResult.summary.stopped_count,
       stoppedByReason: batchResult.summary.stopped_by_reason,
-      customerContactCount: executedBudgeted.length,
-      unnecessaryRetryRate,
-      avgAttemptsBeforeRecovery,
     };
   }, [batchResult]);
 
@@ -183,19 +220,19 @@ export function useRecoveryBatch(options: UseRecoveryBatchOptions = {}) {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.setAttribute('href', url);
-    link.setAttribute('download', `payback-ai-audit-trail-${Date.now()}.csv`);
+    link.setAttribute('download', `recoverflow-audit-trail-${Date.now()}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
   const handleExportJSON = () => {
-    const jsonContent = JSON.stringify(auditRecords, null, 2);
+    const jsonContent = JSON.stringify(chainedLedger, null, 2);
     const blob = new Blob([jsonContent], { type: 'application/json;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.setAttribute('href', url);
-    link.setAttribute('download', `payback-ai-audit-trail-${Date.now()}.json`);
+    link.setAttribute('download', `recoverflow-audit-ledger-${Date.now()}.json`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -220,6 +257,10 @@ export function useRecoveryBatch(options: UseRecoveryBatchOptions = {}) {
     selectedItemAuditRecords,
     batchResult,
     auditRecords,
+    chainedLedger,
+    ledgerVerification,
+    devReport,
+    heldoutReport,
     filteredQueueItems,
     kpis,
     // Filters

@@ -12,8 +12,6 @@ import {
   Target,
   Users,
   ShieldAlert,
-  UserX,
-  AlertOctagon,
   Clock,
   Briefcase,
 } from 'lucide-react';

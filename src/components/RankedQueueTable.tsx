@@ -35,7 +35,6 @@ interface RankedQueueTableProps {
   onSearchChange: (q: string) => void;
   sortField: 'rank' | 'expected_value' | 'amount' | 'recovery_probability';
   onSortFieldChange: (field: 'rank' | 'expected_value' | 'amount' | 'recovery_probability') => void;
-  sortAsc: boolean;
   onSortAscToggle: () => void;
   onSelectPayment: (paymentId: string) => void;
 }
@@ -51,7 +50,6 @@ export function RankedQueueTable({
   onSearchChange,
   sortField,
   onSortFieldChange,
-  sortAsc,
   onSortAscToggle,
   onSelectPayment,
 }: RankedQueueTableProps) {

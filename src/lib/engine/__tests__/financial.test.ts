@@ -12,7 +12,6 @@ import {
   sumPaise,
   formatPaiseToINR,
   FinancialValidationError,
-  BPS_SCALE,
   MAX_SAFE_PAISE,
 } from '../financial';
 

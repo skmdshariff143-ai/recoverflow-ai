@@ -1,4 +1,4 @@
-# PayBack AI — Scoring Model & Probabilistic Calibration Architecture
+# RecoverFlow AI — Scoring Model, Calibration & Counterfactual Evaluation Architecture
 
 > **Submission Document**: Razorpay AI Buildathon · Track 3: AI Revenue Recovery  
 > **Repository**: [https://github.com/skmdshariff143-ai/recoverflow-ai](https://github.com/skmdshariff143-ai/recoverflow-ai)  
@@ -13,114 +13,64 @@ Traditional payment recovery engines rely on **blind rule cascades** (e.g., "ret
 2. **Customer Friction & Churn**: Bombarding good customers with aggressive reminders during temporary bank outages or during local quiet hours.
 3. **Sub-optimal Value Capture**: Treating a ₹50,000 enterprise invoice with an 80% recovery probability identically to a ₹200 one-off purchase with a 10% recovery probability.
 
-**PayBack AI** replaces blind cascades with a **calibrated, explainable prioritization engine**:
-$$\text{Expected Value (EV)} = P(\text{Recovery}) \times \text{Invoice Amount}$$
+**RecoverFlow AI** replaces blind cascades with a **calibrated, explainable prioritization engine**:
+
+$$\text{Expected Value (Paise)} = \text{round}\left(\frac{\text{Amount (Paise)} \times P(\text{Recovery})_{\text{bps}}}{10,000}\right)$$
 
 Recovery resources (limited retry slots and contact bandwidth) are allocated strictly descending by **Expected Value**, maximizing recovered revenue per unit of operational cost while strictly adhering to compliance and safety constraints.
 
 ---
 
-## 2. Deterministic Scoring Formulation
+## 2. Integer-Paise Financial Math & Invariants
 
-Every payment event is scored using a pure, deterministic, and category-anchored proportional formula:
-
-$$P(\text{Recovery}) = \text{clamp}_{[0, 1]}\left( w_{\text{cat}} \cdot \text{BaseRate}(\text{Category}) + \sum_{i=1}^5 w_i \cdot f_i(\mathbf{x}) \right)$$
-
-### A. Feature Weights & Component Breakdown
-
-| Signal / Feature | Symbol | Weight ($w$) | Theoretical & Operational Rationale |
-|---|---|---|---|
-| **Failure Category Base Rate** | $\text{BaseRate}(\text{Category})$ | **$0.55$** (55%) | The primary anchor. Technical infrastructure failures recover at dramatically higher rates than behavioral customer defaults. |
-| **Historical On-Time Payment Rate** | $f_{\text{on\_time}} \in [0, 1]$ | **$0.15$** (15%) | Long-term customer reliability signal. Proves whether the customer typically has sufficient liquidity and intent. |
-| **Broken Promises Count** | $f_{\text{broken}} = \max(0, 1 - 0.5 \times \text{count})$ | **$0.10$** (10%) | Direct behavioral friction signal. Multiple broken promises to pay severely degrade recovery likelihood. |
-| **Merchant Relationship Tenure** | $f_{\text{tenure}} = \min(1, \text{months} / 24)$ | **$0.05$** (5%) | Established multi-year accounts exhibit higher commitment to resolving invoice discrepancies. |
-| **Past Recovery Success Ratio** | $f_{\text{rec}} = \frac{\text{Successes} + 1}{\text{Successes} + \text{Failures} + 2}$ | **$0.05$** (5%) | Laplace-smoothed historical recovery rate specific to this customer account. |
-| **Attempt Count Recency Decay** | $f_{\text{decay}} = (1 - 0.20)^{\text{attempts}}$ | **$0.10$** (10%) | Exponential recovery decay per failed attempt. Each subsequent retry is statistically less likely to succeed. |
-
-$$\sum w_i = 0.55 + 0.15 + 0.10 + 0.05 + 0.05 + 0.10 = 1.00$$
-
-### B. Failure Category Base Rates ($\text{BaseRate}$)
-
-Derived from empirical payment gateway recovery distributions:
-
-```typescript
-export const CATEGORY_BASE_RATES: Record<FailureCategory, number> = {
-  // Infrastructure & Transient Issues (High Base Probability)
-  bank_downtime: 0.75,
-  gateway_degradation: 0.75,
-  duplicate_attempt: 0.65,
-
-  // Moderate Friction / Credential Upgrades
-  auth_failure: 0.40,
-  expired_card: 0.40,
-  insufficient_funds: 0.25,
-  invalid_mandate: 0.20,
-
-  // High Friction & Behavioral Hard Stops (Low / Zero Base Probability)
-  broken_promise_to_pay: 0.05,
-  customer_cancellation: 0.02,
-  permanent_account_closure: 0.01,
-};
-```
+To prevent floating-point rounding errors and precision drift across financial aggregations:
+- All monetary values are represented strictly as **integer paise** ($1\text{ INR} = 100\text{ Paise}$).
+- Probabilities are normalized into integer **basis points** ($100\% = 10,000\text{ bps}$).
+- Expected Value calculation:
+  $$\text{EV}_{\text{paise}} = \text{Math.round}\left(\frac{\text{amount}_{\text{paise}} \times \text{prob}_{\text{bps}}}{10,000}\right)$$
+- Negative amounts are rejected at runtime via `validatePaiseAmount`.
+- Cross-currency aggregations are strictly prevented via `assertMatchingCurrency`.
 
 ---
 
-## 3. Empirical Calibration & Reliability Analysis
+## 3. Deterministic Scoring & Logistic Calibration
 
-A machine learning or heuristic scoring engine is only valuable if its predicted probabilities match **actual real-world outcomes** (i.e. if an engine predicts an 80% recovery probability for 100 payments, exactly 80 should recover).
+### A. Feature Extraction Vector
+Each failed payment $\mathbf{x}$ is mapped into a normalized feature vector:
+1. **Category Base Rate**: Prior empirical baseline $x_1 \in [0, 1]$
+2. **On-Time Payment Fraction**: $x_2 \in [0, 1]$
+3. **Broken Promise Penalty**: $x_3 = \min(1, \text{count} / 3)$
+4. **Recency Days**: $x_4 = \min(1, \text{daysElapsed} / 30)$
+5. **Tenure Fraction**: $x_5 = \min(1, \text{months} / 24)$
+6. **Attempt Penalty**: $x_6 = \min(1, \text{attempts} / 3)$
+7. **Laplace Past Recovery Ratio**: $x_7 = \frac{\text{successes} + 1}{\text{successes} + \text{failures} + 2}$
 
-### Batch Run Results (100 Synthetic Payments)
-
-| Metric | Budgeted Cohort (40 slots) | Complete Batch (100 payments) |
-|---|---|---|
-| **Total Revenue at Risk** | ₹6,87,694.53 | ₹6,87,694.53 |
-| **Total Revenue Recovered** | ₹1,46,900.25 | ₹1,46,900.25 |
-| **Predicted Recovery Rate** | **60.4%** | 48.3% |
-| **Actual Recovery Rate** | **45.0%** (18 recovered) | 18.0% |
-| **Overall Calibration Gap** | **15.38%** | 23.94% |
-| **Brier Score ($BS$)** | **0.2248** | — |
-
-$$\text{Brier Score} = \frac{1}{N}\sum_{t=1}^N (f_t - o_t)^2 = 0.2248$$
-*(Where $f_t$ is predicted probability and $o_t \in \{0, 1\}$ is actual outcome. $0.0$ represents perfect probabilistic foresight).*
-
-### A. 5-Bin Reliability Diagram
-
-| Probability Bin | Sample Size | Avg Predicted Prob | Actual Recovery Rate | Calibration Error | Status |
-|---|---|---|---|---|---|
-| **0.00 – 0.20** | 0 items (deferred) | 10.0% | 0.0% | 0.0% | ✅ Calibrated |
-| **0.20 – 0.40** | 8 items | 36.0% | 12.5% (1/8) | 23.5% | ⚠️ Over-optimistic |
-| **0.40 – 0.60** | 11 items | 49.8% | 27.3% (3/11) | 22.5% | ⚠️ Over-optimistic |
-| **0.60 – 0.80** | 15 items | 72.3% | 60.0% (9/15) | 12.3% | ✅ Well Calibrated |
-| **0.80 – 1.00** | 6 items | 82.6% | **83.3% (5/6)** | **0.7%** | 🎯 Extremely Accurate |
-
-### B. Model Evolution & Comparative Benchmark (Milestone 7a)
-
-In Milestone 7a, PayBack AI introduced a versioned, trained logistic regression model (`v1.1.0-logistic-calibrated` in [`src/lib/engine/trainModel.ts`](file:///e:/recoverflow-ai/src/lib/engine/trainModel.ts)) that fits optimal weights via L2-regularized gradient descent directly on empirical recovery records.
-
-#### Side-by-Side Model Comparison (100-Payment Benchmark):
-
-| Metric | Heuristic Model (`v1.0.0`) | Trained Logistic (`v1.1.0`) | Improvement / Delta |
-|---|:---:|:---:|:---:|
-| **Overall Calibration Error** | 15.38% | **2.98%** | **5.1x reduction in calibration error** ($\Delta -12.40\%$) |
-| **Predicted Recovery Rate** | 60.4% | **65.5%** | Closer to true cohort empirical probability |
-| **Actual Recovery Rate** | 45.0% (18 recovered) | **62.5% (25 recovered)** | Higher yield cohort selected |
-| **Recovered Revenue (40 slots)** | ₹1,46,900 | **₹2,76,467** | **+88.2% revenue increase** via optimal EV prioritization |
-| **Brier Score ($BS$)** | 0.2248 | **0.2378** | Comparable tight probabilistic bound |
-
-$$\text{Logit Link}: z = \text{bias} + w_{\text{cat}} x_{\text{cat}} + w_{\text{ontime}} x_{\text{ontime}} - w_{\text{broken}} x_{\text{broken}} + w_{\text{recency}} x_{\text{recency}} + w_{\text{tenure}} x_{\text{tenure}} - w_{\text{attempt}} x_{\text{attempt}} + w_{\text{past}} x_{\text{past}}$$
+### B. L2-Regularized Logistic Regression
+$$\text{logit}(z) = \beta_0 + \sum_{j=1}^7 \beta_j x_j$$
 $$P(\text{Recovery}) = \sigma(z) = \frac{1}{1 + e^{-z}}$$
 
 ---
 
-## 4. Safety & Governance Rule Matrix
+## 4. Independent Frozen Outcome Environment (Non-Circular Evaluation)
 
-All safety rules are hard-coded in the deterministic core and executed **prior to queue ranking and budget allocation**, ensuring unsafe or illegal interventions never consume merchant budget or reach customers.
+To eliminate the circular evaluation flaw where a model samples outcomes from its own predictions:
+1. **Separation of Concerns**: The **Decision Model** produces predictions using only pre-intervention features.
+2. **Outcome Generator**: A separately defined physical environment generates **frozen potential outcomes** $\mathbf{Y}(i, a)$ for each payment $i$, intervention $a \in \{\text{retry}, \text{reminder}, \text{both}\}$, and attempt $k \in \{1, 2, 3\}$.
+3. **Information Barrier**: The outcome generator **never** reads predicted probability, expected value, queue rank, or model confidence.
+4. **Counterfactual Policy Evaluation**: RecoverFlow AI and control policies (Fixed Retry, Retry-All, High-Confidence Only) are evaluated against **identical frozen matrices**.
 
-| Rule Name | Trigger Condition | Pipeline Action | Audit Reason Logged | Test File |
-|---|---|---|---|---|
-| **Customer Opt-Out** | `opt_out === true` | Immediate Stop | `customer_opted_out` | [`src/lib/engine/__tests__/safetyFilter.test.ts`](file:///e:/recoverflow-ai/src/lib/engine/__tests__/safetyFilter.test.ts) |
-| **Non-Recoverable Category** | `permanent_account_closure` or `customer_cancellation` | Immediate Stop | `non_recoverable_category` | [`src/lib/engine/__tests__/safetyFilter.test.ts`](file:///e:/recoverflow-ai/src/lib/engine/__tests__/safetyFilter.test.ts) |
-| **Hard Attempt Cap** | `attempt_count >= 3` | Immediate Stop | `max_attempts_exceeded` | [`src/lib/engine/__tests__/safetyFilter.test.ts`](file:///e:/recoverflow-ai/src/lib/engine/__tests__/safetyFilter.test.ts) |
-| **Mid-Process Dispute Halt** | Customer chargeback / dispute signal | Immediate Execution Halt | `dispute_or_cancellation_signaled` | [`src/lib/engine/__tests__/executeIntervention.test.ts`](file:///e:/recoverflow-ai/src/lib/engine/__tests__/executeIntervention.test.ts) |
-| **Quiet-Hours Protection** | Target time in customer local window (22:00–07:00) | Schedule delayed dispatch | Timezone-shifted timestamp | [`src/lib/engine/__tests__/quietHours.test.ts`](file:///e:/recoverflow-ai/src/lib/engine/__tests__/quietHours.test.ts) |
-| **High-Value Governance Gate** | `invoice_value_tier === 'high_value'` and $\text{EV} < ₹20,000$ | Escalated to Human Approval | `pending_approval` | [`src/lib/engine/__tests__/approvalGate.test.ts`](file:///e:/recoverflow-ai/src/lib/engine/__tests__/approvalGate.test.ts) |
+---
+
+## 5. Multi-Cycle Closed-Loop State Machine
+
+```
+  DETECTED ──► DIAGNOSED ──► ELIGIBILITY_CHECKED ──► SCHEDULED ──► EXECUTING ──► OUTCOME_OBSERVED
+                                 │                                                     │
+                                 ├──► [Ineligible] ──► STOPPED                         ├──► RECOVERED
+                                 │                                                     ├──► RETRY_SCHEDULED (cycle < 3)
+                                 └──► [High Value] ──► APPROVAL_REQUIRED               └──► STOPPED (cycle >= 3)
+```
+
+- **Safety Filters**: Automatic hard stops for customer opt-out, max attempt cap ($\le 3$), and non-recoverable root causes.
+- **Quiet-Hours Protection**: Dispatches only outside the customer's quiet window (`22:00`–`08:00` in their timezone).
+- **Cryptographic Audit Ledger**: Every state transition event is appended to a tamper-evident SHA-256 hash chain.

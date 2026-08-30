@@ -14,7 +14,6 @@ import {
   CheckCircle,
   AlertTriangle,
   ArrowRight,
-  TrendingDown,
   Sparkles,
   Zap,
 } from 'lucide-react';

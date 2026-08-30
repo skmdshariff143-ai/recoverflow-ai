@@ -9,7 +9,6 @@ import {
   stepWorkflowDiagnosisAndEligibility,
   applyReviewerDecision,
   runClosedLoopWorkflowToCompletion,
-  type RecoveryWorkflowInstance,
 } from '../stateMachine';
 import { generatePotentialOutcomes } from '../outcomeEnvironment';
 import type { FailedPayment } from '@/types';
@@ -18,25 +17,20 @@ function makeMockPayment(overrides: Partial<FailedPayment> = {}): FailedPayment 
   return {
     payment_id: 'pay_test_001',
     customer_id: 'cust_001',
-    customer_name: 'Acme Corp',
-    customer_email: 'finance@acme.com',
-    customer_phone: '+919876543210',
-    customer_tier: 'mid_market',
-    customer_timezone: 'Asia/Kolkata',
-    quiet_hours_window: { start_hour: 22, end_hour: 8 },
+    quiet_hours_window: { start: 22, end: 8, timezone: 'Asia/Kolkata' },
     opt_out: false,
     amount: 500_000, // ₹5,000.00
-    invoice_value_tier: overrides.amount && overrides.amount >= 1_000_000 ? 'high_value' : 'medium',
+    invoice_value_tier: overrides.amount && overrides.amount >= 1_000_000 ? 'high_value' : 'standard',
     currency: 'INR',
     failure_timestamp: '2025-08-29T10:00:00Z',
     failure_category: 'bank_downtime',
     raw_gateway_error: 'BANK_DOWNTIME_503',
     attempt_count: 0,
-    mandate_state: 'active',
     customer_payment_history: {
       on_time_payment_rate: 0.95,
       broken_promise_count: 0,
       tenure_months: 24,
+      total_transactions: 10,
       past_recovery_successes: 3,
       past_recovery_failures: 0,
     },

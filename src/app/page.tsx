@@ -1,7 +1,7 @@
 /**
- * PayBack AI — Main Dashboard Application.
+ * RecoverFlow AI — Main Control Center Application.
  *
- * Interactive Revenue Recovery & Calibration Dashboard.
+ * Interactive Bounded Revenue Recovery, Evaluation Lab & Audit Control Center.
  */
 
 'use client';
@@ -10,10 +10,11 @@ import React from 'react';
 import { useRecoveryBatch } from '@/hooks/useRecoveryBatch';
 import { Header } from '@/components/Header';
 import { MetricsOverview } from '@/components/MetricsOverview';
-import { CalibrationVisualizer } from '@/components/CalibrationVisualizer';
 import { RankedQueueTable } from '@/components/RankedQueueTable';
 import { PaymentDrilldownModal } from '@/components/PaymentDrilldownModal';
 import { AuditTrailExplorer } from '@/components/AuditTrailExplorer';
+import { EvaluationLab } from '@/components/EvaluationLab';
+import { MethodologyGuide } from '@/components/MethodologyGuide';
 
 export default function Home() {
   const {
@@ -21,19 +22,18 @@ export default function Home() {
     setBudget,
     simulationSeed,
     setSimulationSeed,
-    scoringModel,
-    setScoringModel,
-    modelComparison,
     provenance,
     setProvenance,
     activeTab,
     setActiveTab,
-    selectedPaymentId,
     setSelectedPaymentId,
     selectedItem,
     selectedItemAuditRecords,
     batchResult,
-    auditRecords,
+    chainedLedger,
+    ledgerVerification,
+    devReport,
+    heldoutReport,
     filteredQueueItems,
     kpis,
     // Filters
@@ -45,7 +45,6 @@ export default function Home() {
     setSearchQuery,
     sortField,
     setSortField,
-    sortAsc,
     setSortAsc,
     // Exports
     handleExportCSV,
@@ -73,10 +72,10 @@ export default function Home() {
 
       {/* ── Main Application Workspace ─────────────────────────── */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-        {/* KPI Metrics Overview (Visible on all views) */}
+        {/* KPI Metrics Overview (Visible across workspaces) */}
         <MetricsOverview kpis={kpis} />
 
-        {/* Tab 1: Dashboard & Ranked Queue */}
+        {/* Workspace 1: Dashboard & Ranked Queue */}
         {activeTab === 'dashboard' && (
           <div className="space-y-6">
             <RankedQueueTable
@@ -90,31 +89,34 @@ export default function Home() {
               onSearchChange={setSearchQuery}
               sortField={sortField}
               onSortFieldChange={setSortField}
-              sortAsc={sortAsc}
-              onSortAscToggle={() => setSortAsc(!sortAsc)}
+              onSortAscToggle={() => setSortAsc((prev) => !prev)}
               onSelectPayment={(id) => setSelectedPaymentId(id)}
             />
           </div>
         )}
 
-        {/* Tab 2: Probabilistic Calibration Report */}
-        {activeTab === 'calibration' && (
-          <CalibrationVisualizer
-            calibration={batchResult.calibration}
-            modelComparison={modelComparison}
-            scoringModel={scoringModel}
-            onScoringModelChange={setScoringModel}
+        {/* Workspace 2: Evaluation Lab & Policy Simulator */}
+        {activeTab === 'evaluation' && (
+          <EvaluationLab
+            devReport={devReport}
+            heldoutReport={heldoutReport}
           />
         )}
 
-        {/* Tab 3: Immutable Audit Trail Explorer */}
+        {/* Workspace 3: Append-Only Cryptographic Audit Ledger */}
         {activeTab === 'audit_trail' && (
           <AuditTrailExplorer
-            records={auditRecords}
+            records={chainedLedger}
+            verification={ledgerVerification}
             onExportCSV={handleExportCSV}
             onExportJSON={handleExportJSON}
             onSelectPayment={(id) => setSelectedPaymentId(id)}
           />
+        )}
+
+        {/* Workspace 4: Methodology & Judge Guide */}
+        {activeTab === 'methodology' && (
+          <MethodologyGuide />
         )}
       </main>
 
@@ -131,10 +133,10 @@ export default function Home() {
       <footer className="border-t border-slate-200 bg-white py-4 text-center text-xs text-slate-500">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
           <span>
-            PayBack AI — Razorpay AI Buildathon (Track 3: AI Revenue Recovery)
+            RecoverFlow AI — Razorpay AI Buildathon (Track 3: AI Revenue Recovery)
           </span>
           <span className="font-mono text-slate-400">
-            Next.js 16 · Turbopack · Deterministic Calibration Engine
+            Next.js 16 · Turbopack · SHA-256 Ledger · Bounded Gemini 2.5
           </span>
         </div>
       </footer>

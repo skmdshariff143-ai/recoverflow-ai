@@ -59,11 +59,10 @@ const adversarialPayments: FailedPayment[] = baseAdversarial.map((p, idx) => {
   } else if (idx < 32) {
     // Boundary 4: High Value Enterprise Invoices (> ₹1,00,000 requiring approval)
     mod.amount = 15_000_000 + idx * 500_000; // ₹1.5L to ₹1.9L in paise
-    mod.customer_tier = 'enterprise';
+    mod.invoice_value_tier = 'high_value';
   } else if (idx < 40) {
     // Boundary 5: Active Quiet Hours (simulate customer local time in quiet window)
-    mod.quiet_hours_window = { start_hour: 22, end_hour: 8 };
-    mod.customer_timezone = 'Asia/Kolkata';
+    mod.quiet_hours_window = { start: 22, end: 8, timezone: 'Asia/Kolkata' };
   } else if (idx < 48) {
     // Boundary 6: Broken Promise-to-Pay Chronic Defaulter
     mod.failure_category = 'broken_promise_to_pay';

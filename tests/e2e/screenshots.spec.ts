@@ -30,19 +30,27 @@ test.describe('RecoverFlow AI — Screenshot Generation for Submission', () => {
     await page.getByRole('button', { name: /Close Drill-Down/i }).click();
     await page.waitForTimeout(300);
 
-    // 3. Probabilistic Calibration Visualizer Tab
-    await page.getByRole('button', { name: /Probabilistic Calibration Report/i }).click();
+    // 3. Evaluation Lab & Counterfactual Policy Simulator
+    await page.getByRole('button', { name: /Evaluation Lab & Policy Simulator/i }).click();
     await page.waitForTimeout(500);
     await page.screenshot({
-      path: 'docs/screenshots/03-calibration-report.png',
+      path: 'docs/screenshots/03-evaluation-lab.png',
       fullPage: true,
     });
 
-    // 4. Immutable Audit Trail Explorer Tab
-    await page.getByRole('button', { name: /Audit Trail Explorer/i }).click();
+    // 4. Audit Trail & Cryptographic Ledger
+    await page.getByRole('button', { name: /Audit Trail & Cryptographic Ledger/i }).click();
     await page.waitForTimeout(500);
     await page.screenshot({
-      path: 'docs/screenshots/04-audit-trail-explorer.png',
+      path: 'docs/screenshots/04-audit-trail-ledger.png',
+      fullPage: true,
+    });
+
+    // 5. Methodology & Judge Guide
+    await page.getByRole('button', { name: /Methodology & Judge Guide/i }).click();
+    await page.waitForTimeout(500);
+    await page.screenshot({
+      path: 'docs/screenshots/05-methodology-guide.png',
       fullPage: true,
     });
   });

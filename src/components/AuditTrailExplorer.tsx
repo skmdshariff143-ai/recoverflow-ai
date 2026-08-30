@@ -1,8 +1,9 @@
 /**
- * PayBack AI — Global Audit Trail Explorer Component.
+ * RecoverFlow AI — Global Audit Trail & Cryptographic Ledger Explorer.
  *
  * Searchable, filterable, and exportable (CSV / JSON) view of every
- * audit event logged across the entire recovery lifecycle.
+ * audit event logged across the entire recovery lifecycle, with cryptographic
+ * SHA-256 hash-chain verification.
  */
 
 'use client';
@@ -17,11 +18,14 @@ import {
   ChevronRight,
   ShieldCheck,
   FileCode,
+  Lock,
+  AlertOctagon,
 } from 'lucide-react';
-import type { AuditRecord } from '@/lib/engine/auditTrail';
+import type { ChainedAuditRecord, LedgerVerificationResult } from '@/lib/engine/hashChainLedger';
 
 interface AuditTrailExplorerProps {
-  records: AuditRecord[];
+  records: ChainedAuditRecord[];
+  verification?: LedgerVerificationResult;
   onExportCSV: () => void;
   onExportJSON: () => void;
   onSelectPayment: (paymentId: string) => void;
@@ -29,6 +33,7 @@ interface AuditTrailExplorerProps {
 
 export function AuditTrailExplorer({
   records,
+  verification,
   onExportCSV,
   onExportJSON,
   onSelectPayment,
@@ -57,37 +62,72 @@ export function AuditTrailExplorer({
     currentPage * pageSize,
   );
 
+  const isVerified = verification ? verification.isValid : true;
+
   return (
     <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
       {/* ── Explorer Header & Export Actions ───────────────────── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
         <div>
-          <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-            <FileSpreadsheet className="w-5 h-5 text-indigo-600" />
-            Append-Only Audit Trail Explorer
-          </h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+              <FileSpreadsheet className="w-5 h-5 text-indigo-600" />
+              Append-Only Tamper-Evident Audit Ledger
+            </h2>
+            <span className="bg-cyan-100 text-cyan-800 text-[11px] font-bold px-2 py-0.5 rounded-full border border-cyan-300 flex items-center gap-1">
+              <Lock className="w-3 h-3 text-cyan-700" />
+              SHA-256 Hash Chained
+            </span>
+          </div>
           <p className="text-xs text-slate-500 mt-0.5">
-            Chronological audit log of all {records.length} decisions across scoring, safety, ranking, and execution.
+            Chronological cryptographic ledger of all {records.length} decision events across scoring, safety, ranking, and execution.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <button
             onClick={onExportCSV}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition cursor-pointer"
           >
             <Download className="w-3.5 h-3.5 text-emerald-600" />
             Export CSV
           </button>
           <button
             onClick={onExportJSON}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition cursor-pointer"
           >
             <FileCode className="w-3.5 h-3.5 text-indigo-600" />
-            Export JSON
+            Export Signed JSON
           </button>
         </div>
       </div>
+
+      {/* ── Cryptographic Integrity Status Banner ──────────────── */}
+      {verification && (
+        <div
+          className={`p-3 rounded-lg border flex items-center justify-between text-xs ${
+            isVerified
+              ? 'bg-emerald-50/70 border-emerald-200 text-emerald-900'
+              : 'bg-rose-50 border-rose-200 text-rose-900'
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            {isVerified ? (
+              <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+            ) : (
+              <AlertOctagon className="w-4 h-4 text-rose-600 shrink-0" />
+            )}
+            <span className="font-semibold">
+              {isVerified
+                ? 'Cryptographic Verification Passed: All records hash-linked without tampering.'
+                : `Verification Failed: ${verification.errorDetail}`}
+            </span>
+          </div>
+          <div className="font-mono text-[11px] text-slate-600 hidden sm:block">
+            Latest Hash: <span className="text-slate-900 font-bold">{verification.latestHash.slice(0, 16)}...</span>
+          </div>
+        </div>
+      )}
 
       {/* ── Search & Filter Controls ───────────────────────────── */}
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -132,36 +172,41 @@ export function AuditTrailExplorer({
         </div>
       </div>
 
-      {/* ── Audit Records Table ────────────────────────────────── */}
+      {/* ── Audit Records Table with Hash Chain ────────────────── */}
       <div className="overflow-x-auto border border-slate-100 rounded-lg">
         <table className="min-w-full text-xs text-left">
           <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase tracking-wider">
             <tr>
+              <th className="py-2.5 px-3 text-center">Seq #</th>
               <th className="py-2.5 px-3">Audit ID</th>
               <th className="py-2.5 px-3">Payment ID</th>
               <th className="py-2.5 px-3">Timestamp</th>
               <th className="py-2.5 px-3">Stage</th>
               <th className="py-2.5 px-3">Decision</th>
-              <th className="py-2.5 px-3">Audit Reason &amp; Rationale</th>
+              <th className="py-2.5 px-3">Audit Reason</th>
+              <th className="py-2.5 px-3">SHA-256 Hash</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-slate-700">
             {paginatedRecords.length === 0 ? (
               <tr>
-                <td colSpan={6} className="py-8 text-center text-slate-400">
+                <td colSpan={8} className="py-8 text-center text-slate-400">
                   No audit events found matching criteria.
                 </td>
               </tr>
             ) : (
               paginatedRecords.map((r) => (
                 <tr key={r.id} className="hover:bg-slate-50/80 transition">
+                  <td className="py-2.5 px-3 text-center font-mono text-slate-400 font-bold">
+                    {r.sequenceIndex ?? 0}
+                  </td>
                   <td className="py-2.5 px-3 font-mono text-slate-500 font-medium">
                     {r.id}
                   </td>
                   <td className="py-2.5 px-3 font-mono font-bold text-indigo-600">
                     <button
                       onClick={() => onSelectPayment(r.payment_id)}
-                      className="hover:underline focus:outline-none"
+                      className="hover:underline focus:outline-none cursor-pointer"
                     >
                       {r.payment_id}
                     </button>
@@ -177,8 +222,11 @@ export function AuditTrailExplorer({
                   <td className="py-2.5 px-3 font-semibold text-slate-900 max-w-xs">
                     {r.decision}
                   </td>
-                  <td className="py-2.5 px-3 text-slate-600 max-w-md">
+                  <td className="py-2.5 px-3 text-slate-600 max-w-sm">
                     {r.reason}
+                  </td>
+                  <td className="py-2.5 px-3 font-mono text-[10px] text-slate-400">
+                    {r.currentHash ? `${r.currentHash.slice(0, 10)}...` : '—'}
                   </td>
                 </tr>
               ))

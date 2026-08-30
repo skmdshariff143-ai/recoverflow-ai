@@ -51,18 +51,20 @@ test.describe('RecoverFlow AI — Interactive Dashboard & Drill-Down', () => {
     await expect(page.getByText(/Score Breakdown & Explainability Waterfall/i)).not.toBeVisible();
   });
 
-  test('tab navigation switches to Calibration Report and Audit Trail Explorer', async ({ page }) => {
-    // Switch to Calibration tab
-    await page.getByRole('button', { name: /Probabilistic Calibration Report/i }).click();
-    await expect(page.getByText(/5-Bin Reliability Diagram/i)).toBeVisible();
-    await expect(page.getByText(/Category-Level Calibration Breakdown/i)).toBeVisible();
-    await expect(page.getByText('Brier Score', { exact: true })).toBeVisible();
+  test('tab navigation switches to Evaluation Lab and Audit Ledger', async ({ page }) => {
+    // Switch to Evaluation Lab tab
+    await page.getByRole('button', { name: /Evaluation Lab & Policy Simulator/i }).click();
+    await expect(page.getByText(/Counterfactual Policy Matrix/i)).toBeVisible();
+    await expect(page.getByText(/Transparent Error Inspector/i)).toBeVisible();
 
     // Switch to Audit Trail tab
-    await page.getByRole('button', { name: /Audit Trail Explorer/i }).click();
-    await expect(page.getByText(/Audit Trail Explorer/i).first()).toBeVisible();
+    await page.getByRole('button', { name: /Audit Trail & Cryptographic Ledger/i }).click();
+    await expect(page.getByText(/Append-Only Tamper-Evident Audit Ledger/i)).toBeVisible();
     await expect(page.getByRole('button', { name: /Export CSV/i })).toBeVisible();
-    await expect(page.getByRole('button', { name: /Export JSON/i })).toBeVisible();
+
+    // Switch to Methodology Guide tab
+    await page.getByRole('button', { name: /Methodology & Judge Guide/i }).click();
+    await expect(page.getByText(/5-Minute Structured Pitch/i)).toBeVisible();
   });
 
   test('status filter dropdown updates visible table rows', async ({ page }) => {

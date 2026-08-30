@@ -18,7 +18,6 @@ import type {
   CalibrationReport,
   CategoryCalibrationMetric,
   BinnedCalibrationMetric,
-  FailureCategory,
   FailedPayment,
   PipelineOptions,
   ModelComparisonReport,

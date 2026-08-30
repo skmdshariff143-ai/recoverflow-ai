@@ -12,7 +12,8 @@ import {
   Sliders,
   FileSpreadsheet,
   Activity,
-  Layers,
+  FlaskConical,
+  BookOpen,
   Database,
 } from 'lucide-react';
 import type { DashboardTab } from '@/hooks/useRecoveryBatch';
@@ -88,7 +89,7 @@ export function Header({
             {/* Re-simulate Button */}
             <button
               onClick={onReSimulate}
-              className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-700 transition"
+              className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-700 transition cursor-pointer"
               title={`Simulation seed: ${simulationSeed}`}
             >
               <RotateCcw className="w-3.5 h-3.5 text-emerald-400" />
@@ -126,10 +127,10 @@ export function Header({
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex border-t border-slate-800/80 pt-1 -mb-px space-x-6 text-xs font-medium">
+        <div className="flex border-t border-slate-800/80 pt-1 -mb-px space-x-6 text-xs font-medium overflow-x-auto">
           <button
             onClick={() => onSelectTab('dashboard')}
-            className={`pb-2.5 flex items-center gap-2 border-b-2 transition ${
+            className={`pb-2.5 flex items-center gap-2 border-b-2 transition cursor-pointer whitespace-nowrap ${
               activeTab === 'dashboard'
                 ? 'border-indigo-400 text-white font-semibold'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -140,27 +141,39 @@ export function Header({
           </button>
 
           <button
-            onClick={() => onSelectTab('calibration')}
-            className={`pb-2.5 flex items-center gap-2 border-b-2 transition ${
-              activeTab === 'calibration'
+            onClick={() => onSelectTab('evaluation')}
+            className={`pb-2.5 flex items-center gap-2 border-b-2 transition cursor-pointer whitespace-nowrap ${
+              activeTab === 'evaluation'
                 ? 'border-indigo-400 text-white font-semibold'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
             }`}
           >
-            <Layers className="w-4 h-4 text-emerald-400" />
-            <span>Probabilistic Calibration Report</span>
+            <FlaskConical className="w-4 h-4 text-emerald-400" />
+            <span>Evaluation Lab &amp; Policy Simulator</span>
           </button>
 
           <button
             onClick={() => onSelectTab('audit_trail')}
-            className={`pb-2.5 flex items-center gap-2 border-b-2 transition ${
+            className={`pb-2.5 flex items-center gap-2 border-b-2 transition cursor-pointer whitespace-nowrap ${
               activeTab === 'audit_trail'
                 ? 'border-indigo-400 text-white font-semibold'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
             }`}
           >
             <FileSpreadsheet className="w-4 h-4 text-cyan-400" />
-            <span>Audit Trail Explorer</span>
+            <span>Audit Trail &amp; Cryptographic Ledger</span>
+          </button>
+
+          <button
+            onClick={() => onSelectTab('methodology')}
+            className={`pb-2.5 flex items-center gap-2 border-b-2 transition cursor-pointer whitespace-nowrap ${
+              activeTab === 'methodology'
+                ? 'border-indigo-400 text-white font-semibold'
+                : 'border-transparent text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <BookOpen className="w-4 h-4 text-amber-400" />
+            <span>Methodology &amp; Judge Guide</span>
           </button>
         </div>
       </div>

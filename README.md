@@ -4,8 +4,8 @@
 > **Live Web Application**: [https://recoverflow-ai-kohl.vercel.app](https://recoverflow-ai-kohl.vercel.app)  
 > **GitHub Repository**: [https://github.com/skmdshariff143-ai/recoverflow-ai](https://github.com/skmdshariff143-ai/recoverflow-ai)  
 > **Model & Math Documentation**: [`MODEL.md`](./MODEL.md)  
-> **Forensic Audit & Data Provenance**: [`docs/CURRENT_STATE_AUDIT.md`](./docs/CURRENT_STATE_AUDIT.md)  
-> **Incident & Recovery Log**: [`docs/WHAT_BROKE.md`](./docs/WHAT_BROKE.md)
+> **Forensic Audit & Claim Integrity**: [`docs/CURRENT_STATE_AUDIT.md`](./docs/CURRENT_STATE_AUDIT.md)  
+> **Incident & Post-Mortem Log**: [`docs/WHAT_BROKE.md`](./docs/WHAT_BROKE.md)
 
 ---
 
@@ -13,164 +13,144 @@
 
 Most automated payment recovery systems rely on **blind rule cascades** (e.g. "retry all failed charges after 4 hours, then again after 24 hours"). In high-volume commerce, this wastes gateway fees and retry bandwidth on hopeless failures (closed accounts, hard cancellations), annoys reliable customers with aggressive reminders during temporary bank downtime, and fails to prioritize high-value enterprise invoices.
 
-**RecoverFlow AI** transforms revenue recovery into a **bounded, explainable orchestration engine**. It ingests payment failure events, evaluates 6 transparent behavioral signals, predicts each invoice's **Recovery Probability** and **Expected Value** ($\text{EV} = P \times \text{Amount}$), allocates a limited recovery budget strictly to highest-value opportunities, enforces airtight safety guardrails, and evaluates **statistical calibration against test-mode outcomes**.
+**RecoverFlow AI** transforms revenue recovery into a **bounded, explainable closed-loop orchestration engine**:
+1. **Integer-Paise Financial Precision**: Eliminates floating-point money drift and enforces currency segregation.
+2. **Deterministic & Calibrated Scoring**: Evaluates 6 transparent behavioral signals to predict recovery probability and Expected Value ($\text{EV}_{\text{paise}} = \text{round}(\text{amountPaise} \times \text{bps} / 10000)$).
+3. **Independent Frozen Evaluation**: Completely decouples ground-truth outcomes from predicted probabilities to eliminate circular evaluation bias.
+4. **Closed-Loop Multi-Cycle State Machine**: Manages payments across `DETECTED` $\to$ `DIAGNOSED` $\to$ `SCHEDULED` $\to$ `EXECUTING` $\to$ `OUTCOME_OBSERVED` $\to$ `RECOVERED` / `STOPPED` with quiet-hours scheduling.
+5. **Tamper-Evident SHA-256 Audit Ledger**: Cryptographically links every pipeline decision into an append-only hash chain.
+6. **Bounded Gemini 2.5 AI Copilot**: Grounded advisory assistant for gateway error normalization and RBI-compliant customer reminders without financial execution privileges.
 
 ---
 
 ## 📸 Visual Walkthrough
 
-| 1. Dashboard Overview & Priority Queue | 2. Explainable Decision Drill-Down |
+| 1. Control Center & Ranked Queue | 2. Explainable Decision Drill-Down |
 |:---:|:---:|
 | ![Dashboard Overview](./docs/screenshots/01-dashboard-overview.png) | ![Decision Drilldown](./docs/screenshots/02-explainable-drilldown.png) |
-| **Top KPI metrics, financial cards & ranked queue** | **6-factor score waterfall & plain English reasoning** |
+| **Top KPI metrics, financial cards & ranked queue** | **6-factor score waterfall & AI Copilot assistance** |
 
-| 3. Probabilistic Calibration Visualizer | 4. Append-Only Audit Trail Explorer |
+| 3. Counterfactual Evaluation Lab | 4. SHA-256 Cryptographic Ledger |
 |:---:|:---:|
-| ![Calibration Report](./docs/screenshots/03-calibration-report.png) | ![Audit Trail Explorer](./docs/screenshots/04-audit-trail-explorer.png) |
-| **5-bin reliability diagram comparing model architectures** | **Searchable event log with one-click CSV/JSON export** |
+| ![Evaluation Lab](./docs/screenshots/03-evaluation-lab.png) | ![Audit Ledger](./docs/screenshots/04-audit-trail-ledger.png) |
+| **Comparative evaluation on identical frozen outcomes** | **Tamper-evident SHA-256 hash-chain verification** |
 
 ---
 
-## 📊 Key Results (100-Payment Evaluation Cohort)
+## 📊 Key Results (200-Payment Benchmark Cohort)
 
-- **Total Revenue at Risk**: ₹6,87,694.53 across 100 failed payments.
-- **Simulated Test-Mode Recovery**: **₹1,46,900.25 (v1.0)** up to **₹2,76,467.00 (v1.1)** across 40 priority slots.
-- **Expected Value Capture**: Allocated **95.7% of all recoverable EV** (₹2,90,773.60) while deferring low-yield long-tail failures.
-- **Calibration Accuracy**: **2.98% Calibration Gap** (v1.1 trained model) with 5-bin reliability validation.
-- **Safety Compliance**: **26 safety halts** enforced (9 customer opt-outs, 17 non-recoverable categories, 0 customer contact during quiet hours).
-- **Test Suite**: **78 unit tests** + **7 Playwright E2E tests** passing (100% green).
+| Metric | RecoverFlow AI (EV Prioritization) | Fixed Retry Control (First 40 Eligible) | Incremental Delta (Δ) |
+| :--- | :---: | :---: | :---: |
+| **Interventions Budgeted** | **40 slots** | 40 slots | 0 (Identical budget) |
+| **Invoices Recovered** | **27 / 40 (67.5%)** | 10 / 40 (25.0%) | **+17 invoices (+170%)** |
+| **Simulated Recovery** | **₹4,76,823.00** | ₹83,664.00 | **+₹3,93,159.00 (+470%)** |
+| **Estimated Cost** | **₹486.00** | ₹480.00 | +₹6.00 |
+| **Net Simulated Recovery** | **₹4,76,337.00** | ₹83,184.00 | **+₹3,93,153.00 (+473%)** |
+| **Unsafe Interventions** | **0 (100% compliant)** | 0 | 0 |
+| **Opt-Out Violations** | **0 (100% compliant)** | 0 | 0 |
+| **Independent Brier Score** | **0.1637** | — | Strictly proper probabilistic score |
 
 ---
 
-## 🏗️ Pipeline Architecture
+## 🏗️ Closed-Loop Architecture
 
 ```
-┌─────────────────────────┐
-│  Payment Failure Events │ (10 failure categories, customer payment histories)
-└───────────┬─────────────┘
-            │
-            ▼
-┌─────────────────────────┐
-│ 1. Feature Extraction   │ 6 deterministic features (base rate, on-time rate,
-│    & Scoring Engine     │ broken promises, tenure, past successes, attempt decay)
-└───────────┬─────────────┘
-            │
-            ▼
-┌─────────────────────────┐
-│ 2. Safety Rules Filter  │ Hard-stops customer opt-outs, permanent closures,
-│    & Approval Gate      │ attempt caps (≤ 3), & quiet-hours scheduling
-└───────────┬─────────────┘
-            │
-            ▼
-┌─────────────────────────┐
-│ 3. EV Ranking & Budget  │ Sorts by Expected Value = Prob × Amount;
-│    Allocation Engine    │ allocates top N slots (default: 40); defers rest
-└───────────┬─────────────┘
-            │
-            ▼
-┌─────────────────────────┐
-│ 4. Test-Mode Stochastic │ Seeded PRNG simulates intervention outcomes;
-│    Execution Simulation │ halts immediately on simulated dispute signals
-└───────────┬─────────────┘
-            │
-            ▼
-┌─────────────────────────┐
-│ 5. Calibration Engine & │ Computes Brier score, 5-bin reliability diagram,
-│    Interactive UI       │ per-category accuracy, & CSV/JSON audit export
-└─────────────────────────┘
+                       ┌─────────────────────────┐
+                       │  Payment Failure Events │ (10 failure categories, history)
+                       └───────────┬─────────────┘
+                                   │
+                                   ▼
+                       ┌─────────────────────────┐
+                       │ 1. Feature Extraction   │ 6 deterministic features (base rate, on-time rate,
+                       │    & Scoring Engine     │ broken promises, tenure, past recoveries, attempt decay)
+                       └───────────┬─────────────┘
+                                   │
+                                   ▼
+                       ┌─────────────────────────┐
+                       │ 2. Safety Rules Filter  │ Hard-stops customer opt-outs, permanent closures,
+                       │    & Approval Gate      │ attempt caps (≤ 3), & quiet-hours scheduling
+                       └───────────┬─────────────┘
+                                   │
+                                   ▼
+                       ┌─────────────────────────┐
+                       │ 3. EV Ranking & Budget  │ Sorts by Expected Value = Prob × Amount;
+                       │    Allocation Engine    │ allocates top N slots (default: 40); defers rest
+                       └───────────┬─────────────┘
+                                   │
+                                   ▼
+                       ┌─────────────────────────┐
+                       │ 4. Closed-Loop Machine  │ Multi-cycle state machine with backoff, alternate
+                       │    & Execution Adapter  │ channel retry, & offline / Razorpay Test-Mode adapter
+                       └───────────┬─────────────┘
+                                   │
+                                   ▼
+                       ┌─────────────────────────┐
+                       │ 5. SHA-256 Audit Ledger │ Cryptographic hash chain verification, Brier calibration,
+                       │    & Evaluation Lab     │ Error Inspector, & 5-minute judge demonstration
+                       └─────────────────────────┘
 ```
 
 ---
 
-## 🛡️ Safety & Governance Guardrails
+## 🛡️ Strict AI vs Non-AI Responsibility Boundary
 
-PayBack AI implements strict compliance rules enforced in code before budget allocation:
-
-1. **Opt-Out Compliance**: Immediate halt if `opt_out === true` (`customer_opted_out`).
-2. **Non-Recoverable Hard Stops**: Zero retries on `permanent_account_closure` or `customer_cancellation`.
-3. **Attempt Cap**: Maximum 3 recovery attempts across all cycles (`max_attempts_exceeded`).
-4. **Mid-Process Dispute Halt**: Immediate execution stop if a customer signals a dispute / chargeback.
-5. **Quiet-Hours Protection**: Automatically offsets dispatch outside the customer's local quiet hours (`22:00`–`07:00`).
-6. **High-Value Governance Gate**: Flags invoices $\ge ₹15,000$ for merchant approval unless Expected Value $\ge ₹20,000$.
-7. **Zero Sensitive Data Exposure**: Masked identifiers (`pay_00016`, `cust_0095`) and zero card numbers stored.
+| Domain | Mechanism | Responsible Layer |
+| :--- | :--- | :--- |
+| **Monetary Calculations & EV** | Strict Integer-Paise Math (`bps * amountPaise / 10000`) | Deterministic Financial Core |
+| **Safety Invariants & Opt-Outs** | Hard boolean gate before scoring/ranking | Deterministic Safety Filter |
+| **State Machine Transitions** | Explicit transition mapping with idempotency | Deterministic State Engine |
+| **Error Log Normalization** | LLM classification with heuristic fallback | Bounded Gemini 2.5 Copilot |
+| **Customer Reminders** | Empathetic, RBI-compliant drafting | Bounded Gemini 2.5 Copilot |
+| **Audit Verification** | SHA-256 hash-chain integrity verification | Cryptographic Audit Engine |
 
 ---
 
 ## 💻 Local Quickstart
 
 ### Prerequisites
-- Node.js $\ge 20.0.0$
-- npm $\ge 10.0.0$
+- Node.js $\ge 20$
+- npm $\ge 10$
 
-### 1. Clone & Install Dependencies
 ```bash
+# 1. Clone the repository
 git clone https://github.com/skmdshariff143-ai/recoverflow-ai.git
 cd recoverflow-ai
-npm install
+
+# 2. Install dependencies
+npm ci
+
+# 3. Run complete verification gate (lint, types, 112 unit tests, benchmarks, build, 7 E2E tests)
+npm run verify
+
+# 4. Start local development server
+npm run dev
 ```
 
-### 2. Run Quality Gates & Tests
-```bash
-# Type check & ESLint
-npm run type-check
-npm run lint
+Open [http://localhost:3000](http://localhost:3000) to view the RecoverFlow AI Control Center.
 
-# Run 74 Vitest unit tests
+---
+
+## 🧪 Comprehensive Verification Suite
+
+```bash
+# Run unit tests (112 tests across 16 suites)
 npm test
 
-# Run 6 Playwright E2E tests
+# Run TypeScript typecheck (0 errors)
+npm run type-check
+
+# Run ESLint (0 errors, 0 warnings)
+npm run lint
+
+# Run Playwright E2E browser tests (7 tests across Chrome)
 npm run test:e2e
-```
 
-### 3. Start Development Server
-```bash
-npm run dev
-# Open http://localhost:3000
-```
-
-### 4. Production Build
-```bash
-npm run build
-npm start
+# Verify all submission artifacts
+npm run verify:artifacts
 ```
 
 ---
 
-## 📁 Repository Structure
+## ⚖️ License
 
-```
-recoverflow-ai/
-├── src/
-│   ├── app/                    # Next.js 16 App Router (page, layout, styles)
-│   ├── components/             # UI Components (KPIs, Queue, Drilldown, Calibration, Audit)
-│   │   ├── Header.tsx
-│   │   ├── MetricsOverview.tsx
-│   │   ├── RankedQueueTable.tsx
-│   │   ├── PaymentDrilldownModal.tsx
-│   │   ├── CalibrationVisualizer.tsx
-│   │   └── AuditTrailExplorer.tsx
-│   ├── hooks/                  # Custom state hooks (useRecoveryBatch)
-│   ├── lib/engine/             # Framework-agnostic pure business logic
-│   │   ├── generateData.ts     # Synthetic payment data generator with PRNG
-│   │   ├── scoreRecovery.ts    # Deterministic scoring & explainability
-│   │   ├── safetyFilter.ts     # Opt-out, category, attempt cap safety rules
-│   │   ├── approvalGate.ts     # High-value approval governance
-│   │   ├── quietHours.ts       # Timezone quiet hours calculator
-│   │   ├── interventions.ts    # Action selection (retry/reminder/both)
-│   │   ├── rankAndAllocate.ts  # Priority queue & budget allocation
-│   │   ├── executeIntervention.ts # Stochastic test-mode execution
-│   │   ├── calibration.ts      # Brier score & reliability diagram metrics
-│   │   ├── auditTrail.ts       # Immutable audit logging & CSV/JSON export
-│   │   └── runBatch.ts         # Full batch pipeline orchestrator
-│   └── types/                  # Strict TypeScript interfaces
-├── tests/                      # Playwright E2E & Vitest test suites
-├── docs/                       # Screenshots, MODEL.md, WHAT_BROKE.md
-└── data/                       # 100-payment correlated synthetic dataset fixture
-```
-
----
-
-## 📄 License & Attribution
-
-Built for the **Razorpay AI Buildathon (Track 3: AI Revenue Recovery)**.  
-Released under the **MIT License**.
+MIT License · Developed for the **Razorpay AI Buildathon — Track 3: AI Revenue Recovery**.

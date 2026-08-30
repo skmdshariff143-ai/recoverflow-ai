@@ -6,7 +6,6 @@ import { describe, it, expect } from 'vitest';
 import {
   DeterministicSimulatorAdapter,
   RazorpayTestModeAdapter,
-  RecoveryExecutionRequestSchema,
   type RecoveryExecutionRequest,
 } from '../recoveryAdapter';
 
@@ -42,7 +41,7 @@ describe('Recovery Execution Adapters', () => {
 
     it('rejects invalid inputs via Zod schema validation', async () => {
       const invalid = { ...validRequest, amountPaise: -500 };
-      await expect(adapter.execute(invalid as any)).rejects.toThrow();
+      await expect(adapter.execute(invalid as unknown as RecoveryExecutionRequest)).rejects.toThrow();
     });
   });
 

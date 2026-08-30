@@ -17,6 +17,7 @@ const requiredArtifacts = [
   'data/frozen-outcomes-heldout-80.json',
   'src/data/model-weights.json',
   'docs/CURRENT_STATE_AUDIT.md',
+  'docs/SUBMISSION.md',
   'MODEL.md',
   'README.md',
 ];
