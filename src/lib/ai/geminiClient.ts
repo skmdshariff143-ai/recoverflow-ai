@@ -123,7 +123,7 @@ export async function diagnoseGatewayErrorWithGemini(
     return deterministicDiagnosticFallback(cleanInput, 'Gemini API key unconfigured; using deterministic rule classifier');
   }
 
-  const modelName = process.env.GEMINI_MODEL ?? 'gemini-2.5-flash';
+  const modelName = process.env.GEMINI_MODEL ?? 'gemini-1.5-flash';
 
   try {
     const ai = new GoogleGenAI({ apiKey });
@@ -193,7 +193,7 @@ export async function draftCustomerCommunicationWithGemini(
     return fallbackTemplate;
   }
 
-  const modelName = process.env.GEMINI_MODEL ?? 'gemini-2.5-flash';
+  const modelName = process.env.GEMINI_MODEL ?? 'gemini-1.5-flash';
 
   try {
     const ai = new GoogleGenAI({ apiKey });
