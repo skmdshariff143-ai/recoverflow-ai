@@ -15,6 +15,7 @@ import { RankedQueueTable } from '@/components/RankedQueueTable';
 import { PaymentDrilldownModal } from '@/components/PaymentDrilldownModal';
 import { LiveRecoveryRunner } from '@/components/LiveRecoveryRunner';
 import { EvaluationLab } from '@/components/EvaluationLab';
+import { RecoveryIntelligence } from '@/components/RecoveryIntelligence';
 import { PromiseToPayTracker } from '@/components/PromiseToPayTracker';
 import { AuditTrailExplorer } from '@/components/AuditTrailExplorer';
 import { MethodologyGuide } from '@/components/MethodologyGuide';
@@ -123,10 +124,16 @@ export default function Home() {
 
         {/* Workspace 3: Evaluation Lab & Policy Simulator */}
         {activeTab === 'evaluation_lab' && (
-          <EvaluationLab
-            devReport={devReport}
-            heldoutReport={heldoutReport}
-          />
+          <div className="space-y-6">
+            <RecoveryIntelligence
+              items={batchResult.executed_items}
+              evaluationReport={devReport}
+            />
+            <EvaluationLab
+              devReport={devReport}
+              heldoutReport={heldoutReport}
+            />
+          </div>
         )}
 
         {/* Workspace 4: Promise-to-Pay Lifecycle Tracker */}
