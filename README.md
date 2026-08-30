@@ -19,7 +19,7 @@ Most automated payment recovery systems rely on **blind rule cascades** (e.g. "r
 3. **Independent Frozen Evaluation**: Completely decouples ground-truth outcomes from predicted probabilities to eliminate circular evaluation bias.
 4. **Closed-Loop Multi-Cycle State Machine**: Manages payments across `DETECTED` $\to$ `DIAGNOSED` $\to$ `SCHEDULED` $\to$ `EXECUTING` $\to$ `OUTCOME_OBSERVED` $\to$ `RECOVERED` / `STOPPED` with quiet-hours scheduling.
 5. **Tamper-Evident SHA-256 Audit Ledger**: Cryptographically links every pipeline decision into an append-only hash chain.
-6. **Bounded Gemini 2.5 AI Copilot**: Grounded advisory assistant for gateway error normalization and RBI-compliant customer reminders without financial execution privileges.
+6. **Bounded Gemini 2.5 AI Copilot**: Grounded advisory assistant for gateway error normalization and policy-constrained prototype customer reminders without financial execution privileges.
 
 ---
 
@@ -100,7 +100,7 @@ Most automated payment recovery systems rely on **blind rule cascades** (e.g. "r
 | **Safety Invariants & Opt-Outs** | Hard boolean gate before scoring/ranking | Deterministic Safety Filter |
 | **State Machine Transitions** | Explicit transition mapping with idempotency | Deterministic State Engine |
 | **Error Log Normalization** | LLM classification with heuristic fallback | Bounded Gemini 2.5 Copilot |
-| **Customer Reminders** | Empathetic, RBI-compliant drafting | Bounded Gemini 2.5 Copilot |
+| **Customer Reminders** | Policy-constrained prototype draft requiring merchant compliance review | Bounded Gemini 2.5 Copilot |
 | **Audit Verification** | SHA-256 hash-chain integrity verification | Cryptographic Audit Engine |
 
 ---
