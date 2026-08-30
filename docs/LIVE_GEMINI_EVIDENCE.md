@@ -2,7 +2,7 @@
 
 > **Evidence Source**: Programmatically captured by `scripts/capture-live-evidence.ts`  
 > **Target Host**: `https://recoverflow-ai-kohl.vercel.app`  
-> **Capture Timestamp**: `2026-08-30T11:06:34.748Z`  
+> **Capture Timestamp**: `2026-08-30T11:29:41.489Z`  
 > **Evidence JSON**: [`docs/evidence/live-gemini.json`](./evidence/live-gemini.json)
 
 ---
@@ -32,13 +32,13 @@
   "responseBody": {
     "normalizedCategory": "bank_downtime",
     "confidenceScore": 0.95,
-    "plainExplanation": "The issuing bank's core banking system is temporarily unavailable or timed out.",
+    "plainExplanation": "The issuing bank's core system is temporarily unavailable and timing out.",
     "isRecoverable": true,
     "suggestedAction": "retry",
     "provider": "gemini_gemini_3_6_flash"
   },
-  "timestamp": "2026-08-30T11:06:10.303Z",
-  "latencyMs": 5963
+  "timestamp": "2026-08-30T11:29:05.187Z",
+  "latencyMs": 3266
 }
 ```
 
@@ -60,14 +60,14 @@
   "httpStatus": 200,
   "responseBody": {
     "channel": "email",
-    "subject": "Action Required: Payment Authentication Issue",
-    "messageBody": "Dear Rajesh Sharma,\n\nWe were unable to process your recent payment of ₹14,500.00 due to an authentication failure with your card issuer or bank.\n\nTo keep your account active and avoid any service interruptions, please log in to your account portal to re-authenticate the transaction or select an alternative payment method.\n\nIf you continue to experience issues, please contact your bank or reach out to our support team for assistance.\n\nBest regards,\nRecoverFlow AI Support",
-    "tone": "direct",
-    "complianceNotice": "This email is an automated payment notification. RecoverFlow AI will never ask for your full card details, passwords, or sensitive financial information via email.",
+    "subject": "Payment Processing Update - Action Required",
+    "messageBody": "Dear Rajesh Sharma,\n\nWe were unable to complete your recent payment of ₹14,500.00 due to an authentication failure during the transaction.\n\nPlease log in to your secure account portal to update your payment authorization or retry the payment.\n\nIf you have already completed this payment or need help, please reach out to our support team.\n\nBest regards,\nRecoverFlow AI Support",
+    "tone": "empathetic",
+    "complianceNotice": "This is a payment status notification. RecoverFlow AI will never ask for full card details, PINs, or banking passwords directly via email.",
     "provider": "gemini_gemini_3_6_flash"
   },
-  "timestamp": "2026-08-30T11:06:16.266Z",
-  "latencyMs": 13701
+  "timestamp": "2026-08-30T11:29:08.453Z",
+  "latencyMs": 6572
 }
 ```
 
@@ -86,13 +86,13 @@
   "httpStatus": 200,
   "responseBody": {
     "normalizedCategory": "auth_failure",
-    "confidenceScore": 0,
-    "plainExplanation": "Unrecognized error string containing invalid payload; unable to parse legitimate payment failure reason.",
+    "confidenceScore": 0.1,
+    "plainExplanation": "Unrecognized or invalid error text provided. Unable to map to a standard gateway failure.",
     "isRecoverable": false,
     "suggestedAction": "none",
     "provider": "gemini_gemini_3_6_flash"
   },
-  "timestamp": "2026-08-30T11:06:29.967Z",
-  "latencyMs": 4781
+  "timestamp": "2026-08-30T11:29:15.025Z",
+  "latencyMs": 26464
 }
 ```

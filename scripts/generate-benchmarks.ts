@@ -72,7 +72,7 @@ const adversarialPayments: FailedPayment[] = baseAdversarial.map((p, idx) => {
     mod.customer_payment_history.broken_promise_count = 3;
     mod.customer_payment_history.on_time_payment_rate = 0.15;
   } else if (idx < 56) {
-    // Boundary 7: Duplicate Webhook Events (same idempotency reference)
+    // Boundary 7: Duplicate Gateway Event Ingestion (same idempotency reference)
     mod.failure_category = 'duplicate_attempt';
     mod.raw_gateway_error = 'DUPLICATE_TRANSACTION_ID: Payment captured under sub_ref_8829';
   } else if (idx < 64) {

@@ -10,6 +10,6 @@
 - [x] **Measured Money Recovered**: Batch evaluated across 7 policies on frozen potential outcomes.
 - [x] **Compliant Escalation & Stopping Rules**: Opt-out, permanent closure, max attempts, quiet-hours, and high-value approvals verified.
 - [x] **Tamper-Evident Audit Trail**: SHA-256 hash chaining across all events with automated mutation detection.
-- [x] **Razorpay Test-Mode Proof**: Validated server-side adapter, status query, and webhook signature verification (`LIVE_RAZORPAY_EVIDENCE.md`).
-- [x] **Grounded Gemini AI**: Model provenance and fallback verification (`LIVE_GEMINI_EVIDENCE.md`).
-- [x] **Zero Flaky Tests**: 132 unit tests across 18 suites and 11 Playwright multi-viewport browser tests passing.
+- [x] **Razorpay Test-Mode Proof**: Validated server-side adapter and proactive status polling (`LIVE_RAZORPAY_EVIDENCE.md`).
+- [x] **Grounded Gemini AI**: Model provenance and live API verification (`LIVE_GEMINI_EVIDENCE.md`).
+- [x] **Zero Flaky Tests**: 128 unit tests across 18 suites and 11 Playwright multi-viewport browser tests passing.

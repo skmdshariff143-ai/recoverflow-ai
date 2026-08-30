@@ -7,11 +7,12 @@
 ## 1. Overview
 
 RecoverFlow AI integrates with Razorpay via official Test-Mode APIs:
-- **API Endpoint**: `POST https://api.razorpay.com/v1/payment_links`
-- **Status Endpoint**: `GET https://api.razorpay.com/v1/payment_links/:id`
-- **Webhook Endpoint**: `POST /api/recovery/webhook`
+- **Payment Link Creation**: `POST https://api.razorpay.com/v1/payment_links`
+- **Proactive Status Polling**: `GET https://api.razorpay.com/v1/payment_links/:id`
+- **Execution Endpoint**: `POST /api/recovery/execute` (with `x-recovery-adapter: razorpay_test_mode`)
+- **Status Query**: `GET /api/recovery/status/:reference`
 
 ### Configuration Requirements:
-- `RAZORPAY_KEY_ID`: Must start with `rzp_test_`. Any `rzp_live_` key triggers a security exception.
-- `RAZORPAY_KEY_SECRET`: Test-mode secret.
-- `RAZORPAY_WEBHOOK_SECRET`: Used for constant-time HMAC-SHA256 signature verification.
+- `RAZORPAY_KEY_ID`: Must start with `rzp_test_`. Any `rzp_live_` key triggers an immediate fatal security exception.
+- `RAZORPAY_KEY_SECRET`: Razorpay Test-Mode Secret.
+- **Accounting Guarantee**: Payment link creation records ₹0.00 recovered revenue until actual `paid` or `captured` status is returned from the gateway.

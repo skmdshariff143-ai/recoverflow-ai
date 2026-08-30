@@ -84,11 +84,11 @@ async function runCapture() {
   mkdirSync(resolve(process.cwd(), 'docs/evidence'), { recursive: true });
 
   // ── 1. Capture Version Endpoint ──────────────────────────────────
-  console.log('[1/6] Capturing /api/version...');
+  console.log('[1/5] Capturing /api/version...');
   const versionCapture = await captureHttp(host, '/api/version', 'GET', {});
 
   // ── 2. Capture Gemini Endpoints ─────────────────────────────────
-  console.log('[2/6] Capturing /api/ai/diagnose (Normal)...');
+  console.log('[2/5] Capturing /api/ai/diagnose (Normal)...');
   const geminiDiagnoseCapture = await captureHttp(
     host,
     '/api/ai/diagnose',
@@ -97,7 +97,7 @@ async function runCapture() {
     { rawGatewayError: 'HDFC_CORE_BANKING_503_TEMPORARY_UNAVAILABLE_GATEWAY_TIMEOUT' },
   );
 
-  console.log('[3/6] Capturing /api/ai/draft-message (Normal)...');
+  console.log('[3/5] Capturing /api/ai/draft-message (Normal)...');
   const geminiDraftCapture = await captureHttp(
     host,
     '/api/ai/draft-message',
@@ -111,7 +111,7 @@ async function runCapture() {
     },
   );
 
-  console.log('[4/6] Capturing /api/ai/diagnose (Adversarial Prompt Injection)...');
+  console.log('[4/5] Capturing /api/ai/diagnose (Adversarial Prompt Injection)...');
   const geminiInjectionCapture = await captureHttp(
     host,
     '/api/ai/diagnose',
@@ -139,7 +139,7 @@ async function runCapture() {
   console.log('✓ Saved docs/evidence/live-gemini.json');
 
   // ── 3. Capture Recovery Execution Endpoints ──────────────────────
-  console.log('[5/6] Capturing /api/recovery/execute (Simulator)...');
+  console.log('[5/5] Capturing /api/recovery/execute (Simulator)...');
   const simulatorExecuteCapture = await captureHttp(
     host,
     '/api/recovery/execute',
@@ -189,15 +189,6 @@ async function runCapture() {
     },
   );
 
-  console.log('[8/8] Capturing /api/recovery/webhook (Fail-Closed Missing Signature Check)...');
-  const webhookFailClosedCapture = await captureHttp(
-    host,
-    '/api/recovery/webhook',
-    'POST',
-    {},
-    { entity: 'event', event: 'payment_link.paid' },
-  );
-
   const razorpayEvidence = {
     host,
     capturedAt: new Date().toISOString(),
@@ -206,7 +197,6 @@ async function runCapture() {
       simulatorExecute: simulatorExecuteCapture,
       statusQuery: statusQueryCapture,
       razorpayExecuteCheck: rzpExecuteCapture,
-      webhookFailClosedCheck: webhookFailClosedCapture,
     },
   };
 
@@ -297,7 +287,7 @@ ${JSON.stringify(gemini.captures.promptInjection, null, 2)}
 - **Simulator Execution**: Verified live on deployed serverless host with status \`${(razorpay.captures.simulatorExecute.responseBody as Record<string, Record<string, unknown>>)?.receipt?.status ?? 'test_link_created'}\`.
 - **Razorpay Sandbox Status**: ${isLiveRazorpay ? 'Razorpay test-mode payment-object creation and status retrieval verified. No recovered money was observed unless paid/captured status is shown.' : 'Razorpay adapter implemented and unit-tested; live test-mode execution remains unverified.'}
 - **Recovery Accounting Guarantee**: ₹0.00 recovered money recorded upon payment link creation.
-- **Webhook Delivery Notice**: Webhook implementation is verified through signed integration tests (\`recoveryAdapter.test.ts\`); live inbound Razorpay delivery was not observed during this automated test-mode execution run.
+- **Polling & Observation Notice**: Workflow tracks payment settlement via proactive status polling and internal actor telemetry (\`gateway_webhook\`, \`outcome_observer\`).
 - **Idempotency Scope**: Best-effort single-instance memory store; production multi-instance requires distributed Redis/PostgreSQL.
 
 ---
@@ -324,14 +314,6 @@ ${JSON.stringify(razorpay.captures.statusQuery, null, 2)}
 
 \`\`\`json
 ${JSON.stringify(razorpay.captures.razorpayExecuteCheck, null, 2)}
-\`\`\`
-
----
-
-### Test 4: Webhook Missing Signature Check (\`POST /api/recovery/webhook\`)
-
-\`\`\`json
-${JSON.stringify(razorpay.captures.webhookFailClosedCheck, null, 2)}
 \`\`\`
 `;
 

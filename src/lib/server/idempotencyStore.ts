@@ -36,7 +36,6 @@ const MAX_CACHE_ENTRIES = 1000;
 
 class InMemoryIdempotencyStore {
   private cache = new Map<string, IdempotencyEntry>();
-  private processedWebhookEvents = new Set<string>();
 
   /**
    * Compute deterministic SHA-256 hash of a request payload.
@@ -98,22 +97,6 @@ class InMemoryIdempotencyStore {
   }
 
   /**
-   * Webhook deduplication check in local container memory.
-   * Returns true if event is NEW; returns false if duplicate.
-   */
-  recordWebhookEvent(eventId: string): boolean {
-    if (this.processedWebhookEvents.has(eventId)) {
-      return false; // Duplicate
-    }
-    if (this.processedWebhookEvents.size >= MAX_CACHE_ENTRIES) {
-      const oldest = this.processedWebhookEvents.values().next().value;
-      if (oldest) this.processedWebhookEvents.delete(oldest);
-    }
-    this.processedWebhookEvents.add(eventId);
-    return true;
-  }
-
-  /**
    * Prune expired entries.
    */
   private pruneExpired(): void {
@@ -130,7 +113,6 @@ class InMemoryIdempotencyStore {
    */
   clear(): void {
     this.cache.clear();
-    this.processedWebhookEvents.clear();
   }
 }
 

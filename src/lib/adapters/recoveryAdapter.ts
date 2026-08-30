@@ -8,12 +8,10 @@
  * 1. Live keys ('rzp_live_...') are strictly rejected with an invariant error.
  * 2. Only test-mode keys ('rzp_test_...') are accepted.
  * 3. Payment-link creation is NEVER counted as recovered revenue.
- * 4. Webhook signatures are verified using constant-time HMAC-SHA256 comparison.
- * 5. Simulator statuses are transaction-bound rather than hard-coded.
+ * 4. Simulator statuses are transaction-bound rather than hard-coded.
  */
 
 import { z } from 'zod';
-import { createHmac, timingSafeEqual } from 'crypto';
 
 // ─── Zod Schemas for Validation ──────────────────────────────────────
 
@@ -352,34 +350,6 @@ export class RazorpayTestModeAdapter implements RecoveryExecutionAdapter {
         timestamp: new Date().toISOString(),
       };
     }
-  }
-}
-
-// ─── 3. Webhook Signature Verification ───────────────────────────────
-
-/**
- * Verifies Razorpay Webhook Signatures using constant-time HMAC-SHA256 comparison.
- */
-export function verifyRazorpayWebhookSignature(
-  rawBody: string,
-  signature: string,
-  webhookSecret: string,
-): boolean {
-  if (!rawBody || !signature || !webhookSecret) return false;
-
-  try {
-    const expectedSignature = createHmac('sha256', webhookSecret)
-      .update(rawBody)
-      .digest('hex');
-
-    if (signature.length !== expectedSignature.length) return false;
-
-    return timingSafeEqual(
-      Buffer.from(signature, 'utf-8'),
-      Buffer.from(expectedSignature, 'utf-8'),
-    );
-  } catch {
-    return false;
   }
 }
 

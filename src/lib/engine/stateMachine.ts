@@ -57,7 +57,12 @@ export type RecoveryState =
   | 'ESCALATED'
   | 'STOPPED';
 
-export type StateActor = 'system_engine' | 'reviewer' | 'gateway_webhook' | 'customer';
+export type StateActor =
+  | 'system_engine'
+  | 'reviewer'
+  | 'outcome_observer'
+  | 'gateway_webhook'
+  | 'customer';
 
 export interface StateTransitionEvent {
   eventId: string;

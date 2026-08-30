@@ -1,13 +1,11 @@
 /**
- * Unit tests for RecoverFlow AI Execution Adapters, Webhook Verification & Idempotency Store.
+ * Unit tests for RecoverFlow AI Execution Adapters & Idempotency Store.
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import crypto from 'crypto';
 import {
   DeterministicSimulatorAdapter,
   RazorpayTestModeAdapter,
-  verifyRazorpayWebhookSignature,
   AdapterTypeSchema,
   type RecoveryExecutionRequest,
 } from '../recoveryAdapter';
@@ -125,57 +123,6 @@ describe('Recovery Execution Adapters & Idempotency Store', () => {
       const conflictingRequest = { ...validRequest, amountPaise: 999_000 };
       const conflictCheck = idempotencyStore.check(validRequest.idempotencyKey, conflictingRequest);
       expect(conflictCheck.status).toBe('conflict');
-    });
-  });
-
-  describe('Razorpay Webhook Verification, Deduplication & Edge Cases', () => {
-    const secret = 'whsec_test_secret_key_123';
-    const validPaymentPayload = JSON.stringify({
-      entity: 'event',
-      account_id: 'acc_test_123',
-      event: 'payment.captured',
-      payload: {
-        payment: {
-          entity: {
-            id: 'pay_test_settled_123',
-            amount: 500000,
-            currency: 'INR',
-            status: 'captured',
-          },
-        },
-      },
-      event_id: 'evt_001_test',
-    });
-
-    it('validates authentic webhook signatures correctly', () => {
-      const validSignature = crypto.createHmac('sha256', secret).update(validPaymentPayload).digest('hex');
-      const isValid = verifyRazorpayWebhookSignature(validPaymentPayload, validSignature, secret);
-      expect(isValid).toBe(true);
-    });
-
-    it('fails closed when signature or secret is empty', () => {
-      expect(verifyRazorpayWebhookSignature(validPaymentPayload, '', secret)).toBe(false);
-      expect(verifyRazorpayWebhookSignature(validPaymentPayload, 'some_sig', '')).toBe(false);
-      expect(verifyRazorpayWebhookSignature('', 'some_sig', secret)).toBe(false);
-    });
-
-    it('rejects tampered webhook payloads or incorrect secrets', () => {
-      const validSignature = crypto.createHmac('sha256', secret).update(validPaymentPayload).digest('hex');
-
-      const tamperedPayload = validPaymentPayload.replace('500000', '999999');
-      const isTamperedValid = verifyRazorpayWebhookSignature(tamperedPayload, validSignature, secret);
-      expect(isTamperedValid).toBe(false);
-
-      const isWrongSecretValid = verifyRazorpayWebhookSignature(validPaymentPayload, validSignature, 'wrong_secret');
-      expect(isWrongSecretValid).toBe(false);
-    });
-
-    it('deduplicates processed webhook event IDs', () => {
-      const isFirst = idempotencyStore.recordWebhookEvent('evt_wh_unique_001');
-      expect(isFirst).toBe(true);
-
-      const isDuplicate = idempotencyStore.recordWebhookEvent('evt_wh_unique_001');
-      expect(isDuplicate).toBe(false);
     });
   });
 });

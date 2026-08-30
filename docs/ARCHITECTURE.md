@@ -11,7 +11,7 @@ RecoverFlow AI is structured into decoupled, single-responsibility layers:
 
 ```
                       ┌────────────────────────────────────────┐
-                      │    Failed Payment Ingestion Webhook    │
+                      │    Failed Payment Event Ingestion      │
                       └───────────────────┬────────────────────┘
                                           │
                                           ▼
@@ -49,7 +49,7 @@ RecoverFlow AI is structured into decoupled, single-responsibility layers:
         ┌───────────────────────────────┐   ┌───────────────────────────────┐
         │  Deterministic Simulator      │   │  Razorpay Test-Mode Adapter   │
         │  - In-Memory State Binding    │   │  - Payment Links API          │
-        │  - Reproducible Benchmarking  │   │  - HMAC-SHA256 Webhooks       │
+        │  - Reproducible Benchmarking  │   │  - Proactive Status Polling   │
         └───────────────┬───────────────┘   └───────────────┬───────────────┘
                         │                                   │
                         └─────────────────┬─────────────────┘
