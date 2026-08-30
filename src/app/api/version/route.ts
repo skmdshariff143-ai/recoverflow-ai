@@ -20,7 +20,7 @@ export async function GET() {
     project: 'RecoverFlow AI',
     track: 'Razorpay AI Buildathon — Track 3: AI Revenue Recovery',
     commitSha: process.env.VERCEL_GIT_COMMIT_SHA ?? 'b941b1b',
-    buildVersion: '2.3.0-live-verified',
+    buildVersion: '2.4.0-submission',
     environmentName: process.env.NODE_ENV ?? 'production',
     serverTimestamp: new Date().toISOString(),
     serviceStatus: {

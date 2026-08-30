@@ -19,8 +19,10 @@ import { RecoveryIntelligence } from '@/components/RecoveryIntelligence';
 import { PromiseToPayTracker } from '@/components/PromiseToPayTracker';
 import { AuditTrailExplorer } from '@/components/AuditTrailExplorer';
 import { MethodologyGuide } from '@/components/MethodologyGuide';
+import { JudgeModeModal } from '@/components/JudgeModeModal';
 
 export default function Home() {
+  const [isJudgeModeOpen, setIsJudgeModeOpen] = React.useState<boolean>(false);
   const {
     payments,
     budget,
@@ -80,6 +82,7 @@ export default function Home() {
         onReSimulate={handleReSimulate}
         provenance={provenance}
         onProvenanceChange={setProvenance}
+        onOpenJudgeMode={() => setIsJudgeModeOpen(true)}
       />
 
       {/* ── Main Application Workspace ─────────────────────────── */}
@@ -168,6 +171,14 @@ export default function Home() {
           existingReviewerAction={selectedPaymentId ? reviewerDecisions[selectedPaymentId] : undefined}
         />
       )}
+
+      {/* ── Guided Evaluator Walkthrough (Judge Mode) ─────────────── */}
+      <JudgeModeModal
+        isOpen={isJudgeModeOpen}
+        onClose={() => setIsJudgeModeOpen(false)}
+        onNavigateTab={(tab) => setActiveTab(tab)}
+        onSetProvenance={(prov) => setProvenance(prov)}
+      />
 
       {/* ── Global Footer ───────────────────────────────────────── */}
       <footer className="bg-slate-900 border-t border-slate-800 text-slate-400 py-6 text-xs text-center">

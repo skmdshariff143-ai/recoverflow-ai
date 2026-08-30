@@ -31,6 +31,7 @@ interface HeaderProps {
   onReSimulate: () => void;
   provenance?: DataProvenanceSource;
   onProvenanceChange?: (provenance: DataProvenanceSource) => void;
+  onOpenJudgeMode?: () => void;
 }
 
 export function Header({
@@ -42,6 +43,7 @@ export function Header({
   onReSimulate,
   provenance = 'synthetic_fixture',
   onProvenanceChange,
+  onOpenJudgeMode,
 }: HeaderProps) {
   return (
     <header className="bg-slate-900 border-b border-slate-800 text-white sticky top-0 z-30 shadow-md">
@@ -128,6 +130,16 @@ export function Header({
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
               <span>TEST-MODE ONLY</span>
             </div>
+
+            {/* Judge Mode Launcher Button */}
+            <button
+              onClick={onOpenJudgeMode}
+              className="flex items-center gap-1.5 bg-gradient-to-r from-indigo-600 to-emerald-600 hover:from-indigo-500 hover:to-emerald-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm transition cursor-pointer border border-indigo-400/40"
+              title="Launch 10-Step Guided Submission Experience for Evaluators"
+            >
+              <Award className="w-3.5 h-3.5 text-amber-300" />
+              <span>Judge Mode</span>
+            </button>
           </div>
         </div>
 
