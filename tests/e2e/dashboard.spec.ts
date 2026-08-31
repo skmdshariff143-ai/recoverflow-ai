@@ -64,6 +64,8 @@ test.describe('PayBack AI — Interactive Workspaces & Drill-Down', () => {
     await page.getByRole('button', { name: /Evaluation Lab/i }).click();
     await expect(page.getByText(/Comparative Recovery Policy Matrix/i)).toBeVisible();
     await expect(page.getByText(/How This Compares: Industry Recovery Benchmarks/i).first()).toBeVisible();
+    await expect(page.getByText(/Merchant-Configurable Policy Builder/i).first()).toBeVisible();
+    await expect(page.getByTestId('merchant-policy-builder')).toBeVisible();
     await expect(page.getByText(/Multi-Merchant Risk Appetite Presets/i).first()).toBeVisible();
     await expect(page.getByText(/Conservative Merchant/i).first()).toBeVisible();
     await expect(page.getByText(/Transparent Error Inspector/i)).toBeVisible();

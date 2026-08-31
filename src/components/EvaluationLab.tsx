@@ -22,6 +22,8 @@ import type { ComprehensiveEvaluationReport } from '@/lib/engine/counterfactualE
 import { formatPaiseToINR } from '@/lib/engine/financial';
 import { DATASET_METADATA } from '@/lib/data/benchmarkLoader';
 import { MerchantPortfolioComparison } from './MerchantPortfolioComparison';
+import { MerchantPolicyBuilder } from './MerchantPolicyBuilder';
+import type { MerchantPolicyConfig } from '@/lib/engine/policyConfig';
 import { generateSyntheticPayments } from '@/lib/engine/generateData';
 import type { FailedPayment } from '@/types';
 
@@ -29,12 +31,16 @@ interface EvaluationLabProps {
   devReport: ComprehensiveEvaluationReport;
   heldoutReport: ComprehensiveEvaluationReport;
   payments?: FailedPayment[];
+  policyConfig?: MerchantPolicyConfig;
+  onPolicyConfigChange?: (config: MerchantPolicyConfig) => void;
 }
 
 export function EvaluationLab({
   devReport,
   heldoutReport,
   payments,
+  policyConfig,
+  onPolicyConfigChange,
 }: EvaluationLabProps) {
   const defaultPayments = useMemo(() => generateSyntheticPayments({ seed: 42, totalRecords: 100 }), []);
   const activePayments = payments ?? defaultPayments;
@@ -367,6 +373,12 @@ export function EvaluationLab({
           </table>
         </div>
       </div>
+
+      {/* ── Live Merchant-Configurable Policy Builder ───────────── */}
+      <MerchantPolicyBuilder
+        currentConfig={policyConfig}
+        onApplyConfig={onPolicyConfigChange ?? (() => {})}
+      />
 
       {/* ── Multi-Merchant Risk Profiles & Platform Framing ─────── */}
       <MerchantPortfolioComparison payments={activePayments} />

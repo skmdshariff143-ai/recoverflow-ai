@@ -137,6 +137,12 @@ export default function Home() {
               devReport={devReport}
               heldoutReport={heldoutReport}
               payments={payments}
+              policyConfig={{
+                budget,
+                approvalThresholdPaise: 5_000_000,
+                maxAttemptsCap: 3,
+              }}
+              onPolicyConfigChange={(cfg) => setBudget(cfg.budget)}
             />
           </div>
         )}
