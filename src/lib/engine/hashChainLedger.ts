@@ -141,3 +141,27 @@ export function verifyLedgerIntegrity(ledger: ChainedAuditRecord[]): LedgerVerif
     latestHash: ledger[ledger.length - 1].currentHash,
   };
 }
+
+/**
+ * Create a tampered working copy of the ledger for interactive live demonstration.
+ * Mutates a specific field on a cloned ledger without modifying the source ledger.
+ */
+export function tamperWorkingLedgerCopy(
+  ledger: ChainedAuditRecord[],
+  targetRecordId: string,
+  fieldToTamper: 'decision' | 'reason' = 'decision',
+  tamperedValue: string = 'UNAUTHORIZED_MUTATION: Bypassed Safety Checks',
+): { tamperedLedger: ChainedAuditRecord[]; targetIndex: number } {
+  const cloned: ChainedAuditRecord[] = ledger.map((item) => ({ ...item }));
+  const targetIndex = cloned.findIndex((r) => r.id === targetRecordId);
+
+  if (targetIndex !== -1) {
+    cloned[targetIndex] = {
+      ...cloned[targetIndex],
+      [fieldToTamper]: tamperedValue,
+    };
+  }
+
+  return { tamperedLedger: cloned, targetIndex };
+}
+

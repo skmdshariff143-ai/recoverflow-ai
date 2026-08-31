@@ -6,6 +6,7 @@ import { describe, it, expect } from 'vitest';
 import {
   buildHashChainedLedger,
   verifyLedgerIntegrity,
+  tamperWorkingLedgerCopy,
   GENESIS_HASH,
 } from '../hashChainLedger';
 import type { AuditRecord } from '../auditTrail';
@@ -102,5 +103,30 @@ describe('Tamper-Evident SHA-256 Hash-Chained Audit Ledger', () => {
     const verification = verifyLedgerIntegrity(insertedLedger);
     expect(verification.isValid).toBe(false);
     expect(verification.tamperedIndex).toBe(1);
+  });
+
+  it('tamperWorkingLedgerCopy mutates targeted record without affecting original ledger, breaking verification at exact index', () => {
+    const originalLedger = buildHashChainedLedger(sampleRecords);
+    const originalVerification = verifyLedgerIntegrity(originalLedger);
+    expect(originalVerification.isValid).toBe(true);
+
+    // Tamper record 2 in a working copy
+    const { tamperedLedger, targetIndex } = tamperWorkingLedgerCopy(
+      originalLedger,
+      'aud_000002',
+      'decision',
+      'FORGED: Force bypass customer opt-out',
+    );
+
+    expect(targetIndex).toBe(1);
+    // Original ledger is unmodified
+    expect(originalLedger[1].decision).toBe('Eligible for recovery');
+    expect(verifyLedgerIntegrity(originalLedger).isValid).toBe(true);
+
+    // Tampered copy fails verification at exactly index 1
+    const tamperedVerification = verifyLedgerIntegrity(tamperedLedger);
+    expect(tamperedVerification.isValid).toBe(false);
+    expect(tamperedVerification.tamperedIndex).toBe(1);
+    expect(tamperedVerification.errorDetail).toContain('Payload tampering detected at record 1 (aud_000002)');
   });
 });
