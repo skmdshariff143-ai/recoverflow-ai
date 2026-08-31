@@ -55,6 +55,7 @@ export function RankedQueueTable({
 }: RankedQueueTableProps) {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(25);
+  const [focusedIndex, setFocusedIndex] = useState<number>(0);
 
   const totalPages = Math.ceil(items.length / pageSize) || 1;
   const paginatedItems = items.slice((currentPage - 1) * pageSize, currentPage * pageSize);
@@ -68,8 +69,30 @@ export function RankedQueueTable({
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    const targetTag = (e.target as HTMLElement)?.tagName?.toLowerCase();
+    if (targetTag === 'input' || targetTag === 'select') return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setFocusedIndex((prev) => Math.min(prev + 1, Math.max(0, paginatedItems.length - 1)));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setFocusedIndex((prev) => Math.max(prev - 1, 0));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (paginatedItems[focusedIndex]) {
+        onSelectPayment(paginatedItems[focusedIndex].payment.payment_id);
+      }
+    }
+  };
+
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden space-y-4 p-4">
+    <div
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
+      className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden space-y-4 p-4 focus:outline-none focus:ring-1 focus:ring-indigo-300"
+    >
       {/* ── Table Header & Evidence Provenance ─────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
         <div>
@@ -213,18 +236,24 @@ export function RankedQueueTable({
                 </td>
               </tr>
             ) : (
-              paginatedItems.map((item) => {
+              paginatedItems.map((item, idx) => {
                 const isRecovered = item.execution_status === 'recovered';
                 const isStopped = item.status === 'stopped' || item.execution_status === 'stopped';
                 const isDeferred = item.status === 'deferred';
                 const isPending = item.status === 'pending_approval';
+                const isFocused = idx === focusedIndex;
 
                 return (
                   <tr
                     key={item.payment.payment_id}
                     data-testid="queue-row"
+                    data-focused={isFocused}
+                    tabIndex={0}
+                    onFocus={() => setFocusedIndex(idx)}
                     onClick={() => onSelectPayment(item.payment.payment_id)}
-                    className="hover:bg-indigo-50/40 cursor-pointer transition"
+                    className={`hover:bg-indigo-50/40 cursor-pointer transition focus:outline-none ${
+                      isFocused ? 'bg-indigo-50/70 ring-1.5 ring-indigo-500 ring-inset' : ''
+                    }`}
                   >
                     {/* Rank */}
                     <td className="py-2.5 px-3 text-center font-bold text-slate-500">

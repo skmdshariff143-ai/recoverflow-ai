@@ -58,6 +58,16 @@ export function PaymentDrilldownModal({
   const [reviewerNote, setReviewerNote] = useState<string>(
     existingReviewerAction?.reviewerNote ?? '',
   );
+
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
   const [reviewerStatus, setReviewerStatus] = useState<string | null>(
     existingReviewerAction
       ? `Recorded: ${existingReviewerAction.action.toUpperCase()} (${existingReviewerAction.reviewerNote})`
