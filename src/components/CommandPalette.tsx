@@ -60,6 +60,7 @@ const ACTION_COMMANDS: CommandItem[] = [
   { id: 'act-verify-ledger', label: 'Verify Ledger Integrity', keywords: ['verify', 'ledger', 'integrity', 'hash', 'sha256'], category: 'action' },
   { id: 'act-replay-arena', label: 'Blind-Bot vs PayBack AI Replay Arena', keywords: ['replay', 'arena', 'blind', 'bot', 'versus', 'side-by-side', 'comparison'], category: 'action' },
   { id: 'act-judge-mode', label: 'Toggle Judge Mode', keywords: ['judge', 'mode', 'evaluator', 'walkthrough'], category: 'action' },
+  { id: 'act-judge-cheat-sheet', label: 'Judge Cheat Sheet (Printable Summary)', keywords: ['cheat', 'sheet', 'print', 'pdf', 'qr', 'script', 'summary'], category: 'action' },
 ];
 
 // ── Props ─────────────────────────────────────────────────────────
@@ -79,6 +80,8 @@ interface CommandPaletteProps {
   onOpenJudgeMode: () => void;
   /** Open Blind-Bot Replay Arena. */
   onOpenReplayArena?: () => void;
+  /** Open Judge Cheat Sheet. */
+  onOpenCheatSheet?: () => void;
 }
 
 export function CommandPalette({
@@ -89,6 +92,7 @@ export function CommandPalette({
   onVerifyLedger,
   onOpenJudgeMode,
   onOpenReplayArena,
+  onOpenCheatSheet,
 }: CommandPaletteProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -197,9 +201,11 @@ export function CommandPalette({
         onOpenReplayArena?.();
       } else if (item.id === 'act-judge-mode') {
         onOpenJudgeMode();
+      } else if (item.id === 'act-judge-cheat-sheet') {
+        onOpenCheatSheet?.();
       }
     },
-    [onNavigateTab, onSelectPayment, onReSimulate, onVerifyLedger, onOpenJudgeMode, onOpenReplayArena],
+    [onNavigateTab, onSelectPayment, onReSimulate, onVerifyLedger, onOpenJudgeMode, onOpenReplayArena, onOpenCheatSheet],
   );
 
   // Keyboard navigation within the palette

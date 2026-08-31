@@ -19,6 +19,7 @@ import {
   HandCoins,
   Award,
   Swords,
+  FileText,
 } from 'lucide-react';
 import type { DashboardTab } from '@/types/pipeline';
 
@@ -35,6 +36,7 @@ interface HeaderProps {
   onProvenanceChange?: (provenance: DataProvenanceSource) => void;
   onOpenJudgeMode?: () => void;
   onOpenReplayArena?: () => void;
+  onOpenCheatSheet?: () => void;
 }
 
 export function Header({
@@ -48,6 +50,7 @@ export function Header({
   onProvenanceChange,
   onOpenJudgeMode,
   onOpenReplayArena,
+  onOpenCheatSheet,
 }: HeaderProps) {
   return (
     <header className="bg-slate-900 border-b border-slate-800 text-white sticky top-0 z-30 shadow-md">
@@ -154,6 +157,17 @@ export function Header({
             >
               <Award className="w-3.5 h-3.5 text-amber-300" />
               <span>Judge Mode</span>
+            </button>
+
+            {/* Judge Cheat Sheet Launcher Button */}
+            <button
+              onClick={onOpenCheatSheet}
+              data-testid="open-cheat-sheet-btn"
+              className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/40 text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm transition cursor-pointer"
+              title="Open Printable 1-Page Summary & QR Code Reference"
+            >
+              <FileText className="w-3.5 h-3.5 text-amber-400" />
+              <span>Cheat Sheet</span>
             </button>
           </div>
         </div>

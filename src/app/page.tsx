@@ -23,10 +23,12 @@ import { JudgeModeModal } from '@/components/JudgeModeModal';
 import { CommandPalette } from '@/components/CommandPalette';
 import { StickySummaryBar } from '@/components/StickySummaryBar';
 import { BlindBotReplayModal } from '@/components/BlindBotReplayModal';
+import { JudgeCheatSheetModal } from '@/components/JudgeCheatSheetModal';
 
 export default function Home() {
   const [isJudgeModeOpen, setIsJudgeModeOpen] = React.useState<boolean>(false);
   const [isReplayModalOpen, setIsReplayModalOpen] = React.useState<boolean>(false);
+  const [isCheatSheetOpen, setIsCheatSheetOpen] = React.useState<boolean>(false);
   const {
     payments,
     budget,
@@ -88,6 +90,7 @@ export default function Home() {
         onProvenanceChange={setProvenance}
         onOpenJudgeMode={() => setIsJudgeModeOpen(true)}
         onOpenReplayArena={() => setIsReplayModalOpen(true)}
+        onOpenCheatSheet={() => setIsCheatSheetOpen(true)}
       />
 
       {/* ── Sticky Mini-Summary Bar (Appears on scroll past KPI cards) ─ */}
@@ -222,6 +225,13 @@ export default function Home() {
         }}
         onOpenJudgeMode={() => setIsJudgeModeOpen(true)}
         onOpenReplayArena={() => setIsReplayModalOpen(true)}
+        onOpenCheatSheet={() => setIsCheatSheetOpen(true)}
+      />
+
+      {/* ── Printable Judge Cheat Sheet Modal & QR Code Summary ─────── */}
+      <JudgeCheatSheetModal
+        isOpen={isCheatSheetOpen}
+        onClose={() => setIsCheatSheetOpen(false)}
       />
 
       {/* ── Global Footer ───────────────────────────────────────── */}
