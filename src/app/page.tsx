@@ -171,6 +171,7 @@ export default function Home() {
         {activeTab === 'audit_ledger' && (
           <AuditTrailExplorer
             records={chainedLedger}
+            payments={payments}
             verification={ledgerVerification}
             onExportCSV={handleExportCSV}
             onExportJSON={handleExportJSON}

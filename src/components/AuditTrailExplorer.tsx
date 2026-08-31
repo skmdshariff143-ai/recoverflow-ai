@@ -23,12 +23,18 @@ import {
   Flame,
   RotateCcw,
   Bug,
+  Sparkles,
+  Send,
+  CheckCircle2,
 } from 'lucide-react';
 import type { ChainedAuditRecord, LedgerVerificationResult } from '@/lib/engine/hashChainLedger';
 import { tamperWorkingLedgerCopy, verifyLedgerIntegrity } from '@/lib/engine/hashChainLedger';
+import { queryAuditLedger, type LedgerQueryResponse } from '@/lib/engine/askLedger';
+import type { FailedPayment } from '@/types';
 
 interface AuditTrailExplorerProps {
   records: ChainedAuditRecord[];
+  payments?: FailedPayment[];
   verification?: LedgerVerificationResult;
   onExportCSV: () => void;
   onExportJSON: () => void;
@@ -37,6 +43,7 @@ interface AuditTrailExplorerProps {
 
 export function AuditTrailExplorer({
   records,
+  payments = [],
   verification,
   onExportCSV,
   onExportJSON,
@@ -46,6 +53,22 @@ export function AuditTrailExplorer({
   const [stageFilter, setStageFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(50);
+
+  // Ask the Ledger Natural Language Query State
+  const [nlQuery, setNlQuery] = useState<string>('');
+  const [queryResponse, setQueryResponse] = useState<LedgerQueryResponse | null>(null);
+  const [isQuerying, setIsQuerying] = useState<boolean>(false);
+
+  const handleRunNlQuery = (queryText: string) => {
+    const q = queryText || nlQuery;
+    if (!q.trim()) return;
+    setIsQuerying(true);
+    setTimeout(() => {
+      const res = queryAuditLedger(q, records, payments);
+      setQueryResponse(res);
+      setIsQuerying(false);
+    }, 150);
+  };
 
   // Live Tamper Demo State (Operates purely on working copies)
   const [tamperRecordId, setTamperRecordId] = useState<string>(records[2]?.id ?? records[0]?.id ?? '');
@@ -131,6 +154,128 @@ export function AuditTrailExplorer({
             Export Signed JSON
           </button>
         </div>
+      </div>
+
+      {/* ── Ask the Ledger Natural Language Query Panel ────────── */}
+      <div
+        data-testid="ask-ledger-panel"
+        className="bg-gradient-to-r from-indigo-900/10 via-purple-900/10 to-slate-900/10 border border-indigo-200 rounded-xl p-4 space-y-3"
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-indigo-600" />
+            <h3 className="text-xs font-bold text-slate-900">
+              Ask the Ledger (Grounded Natural Language Query)
+            </h3>
+            <span className="text-[10px] bg-indigo-100 text-indigo-800 font-semibold px-2 py-0.5 rounded border border-indigo-200">
+              Zero Hallucination · Cryptographically Cited
+            </span>
+          </div>
+        </div>
+
+        <p className="text-[11px] text-slate-600">
+          Query the tamper-evident audit ledger in plain English to retrieve verified decisions, timestamps, quiet-hours compliance, and cryptographic signatures.
+        </p>
+
+        {/* Input Bar */}
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleRunNlQuery(nlQuery);
+          }}
+          className="flex items-center gap-2"
+        >
+          <div className="relative flex-1">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+            <input
+              type="text"
+              data-testid="ask-ledger-input"
+              value={nlQuery}
+              onChange={(e) => setNlQuery(e.target.value)}
+              placeholder="Ask anything (e.g. 'Why was payment pay_001 stopped?', 'Which payments had quiet-hours delays?')"
+              className="w-full pl-9 pr-3 py-2 text-xs border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-slate-900 placeholder:text-slate-400"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={isQuerying || !nlQuery.trim()}
+            data-testid="ask-ledger-submit-btn"
+            className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-semibold px-4 py-2 rounded-lg transition cursor-pointer shadow-xs shrink-0"
+          >
+            <Send className="w-3.5 h-3.5" />
+            <span>{isQuerying ? 'Querying...' : 'Ask Ledger'}</span>
+          </button>
+        </form>
+
+        {/* Preset Query Chips */}
+        <div className="flex items-center flex-wrap gap-1.5 text-[11px] text-slate-500">
+          <span className="font-semibold text-slate-600">Quick prompts:</span>
+          {[
+            'Why was payment pay_001 stopped?',
+            'Which payments had quiet-hours delays?',
+            'List payments requiring human dual-custody approval',
+            'How many payments achieved verified recovery?',
+          ].map((prompt) => (
+            <button
+              key={prompt}
+              type="button"
+              onClick={() => {
+                setNlQuery(prompt);
+                handleRunNlQuery(prompt);
+              }}
+              className="bg-white hover:bg-indigo-50 text-indigo-700 border border-slate-200 hover:border-indigo-300 px-2 py-0.5 rounded-md text-[10px] transition cursor-pointer"
+            >
+              {prompt}
+            </button>
+          ))}
+        </div>
+
+        {/* Grounded Response Card */}
+        {queryResponse && (
+          <div
+            data-testid="ask-ledger-response"
+            className="bg-white border border-indigo-200 rounded-xl p-3.5 space-y-2 shadow-xs animate-in fade-in duration-200"
+          >
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-bold text-slate-900 flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                Ledger Grounded Response
+              </span>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                {queryResponse.groundingConfidence}
+              </span>
+            </div>
+
+            <p className="text-xs text-slate-700 font-sans leading-relaxed">
+              {queryResponse.answer}
+            </p>
+
+            {queryResponse.citedRecordIds.length > 0 && (
+              <div className="flex items-center flex-wrap gap-1.5 pt-1.5 border-t border-slate-100 text-[10px]">
+                <span className="text-slate-400 font-medium">Verified Citations:</span>
+                {queryResponse.citedRecordIds.map((seqId) => (
+                  <span
+                    key={seqId}
+                    className="font-mono bg-indigo-50 text-indigo-800 border border-indigo-200 px-1.5 py-0.5 rounded font-semibold"
+                  >
+                    Record #{seqId}
+                  </span>
+                ))}
+                {queryResponse.citedPaymentIds.map((pid) => (
+                  <button
+                    key={pid}
+                    type="button"
+                    onClick={() => onSelectPayment(pid)}
+                    className="font-mono bg-cyan-50 text-cyan-800 border border-cyan-200 px-1.5 py-0.5 rounded font-semibold hover:bg-cyan-100 transition cursor-pointer"
+                    title="Open Drill-Down for this payment"
+                  >
+                    {pid} ↗
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* ── Live Tamper Demo Panel ("Try to Break It") ─────────── */}
