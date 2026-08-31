@@ -20,6 +20,7 @@ import { PromiseToPayTracker } from '@/components/PromiseToPayTracker';
 import { AuditTrailExplorer } from '@/components/AuditTrailExplorer';
 import { MethodologyGuide } from '@/components/MethodologyGuide';
 import { JudgeModeModal } from '@/components/JudgeModeModal';
+import { CommandPalette } from '@/components/CommandPalette';
 
 export default function Home() {
   const [isJudgeModeOpen, setIsJudgeModeOpen] = React.useState<boolean>(false);
@@ -179,6 +180,18 @@ export default function Home() {
         onClose={() => setIsJudgeModeOpen(false)}
         onNavigateTab={(tab) => setActiveTab(tab)}
         onSetProvenance={(prov) => setProvenance(prov)}
+      />
+
+      {/* ── Global Command Palette (Cmd/Ctrl+K) ────────────────────── */}
+      <CommandPalette
+        items={batchResult.executed_items}
+        onNavigateTab={setActiveTab}
+        onSelectPayment={(id) => setSelectedPaymentId(id)}
+        onReSimulate={handleReSimulate}
+        onVerifyLedger={() => {
+          setActiveTab('audit_ledger');
+        }}
+        onOpenJudgeMode={() => setIsJudgeModeOpen(true)}
       />
 
       {/* ── Global Footer ───────────────────────────────────────── */}
