@@ -55,7 +55,12 @@ Most recovery tools claim high recovery rates by scoring payments with optimisti
 | 3. Counterfactual Evaluation Lab | 4. SHA-256 Cryptographic Ledger |
 |:---:|:---:|
 | ![Evaluation Lab](./docs/screenshots/03-evaluation-lab.png) | ![Audit Ledger](./docs/screenshots/04-audit-trail-ledger.png) |
-| **Comparative evaluation on identical frozen outcomes** | **Tamper-evident SHA-256 hash-chain verification** |
+| **Comparative policy matrix & multi-merchant risk presets** | **Tamper-evident SHA-256 hash-chain verification** |
+
+| 5. Live Recovery Runner | 6. Methodology & Governance Guide |
+|:---:|:---:|
+| ![Live Runner](./docs/screenshots/05-live-runner.png) | ![Methodology Guide](./docs/screenshots/05-methodology-guide.png) |
+| **Stepped execution & proactive outcome observation** | **Architectural AI boundaries & transparent post-mortems** |
 
 ---
 
