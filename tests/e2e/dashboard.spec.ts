@@ -72,7 +72,10 @@ test.describe('PayBack AI — Interactive Workspaces & Drill-Down', () => {
 
     // Switch to Methodology Guide tab
     await page.getByRole('button', { name: /Methodology/i }).click();
+    await page.waitForTimeout(400);
     await expect(page.getByText(/5-Minute Structured Pitch/i)).toBeVisible();
+    await expect(page.getByText(/What We Got Wrong/i).first()).toBeVisible();
+    await expect(page.getByText(/Circular Calibration Defect/i).first()).toBeVisible();
   });
 
   test('status filter dropdown updates visible table rows', async ({ page }) => {
