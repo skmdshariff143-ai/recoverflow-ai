@@ -124,14 +124,42 @@ Most recovery tools claim high recovery rates by scoring payments with optimisti
 
 ## 🛡️ Strict AI vs Non-AI Responsibility Boundary
 
-| Domain | Mechanism | Responsible Layer |
-| :--- | :--- | :--- |
-| **Monetary Calculations & EV** | Strict Integer-Paise Math (`bps * amountPaise / 10000`) | Deterministic Financial Core |
-| **Safety Invariants & Opt-Outs** | Hard boolean gate before scoring/ranking | Deterministic Safety Filter |
-| **State Machine Transitions** | Explicit transition mapping with idempotency | Deterministic State Engine |
-| **Error Log Normalization** | LLM classification with heuristic fallback | Bounded Gemini 3.6 Copilot |
-| **Customer Reminders** | Policy-constrained prototype draft requiring merchant compliance review | Bounded Gemini 3.6 Copilot |
-| **Audit Verification** | SHA-256 hash-chain integrity verification | Cryptographic Audit Engine |
+```mermaid
+graph TD
+    subgraph AI_ADVISORY["🤖 Bounded AI Advisory Layer (Gemini 3.6 Flash)"]
+        A1["Gateway Error Normalization<br/>(cryptic log -> standard category)"]
+        A2["Empathetic Reminder Drafting<br/>(SMS/Email notification proposal)"]
+        A3["Reviewer Case Summarization<br/>(natural language timeline)"]
+    end
+
+    subgraph ISOLATION_BARRIER["🔒 Code-Enforced Architectural Barrier (src/lib/ai/)"]
+        direction LR
+        B1["ZERO Execution Privileges"] --- B2["ZERO State Mutation"] --- B3["ZERO Money Movement"]
+    end
+
+    subgraph DETERMINISTIC_CORE["⚖️ Deterministic Governance & Financial Engine (src/lib/engine/)"]
+        C1["Integer-Paise Arithmetic & EV Ranking<br/>(Math.round(amountPaise * bps / 10000))"]
+        C2["Safety Rule Filter & Opt-Out Halts<br/>(immediate hard-stop invariants)"]
+        C3["Budget Capacity Allocation<br/>(top N slots prioritized, rest deferred)"]
+        C4["Multi-Cycle State Transitions<br/>(DETECTED -> DIAGNOSED -> EXECUTED)"]
+        C5["SHA-256 Tamper-Evident Ledger<br/>(immutable append-only hash chain)"]
+    end
+
+    AI_ADVISORY -. "Advisory Proposals Only" .-> ISOLATION_BARRIER
+    ISOLATION_BARRIER ===> DETERMINISTIC_CORE
+```
+
+> **Enforced in Code**: The AI boundary is not a prompt convention—it is enforced by module decoupling. `src/lib/ai/geminiClient.ts` has **zero write access** to payment state, ledger hashes, or payment adapters. All money calculations, safety halts, and state transitions reside exclusively in `src/lib/engine/` and `src/lib/adapters/`.
+
+| Domain | Mechanism | Responsible Layer | Code Location |
+| :--- | :--- | :--- | :--- |
+| **Monetary Calculations & EV** | Strict Integer-Paise Math (`bps * amountPaise / 10000`) | Deterministic Financial Core | `src/lib/engine/financial.ts` |
+| **Safety Invariants & Opt-Outs** | Hard boolean gate before scoring/ranking | Deterministic Safety Filter | `src/lib/engine/safetyFilter.ts` |
+| **Budget Allocation & Ranking** | EV sorting and capacity capping | Deterministic Prioritization | `src/lib/engine/rankAndAllocate.ts` |
+| **State Machine Transitions** | Explicit transition mapping with idempotency | Deterministic State Engine | `src/lib/engine/stateMachine.ts` |
+| **Error Log Normalization** | LLM classification with heuristic fallback | Bounded Gemini 3.6 Copilot | `src/lib/ai/geminiClient.ts` |
+| **Customer Reminders** | Policy-constrained prototype draft requiring merchant review | Bounded Gemini 3.6 Copilot | `src/lib/ai/geminiClient.ts` |
+| **Audit Verification** | SHA-256 hash-chain integrity verification | Cryptographic Audit Engine | `src/lib/engine/hashChainLedger.ts` |
 
 ---
 

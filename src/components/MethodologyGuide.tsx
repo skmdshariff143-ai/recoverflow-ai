@@ -13,6 +13,8 @@ import {
   CheckCircle2,
   FileText,
   Clock,
+  Lock,
+  Cpu,
 } from 'lucide-react';
 
 export function MethodologyGuide() {
@@ -84,49 +86,119 @@ export function MethodologyGuide() {
         </div>
 
         {/* ── Strict AI vs Non-AI Responsibility Boundary ─────────── */}
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* What Gemini AI Does */}
-          <div className="bg-indigo-50/50 border border-indigo-200 rounded-xl p-4">
-            <h3 className="text-sm font-bold text-indigo-900 flex items-center gap-2 mb-2">
-              <Bot className="w-4 h-4 text-indigo-600" />
-              Where AI is Used (Natural Language &amp; Reasoning)
+        <div className="mt-6 space-y-4">
+          <div className="border-t border-slate-100 pt-4">
+            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-1">
+              <Shield className="w-4 h-4 text-indigo-600" />
+              Strict AI vs Non-AI Responsibility Boundary
             </h3>
-            <ul className="text-xs text-slate-700 space-y-2">
-              <li className="flex items-start gap-2">
-                <CheckCircle2 className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
-                <span><strong>Gateway Error Normalization:</strong> Interprets cryptic, non-standard bank error strings into standard taxonomy categories.</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle2 className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
-                <span><strong>Customer Communication Drafting:</strong> Crafts empathetic, policy-constrained prototype payment link recovery messages across SMS/Email.</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle2 className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
-                <span><strong>Reviewer Case Summaries:</strong> Summarizes historical customer discipline to accelerate manual high-value invoice approvals.</span>
-              </li>
-            </ul>
+            <p className="text-xs text-slate-500">
+              Enforced by physical module separation in code: <code className="bg-slate-100 text-indigo-700 px-1.5 py-0.5 rounded font-mono text-[11px]">src/lib/ai/</code> has <strong>zero write access</strong> to payment state, ledger hashes, or execution triggers.
+            </p>
           </div>
 
-          {/* What AI Strictly NEVER Does */}
-          <div className="bg-rose-50/50 border border-rose-200 rounded-xl p-4">
-            <h3 className="text-sm font-bold text-rose-900 flex items-center gap-2 mb-2">
-              <Shield className="w-4 h-4 text-rose-600" />
-              Where AI is Strictly Forbidden (Deterministic Invariants)
-            </h3>
-            <ul className="text-xs text-slate-700 space-y-2">
-              <li className="flex items-start gap-2">
-                <Scale className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-                <span><strong>Monetary Arithmetic &amp; EV:</strong> Calculations are strictly integer-paise based (bps × amountPaise / 10,000) — no LLM math.</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <Scale className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-                <span><strong>Safety Filter &amp; Attempt Caps:</strong> Hard-coded stopping rules execute prior to any model or queue ranking.</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <Scale className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-                <span><strong>State Machine Transitions:</strong> Only deterministic engine actors and authenticated human reviewers can transition state.</span>
-              </li>
-            </ul>
+          {/* Visual Architecture Flow Banner */}
+          <div className="bg-slate-950 text-white rounded-xl p-4 border border-slate-800 space-y-3">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+              <span>Architectural Isolation Topology</span>
+              <span className="text-emerald-400 flex items-center gap-1 font-mono">
+                <CheckCircle2 className="w-3 h-3" />
+                Zero Execution Privileges in AI Layer
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+              {/* Left: AI Advisory */}
+              <div className="bg-indigo-950/60 border border-indigo-500/30 rounded-lg p-3 space-y-1.5">
+                <div className="flex items-center gap-1.5 text-indigo-300 font-bold">
+                  <Bot className="w-4 h-4" />
+                  <span>Bounded AI Copilot</span>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  • Error log normalization<br/>
+                  • Draft reminder proposal<br/>
+                  • Reviewer natural language summaries
+                </p>
+                <div className="text-[10px] text-indigo-400 font-mono bg-indigo-900/40 px-2 py-0.5 rounded border border-indigo-500/20">
+                  Advisory Layer Only (Read-Only)
+                </div>
+              </div>
+
+              {/* Center: Enforcement Barrier */}
+              <div className="bg-slate-900 border border-slate-700 rounded-lg p-3 flex flex-col items-center justify-center text-center space-y-1">
+                <div className="p-1.5 bg-rose-500/20 text-rose-400 rounded-full">
+                  <Lock className="w-4 h-4" />
+                </div>
+                <span className="font-bold text-white text-xs">Isolation Barrier</span>
+                <span className="text-[10px] text-slate-400">
+                  Zero state mutations • Zero direct dispatch • Pure functional responses
+                </span>
+                <span className="text-[9px] font-mono text-slate-500">src/lib/ai/geminiClient.ts</span>
+              </div>
+
+              {/* Right: Deterministic Core */}
+              <div className="bg-emerald-950/60 border border-emerald-500/30 rounded-lg p-3 space-y-1.5">
+                <div className="flex items-center gap-1.5 text-emerald-300 font-bold">
+                  <Cpu className="w-4 h-4" />
+                  <span>Deterministic Engine</span>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  • Integer paise EV calculations<br/>
+                  • Hard safety stopping invariants<br/>
+                  • SHA-256 cryptographic ledger append
+                </p>
+                <div className="text-[10px] text-emerald-400 font-mono bg-emerald-900/40 px-2 py-0.5 rounded border border-emerald-500/20">
+                  Sole Execution &amp; State Authority
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Two-Column Detail Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* What Gemini AI Does */}
+            <div className="bg-indigo-50/50 border border-indigo-200 rounded-xl p-4">
+              <h4 className="text-xs font-bold text-indigo-900 flex items-center gap-2 mb-2">
+                <Bot className="w-4 h-4 text-indigo-600" />
+                Where AI is Permitted (Natural Language &amp; Reasoning)
+              </h4>
+              <ul className="text-xs text-slate-700 space-y-2">
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
+                  <span><strong>Gateway Error Normalization:</strong> Interprets cryptic, non-standard bank error strings into standard taxonomy categories.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
+                  <span><strong>Customer Communication Drafting:</strong> Crafts empathetic, policy-constrained prototype payment link recovery messages across SMS/Email.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
+                  <span><strong>Reviewer Case Summaries:</strong> Summarizes historical customer discipline to accelerate manual high-value invoice approvals.</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* What AI Strictly NEVER Does */}
+            <div className="bg-rose-50/50 border border-rose-200 rounded-xl p-4">
+              <h4 className="text-xs font-bold text-rose-900 flex items-center gap-2 mb-2">
+                <Shield className="w-4 h-4 text-rose-600" />
+                Where AI is Strictly Forbidden (Deterministic Invariants)
+              </h4>
+              <ul className="text-xs text-slate-700 space-y-2">
+                <li className="flex items-start gap-2">
+                  <Scale className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                  <span><strong>Monetary Arithmetic &amp; EV:</strong> Calculations are strictly integer-paise based (<code className="font-mono text-[11px]">Math.round(amountPaise * bps / 10000)</code>) — zero LLM math.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Scale className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                  <span><strong>Safety Filter &amp; Attempt Caps:</strong> Hard-coded stopping rules execute prior to any model or queue ranking (<code className="font-mono text-[11px]">src/lib/engine/safetyFilter.ts</code>).</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Scale className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                  <span><strong>State Transitions:</strong> Only deterministic engine actors and authenticated human reviewers can transition state (<code className="font-mono text-[11px]">src/lib/engine/stateMachine.ts</code>).</span>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
 
