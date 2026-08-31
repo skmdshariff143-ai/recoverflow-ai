@@ -28,15 +28,18 @@ import {
   RotateCw,
   Zap,
   Activity,
+  Scale,
 } from 'lucide-react';
 import type { ExecutedItem } from '@/types';
 import type { AuditRecord } from '@/lib/engine/auditTrail';
 import { formatPaiseToINR } from '@/lib/engine/financial';
 import type { ReviewerAction } from '@/lib/engine/stateMachine';
 import { CaseRecoveryJourney } from '@/components/CaseRecoveryJourney';
+import { generateContrastiveReport } from '@/lib/engine/contrastiveExplanation';
 
 interface PaymentDrilldownModalProps {
   item: ExecutedItem | null;
+  allItems?: ExecutedItem[];
   auditRecords: AuditRecord[];
   onClose: () => void;
   onApplyReviewerAction?: (paymentId: string, action: ReviewerAction) => void;
@@ -45,6 +48,7 @@ interface PaymentDrilldownModalProps {
 
 export function PaymentDrilldownModal({
   item,
+  allItems,
   auditRecords,
   onClose,
   onApplyReviewerAction,
@@ -104,6 +108,11 @@ export function PaymentDrilldownModal({
     source: string;
     timestamp: string;
   } | null>(null);
+
+  const contrastiveReport = React.useMemo(
+    () => (item && allItems ? generateContrastiveReport(item, allItems) : null),
+    [item, allItems],
+  );
 
   if (!item) return null;
 
@@ -426,6 +435,68 @@ export function PaymentDrilldownModal({
               })}
             </div>
           </div>
+
+          {/* 1.5 Contrastive Peer Comparison: "Why Not the Others?" */}
+          {contrastiveReport && contrastiveReport.hasComparisons && (
+            <div
+              className="bg-indigo-50/40 border border-indigo-200/80 rounded-xl p-4 space-y-3"
+              data-testid="contrastive-explanation-section"
+            >
+              <div className="flex items-center justify-between border-b border-indigo-100 pb-2">
+                <h4 className="font-bold text-slate-900 flex items-center gap-1.5">
+                  <Scale className="w-4 h-4 text-indigo-600" />
+                  Why Not The Others? (Contrastive Peer Comparison)
+                </h4>
+                <span className="text-[10px] bg-indigo-100 text-indigo-800 font-bold px-2 py-0.5 rounded-full border border-indigo-300">
+                  Category Peer Factor Deltas
+                </span>
+              </div>
+
+              <div className="space-y-3">
+                {contrastiveReport.comparisons.map((comp, idx) => (
+                  <div
+                    key={idx}
+                    className="bg-white border border-indigo-100 rounded-lg p-3 space-y-2 text-xs shadow-xs"
+                    data-testid="contrastive-peer-card"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-1 text-[11px]">
+                      <span className="font-semibold text-slate-800">
+                        Peer: <span className="font-mono text-indigo-700 font-bold">{comp.peerPaymentId}</span> ({formatPaiseToINR(comp.peerAmount, true)})
+                      </span>
+                      <div className="flex items-center gap-1.5 font-mono text-[10px]">
+                        <span className="text-slate-500">Peer Score: {(comp.peerScore * 100).toFixed(1)}%</span>
+                        <span className="text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded font-bold">
+                          +{Math.round(comp.scoreDelta * 100)}% Delta
+                        </span>
+                      </div>
+                    </div>
+
+                    <p className="text-slate-700 text-[11px] leading-relaxed bg-slate-50 p-2 rounded border border-slate-100">
+                      {comp.plainEnglishSummary}
+                    </p>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-1">
+                      {comp.topDifferentiatingFactors.map((df, fIdx) => (
+                        <div
+                          key={fIdx}
+                          className="flex items-center justify-between bg-slate-50/80 px-2 py-1 rounded text-[10px]"
+                        >
+                          <span className="text-slate-600 truncate">{df.label}</span>
+                          <span
+                            className={`font-mono font-bold ml-1 shrink-0 ${
+                              df.delta > 0 ? 'text-emerald-700' : 'text-slate-500'
+                            }`}
+                          >
+                            {df.delta > 0 ? `+${(df.delta * 100).toFixed(1)}%` : `${(df.delta * 100).toFixed(1)}%`}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* 2. Customer Behavior Profile & Raw Error */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

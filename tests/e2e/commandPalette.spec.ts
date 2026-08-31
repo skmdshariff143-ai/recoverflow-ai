@@ -4,6 +4,7 @@ test.describe('PayBack AI — Command Palette (Cmd/Ctrl+K)', () => {
 
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
+    await page.waitForSelector('header');
   });
 
   test('opens with Ctrl+K, searches payment_id, selects to open drill-down', async ({ page }) => {

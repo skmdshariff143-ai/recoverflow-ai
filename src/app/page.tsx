@@ -167,6 +167,7 @@ export default function Home() {
       {selectedItem && (
         <PaymentDrilldownModal
           item={selectedItem}
+          allItems={batchResult.executed_items}
           auditRecords={selectedItemAuditRecords}
           onClose={() => setSelectedPaymentId(null)}
           onApplyReviewerAction={applyReviewerAction}

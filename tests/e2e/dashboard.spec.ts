@@ -46,6 +46,10 @@ test.describe('PayBack AI — Interactive Workspaces & Drill-Down', () => {
     // Verify factor details are rendered
     await expect(page.getByText(/Category Base Rate/i).first()).toBeVisible();
 
+    // Verify contrastive "Why Not the Others" peer comparison renders
+    await expect(page.getByText(/Why Not The Others/i)).toBeVisible();
+    await expect(page.getByTestId('contrastive-explanation-section')).toBeVisible();
+
     // Close drill-down modal
     await page.getByRole('button', { name: /Close Drill-Down/i }).click();
     await expect(page.getByText(/Deterministic Scoring Waterfall/i)).not.toBeVisible();
