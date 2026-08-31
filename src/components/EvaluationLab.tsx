@@ -17,21 +17,27 @@ import {
   Database,
   ExternalLink,
   TrendingUp,
-  Info,
 } from 'lucide-react';
 import type { ComprehensiveEvaluationReport } from '@/lib/engine/counterfactualEvaluation';
 import { formatPaiseToINR } from '@/lib/engine/financial';
 import { DATASET_METADATA } from '@/lib/data/benchmarkLoader';
+import { MerchantPortfolioComparison } from './MerchantPortfolioComparison';
+import { generateSyntheticPayments } from '@/lib/engine/generateData';
+import type { FailedPayment } from '@/types';
 
 interface EvaluationLabProps {
   devReport: ComprehensiveEvaluationReport;
   heldoutReport: ComprehensiveEvaluationReport;
+  payments?: FailedPayment[];
 }
 
 export function EvaluationLab({
   devReport,
   heldoutReport,
+  payments,
 }: EvaluationLabProps) {
+  const defaultPayments = useMemo(() => generateSyntheticPayments({ seed: 42, totalRecords: 100 }), []);
+  const activePayments = payments ?? defaultPayments;
   const [selectedDataset, setSelectedDataset] = useState<'dev' | 'heldout'>('dev');
   const [errorFilter, setErrorFilter] = useState<'all' | 'false_positive' | 'false_negative' | 'unsafe_attempt' | 'high_value_misclassification'>('all');
   const [errorSearch, setErrorSearch] = useState<string>('');
@@ -361,6 +367,9 @@ export function EvaluationLab({
           </table>
         </div>
       </div>
+
+      {/* ── Multi-Merchant Risk Profiles & Platform Framing ─────── */}
+      <MerchantPortfolioComparison payments={activePayments} />
 
       {/* ── Error Inspector ──────────────────────────────────────── */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">

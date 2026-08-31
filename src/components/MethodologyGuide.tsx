@@ -235,7 +235,7 @@ export function MethodologyGuide() {
             <div className="flex items-center gap-2">
               <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                 <AlertOctagon className="w-4 h-4 text-amber-600" />
-                What We Got Wrong (And How We Know It's Fixed)
+                What We Got Wrong (And How We Know It&apos;s Fixed)
               </h3>
               <span className="bg-amber-100 text-amber-900 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-300">
                 Transparent Post-Mortems
@@ -275,7 +275,7 @@ export function MethodologyGuide() {
                   <span className="text-[10px] font-mono text-indigo-700 font-bold bg-indigo-100 px-1.5 py-0.5 rounded">Fintech Core</span>
                 </div>
                 <p className="text-slate-700 leading-relaxed text-[11px]">
-                  <strong>What Broke:</strong> Dispatching a payment link was initially marked as "recovered revenue", overstating recovered funds before the customer actually settled the invoice.
+                  <strong>What Broke:</strong> Dispatching a payment link was initially marked as &quot;recovered revenue&quot;, overstating recovered funds before the customer actually settled the invoice.
                 </p>
                 <p className="text-slate-700 leading-relaxed text-[11px]">
                   <strong>The Fix:</strong> Link dispatch enforces <code className="font-mono text-[10px]">settledAmountPaise = 0</code>. Revenue is credited only after the proactive Outcome Observer polls the gateway and confirms settlement.

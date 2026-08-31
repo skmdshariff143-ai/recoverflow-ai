@@ -135,6 +135,7 @@ export default function Home() {
             <EvaluationLab
               devReport={devReport}
               heldoutReport={heldoutReport}
+              payments={payments}
             />
           </div>
         )}
