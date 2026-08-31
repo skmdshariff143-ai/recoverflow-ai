@@ -18,6 +18,7 @@ import {
   Zap,
   HandCoins,
   Award,
+  Swords,
 } from 'lucide-react';
 import type { DashboardTab } from '@/types/pipeline';
 
@@ -33,6 +34,7 @@ interface HeaderProps {
   provenance?: DataProvenanceSource;
   onProvenanceChange?: (provenance: DataProvenanceSource) => void;
   onOpenJudgeMode?: () => void;
+  onOpenReplayArena?: () => void;
 }
 
 export function Header({
@@ -45,6 +47,7 @@ export function Header({
   provenance = 'synthetic_fixture',
   onProvenanceChange,
   onOpenJudgeMode,
+  onOpenReplayArena,
 }: HeaderProps) {
   return (
     <header className="bg-slate-900 border-b border-slate-800 text-white sticky top-0 z-30 shadow-md">
@@ -131,6 +134,17 @@ export function Header({
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
               <span>TEST-MODE ONLY</span>
             </div>
+
+            {/* Replay Arena Launcher Button */}
+            <button
+              onClick={onOpenReplayArena}
+              data-testid="open-replay-arena-btn"
+              className="flex items-center gap-1.5 bg-gradient-to-r from-rose-600 to-indigo-600 hover:from-rose-500 hover:to-indigo-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm transition cursor-pointer border border-rose-400/40"
+              title="Launch Animated Blind-Bot vs PayBack AI Head-to-Head Comparison"
+            >
+              <Swords className="w-3.5 h-3.5 text-amber-300" />
+              <span>Replay Arena</span>
+            </button>
 
             {/* Judge Mode Launcher Button */}
             <button

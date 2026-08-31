@@ -22,9 +22,11 @@ import { MethodologyGuide } from '@/components/MethodologyGuide';
 import { JudgeModeModal } from '@/components/JudgeModeModal';
 import { CommandPalette } from '@/components/CommandPalette';
 import { StickySummaryBar } from '@/components/StickySummaryBar';
+import { BlindBotReplayModal } from '@/components/BlindBotReplayModal';
 
 export default function Home() {
   const [isJudgeModeOpen, setIsJudgeModeOpen] = React.useState<boolean>(false);
+  const [isReplayModalOpen, setIsReplayModalOpen] = React.useState<boolean>(false);
   const {
     payments,
     budget,
@@ -85,6 +87,7 @@ export default function Home() {
         provenance={provenance}
         onProvenanceChange={setProvenance}
         onOpenJudgeMode={() => setIsJudgeModeOpen(true)}
+        onOpenReplayArena={() => setIsReplayModalOpen(true)}
       />
 
       {/* ── Sticky Mini-Summary Bar (Appears on scroll past KPI cards) ─ */}
@@ -201,6 +204,12 @@ export default function Home() {
         onSetProvenance={(prov) => setProvenance(prov)}
       />
 
+      {/* ── Blind-Bot vs PayBack AI Side-by-Side Replay Arena ─────── */}
+      <BlindBotReplayModal
+        isOpen={isReplayModalOpen}
+        onClose={() => setIsReplayModalOpen(false)}
+      />
+
       {/* ── Global Command Palette (Cmd/Ctrl+K) ────────────────────── */}
       <CommandPalette
         items={batchResult.executed_items}
@@ -211,6 +220,7 @@ export default function Home() {
           setActiveTab('audit_ledger');
         }}
         onOpenJudgeMode={() => setIsJudgeModeOpen(true)}
+        onOpenReplayArena={() => setIsReplayModalOpen(true)}
       />
 
       {/* ── Global Footer ───────────────────────────────────────── */}

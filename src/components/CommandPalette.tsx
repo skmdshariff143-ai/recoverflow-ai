@@ -58,6 +58,7 @@ const NAVIGATION_COMMANDS: CommandItem[] = [
 const ACTION_COMMANDS: CommandItem[] = [
   { id: 'act-resimulate', label: 'Re-Simulate Batch', keywords: ['resimulate', 'batch', 'seed', 'rerun'], category: 'action' },
   { id: 'act-verify-ledger', label: 'Verify Ledger Integrity', keywords: ['verify', 'ledger', 'integrity', 'hash', 'sha256'], category: 'action' },
+  { id: 'act-replay-arena', label: 'Blind-Bot vs PayBack AI Replay Arena', keywords: ['replay', 'arena', 'blind', 'bot', 'versus', 'side-by-side', 'comparison'], category: 'action' },
   { id: 'act-judge-mode', label: 'Toggle Judge Mode', keywords: ['judge', 'mode', 'evaluator', 'walkthrough'], category: 'action' },
 ];
 
@@ -76,6 +77,8 @@ interface CommandPaletteProps {
   onVerifyLedger: () => void;
   /** Open Judge Mode modal. */
   onOpenJudgeMode: () => void;
+  /** Open Blind-Bot Replay Arena. */
+  onOpenReplayArena?: () => void;
 }
 
 export function CommandPalette({
@@ -85,6 +88,7 @@ export function CommandPalette({
   onReSimulate,
   onVerifyLedger,
   onOpenJudgeMode,
+  onOpenReplayArena,
 }: CommandPaletteProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -189,11 +193,13 @@ export function CommandPalette({
         onReSimulate();
       } else if (item.id === 'act-verify-ledger') {
         onVerifyLedger();
+      } else if (item.id === 'act-replay-arena') {
+        onOpenReplayArena?.();
       } else if (item.id === 'act-judge-mode') {
         onOpenJudgeMode();
       }
     },
-    [onNavigateTab, onSelectPayment, onReSimulate, onVerifyLedger, onOpenJudgeMode],
+    [onNavigateTab, onSelectPayment, onReSimulate, onVerifyLedger, onOpenJudgeMode, onOpenReplayArena],
   );
 
   // Keyboard navigation within the palette
