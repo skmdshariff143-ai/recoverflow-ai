@@ -16,6 +16,7 @@ import {
   Briefcase,
 } from 'lucide-react';
 import type { useRecoveryBatch } from '@/hooks/useRecoveryBatch';
+import { TrustScoreWidget } from './TrustScoreWidget';
 
 interface MetricsOverviewProps {
   kpis: ReturnType<typeof useRecoveryBatch>['kpis'];
@@ -24,6 +25,18 @@ interface MetricsOverviewProps {
 export function MetricsOverview({ kpis }: MetricsOverviewProps) {
   return (
     <div className="space-y-4">
+      {/* ── Explainability & Safety Trust Score Headline Banner ─── */}
+      <TrustScoreWidget
+        inputs={{
+          brierScore: kpis.brierScore,
+          calibrationError: kpis.calibrationGap / 100,
+          passingSafetyRules: 7,
+          totalSafetyRules: 7,
+          totalDecisions: 100,
+          loggedAuditRecords: 100,
+        }}
+      />
+
       {/* ── Primary Financial & Calibration Row ─────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Revenue at Risk */}

@@ -38,6 +38,7 @@ test.describe('PayBack AI — Interactive Workspaces & Drill-Down', () => {
   test('clicking a payment row opens the explainable decision drill-down drawer', async ({ page }) => {
     // Click the first row in the ranked queue table
     const firstRow = page.locator('[data-testid="queue-row"]').first();
+    await firstRow.scrollIntoViewIfNeeded();
     await firstRow.click();
 
     // Verify drill-down modal appears
