@@ -927,10 +927,10 @@ export function PaymentDrilldownModal({
           </div>
         </div>
 
-        {/* ── Modal Footer ─────────────────────────────────────── */}
         <div className="bg-slate-900 p-4 border-t border-slate-800 flex justify-end">
           <button
             onClick={onClose}
+            data-testid="close-drilldown-modal"
             className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 rounded-lg text-xs font-semibold transition cursor-pointer"
           >
             Close Drill-Down

@@ -20,6 +20,8 @@ import {
   AlertCircle,
   PauseCircle,
   ExternalLink,
+  FilterX,
+  RotateCcw,
 } from 'lucide-react';
 import type { ExecutedItem } from '@/types';
 import { FAILURE_CATEGORIES } from '@/types';
@@ -85,6 +87,13 @@ export function RankedQueueTable({
         onSelectPayment(paginatedItems[focusedIndex].payment.payment_id);
       }
     }
+  };
+
+  const handleClearAllFilters = () => {
+    onSearchChange('');
+    onStatusFilterChange('all');
+    onCategoryFilterChange('all');
+    setCurrentPage(1);
   };
 
   return (
@@ -231,8 +240,28 @@ export function RankedQueueTable({
           <tbody className="divide-y divide-slate-100 text-slate-700">
             {paginatedItems.length === 0 ? (
               <tr>
-                <td colSpan={10} className="py-8 text-center text-slate-400">
-                  No payment records match the selected filters.
+                <td colSpan={10} className="py-12 text-center" data-testid="empty-queue-state">
+                  <div className="flex flex-col items-center justify-center space-y-3 max-w-sm mx-auto">
+                    <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+                      <FilterX className="w-6 h-6 text-slate-500" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-slate-800">
+                        No payments match your filters
+                      </h4>
+                      <p className="text-xs text-slate-500 mt-1">
+                        Try adjusting your search query, status filter, or category selection to see recovery records.
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleClearAllFilters}
+                      data-testid="clear-filters-btn"
+                      className="flex items-center gap-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold px-3 py-1.5 rounded-lg text-xs border border-indigo-200 transition cursor-pointer"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      Clear All Filters
+                    </button>
+                  </div>
                 </td>
               </tr>
             ) : (

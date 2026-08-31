@@ -69,8 +69,7 @@ test.describe('PayBack AI — Multi-Viewport & Screenshot Verification', () => {
         await page.screenshot({
           path: 'docs/screenshots/02-explainable-drilldown.png',
         });
-        const closeBtn = page.getByRole('button', { name: /Close Drill-Down/i }).or(page.locator('button[aria-label="Close modal"]'));
-        await closeBtn.first().click();
+        await page.locator('button[aria-label="Close modal"]').click();
         await page.waitForTimeout(300);
 
         // 3. Evaluation Lab
