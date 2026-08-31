@@ -36,6 +36,7 @@ import { formatPaiseToINR } from '@/lib/engine/financial';
 import type { ReviewerAction } from '@/lib/engine/stateMachine';
 import { CaseRecoveryJourney } from '@/components/CaseRecoveryJourney';
 import { generateContrastiveReport } from '@/lib/engine/contrastiveExplanation';
+import { generateNotificationDraft, maskPII } from '@/lib/engine/notificationPreview';
 
 interface PaymentDrilldownModalProps {
   item: ExecutedItem | null;
@@ -113,6 +114,10 @@ export function PaymentDrilldownModal({
     () => (item && allItems ? generateContrastiveReport(item, allItems) : null),
     [item, allItems],
   );
+
+  const autoDraft = React.useMemo(() => {
+    return item ? generateNotificationDraft(item, aiDraftChannel) : null;
+  }, [item, aiDraftChannel]);
 
   if (!item) return null;
 
@@ -792,23 +797,37 @@ export function PaymentDrilldownModal({
                 </div>
               </div>
 
-              {aiMessage && (
-                <div className="mt-3 bg-white border border-indigo-200 rounded-lg p-3 space-y-2">
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
+              {/* Notification Preview Card (PII-Masked by Default) */}
+              {(aiMessage || autoDraft) && (
+                <div
+                  className="mt-3 bg-white border border-indigo-200 rounded-lg p-3 space-y-2"
+                  data-testid="notification-preview-card"
+                >
+                  <div className="flex flex-wrap items-center justify-between border-b border-slate-100 pb-1.5 gap-1">
                     <span className="font-bold text-slate-800">
-                      {aiMessage.subject ?? `Notification for Customer ${payment.customer_id}`}
+                      {aiMessage
+                        ? maskPII(aiMessage.subject ?? `Payment Notification`)
+                        : autoDraft?.subject}
                     </span>
-                    <span className="text-[10px] text-indigo-600 font-medium">
-                      Provider: {aiMessage.provider}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded border border-emerald-200">
+                        PII-MASKED PREVIEW
+                      </span>
+                      <span className="text-[10px] text-indigo-600 font-medium">
+                        Provider: {aiMessage ? aiMessage.provider : 'policy_engine_draft'}
+                      </span>
+                    </div>
                   </div>
-                  <p className="text-xs text-slate-700 whitespace-pre-wrap leading-relaxed">
-                    {aiMessage.messageBody}
+                  <p
+                    className="text-xs text-slate-700 whitespace-pre-wrap leading-relaxed font-sans bg-slate-50/50 p-2.5 rounded border border-slate-100"
+                    data-testid="notification-message-body"
+                  >
+                    {aiMessage ? maskPII(aiMessage.messageBody ?? '') : autoDraft?.maskedBody}
                   </p>
                   <div className="text-[10px] text-slate-500 bg-slate-50 p-1.5 rounded border border-slate-100">
-                    {aiMessage.complianceNotice}
+                    {aiMessage?.complianceNotice ?? autoDraft?.complianceNotice}
                   </div>
-                  {aiMessage.fallbackReason && (
+                  {aiMessage?.fallbackReason && (
                     <div className="text-[10px] text-amber-700 italic">
                       Notice: {aiMessage.fallbackReason}
                     </div>

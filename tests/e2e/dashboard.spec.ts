@@ -4,6 +4,8 @@ test.describe('PayBack AI — Interactive Workspaces & Drill-Down', () => {
 
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
+    await page.waitForSelector('header');
+    await page.waitForSelector('[data-testid="queue-row"]');
   });
 
   test('renders top-level KPI metrics panel with non-zero financial values', async ({ page }) => {
