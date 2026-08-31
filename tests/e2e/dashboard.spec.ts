@@ -59,6 +59,7 @@ test.describe('PayBack AI — Interactive Workspaces & Drill-Down', () => {
     // Switch to Evaluation Lab tab
     await page.getByRole('button', { name: /Evaluation Lab/i }).click();
     await expect(page.getByText(/Comparative Recovery Policy Matrix/i)).toBeVisible();
+    await expect(page.getByText(/How This Compares: Industry Recovery Benchmarks/i).first()).toBeVisible();
     await expect(page.getByText(/Transparent Error Inspector/i)).toBeVisible();
 
     // Switch to Promise-to-Pay Tracker

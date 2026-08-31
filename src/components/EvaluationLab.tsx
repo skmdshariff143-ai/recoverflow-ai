@@ -15,6 +15,9 @@ import {
   AlertTriangle,
   Search,
   Database,
+  ExternalLink,
+  TrendingUp,
+  Info,
 } from 'lucide-react';
 import type { ComprehensiveEvaluationReport } from '@/lib/engine/counterfactualEvaluation';
 import { formatPaiseToINR } from '@/lib/engine/financial';
@@ -193,6 +196,67 @@ export function EvaluationLab({
             <span className="text-xs text-cyan-700 font-medium block mt-0.5">
               Net yield after gateway retry &amp; notification fees
             </span>
+          </div>
+        </div>
+
+        {/* ── How This Compares: External Industry Reference ────────── */}
+        <div className="mt-6 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-xl p-5 border border-slate-800 text-white shadow-sm space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-2.5">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-emerald-400" />
+              <h3 className="text-sm font-bold text-white">
+                How This Compares: Industry Recovery Benchmarks
+              </h3>
+            </div>
+            <span className="text-[11px] text-slate-400 italic">
+              External industry reference for context — not a direct apples-to-apples comparison
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+            {/* Baseline Industry */}
+            <div className="bg-slate-800/80 border border-slate-700/60 rounded-lg p-3 space-y-1">
+              <span className="text-[11px] font-bold text-slate-300 block uppercase tracking-wider">
+                Basic Fixed-Interval Retries
+              </span>
+              <div className="text-xl font-bold text-slate-300">~20% – 40%</div>
+              <p className="text-[11px] text-slate-400 leading-relaxed">
+                Standard automated retry schedules without dynamic scoring or failure code specialization.
+              </p>
+              <div className="text-[10px] text-slate-500 pt-1">
+                Source: <a href="https://recurly.com/research/state-of-subscriptions/" target="_blank" rel="noreferrer" className="text-indigo-400 hover:underline inline-flex items-center gap-0.5">Recurly Churn Benchmark <ExternalLink className="w-2.5 h-2.5" /></a>
+              </div>
+            </div>
+
+            {/* Top Quartile */}
+            <div className="bg-slate-800/80 border border-slate-700/60 rounded-lg p-3 space-y-1">
+              <span className="text-[11px] font-bold text-cyan-300 block uppercase tracking-wider">
+                Multi-Channel Smart Dunning
+              </span>
+              <div className="text-xl font-bold text-cyan-300">~50% – 60%</div>
+              <p className="text-[11px] text-slate-400 leading-relaxed">
+                Heuristic retry sequences paired with account updaters and customer outreach.
+              </p>
+              <div className="text-[10px] text-slate-500 pt-1">
+                Source: <a href="https://retentionlens.com" target="_blank" rel="noreferrer" className="text-indigo-400 hover:underline inline-flex items-center gap-0.5">RetentionLens Payments Report <ExternalLink className="w-2.5 h-2.5" /></a>
+              </div>
+            </div>
+
+            {/* PayBack AI Benchmark */}
+            <div className="bg-indigo-950/80 border border-indigo-500/40 rounded-lg p-3 space-y-1">
+              <span className="text-[11px] font-bold text-emerald-300 block uppercase tracking-wider">
+                PayBack AI (EV Prioritization)
+              </span>
+              <div className="text-xl font-bold text-emerald-400">
+                {rf.countRecoveryRatePercent}% ({rf.recoveredCount}/{rf.interventionsExecuted} Invoices)
+              </div>
+              <p className="text-[11px] text-slate-300 leading-relaxed">
+                Deterministic 6-factor Expected Value ranking with quiet hours &amp; hard safety stopping rules.
+              </p>
+              <div className="text-[10px] text-emerald-400/80 pt-1 font-mono">
+                Evaluated on independent 200-cohort frozen matrix
+              </div>
+            </div>
           </div>
         </div>
       </div>
