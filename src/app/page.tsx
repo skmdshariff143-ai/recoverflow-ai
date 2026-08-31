@@ -21,6 +21,7 @@ import { AuditTrailExplorer } from '@/components/AuditTrailExplorer';
 import { MethodologyGuide } from '@/components/MethodologyGuide';
 import { JudgeModeModal } from '@/components/JudgeModeModal';
 import { CommandPalette } from '@/components/CommandPalette';
+import { StickySummaryBar } from '@/components/StickySummaryBar';
 
 export default function Home() {
   const [isJudgeModeOpen, setIsJudgeModeOpen] = React.useState<boolean>(false);
@@ -84,6 +85,17 @@ export default function Home() {
         provenance={provenance}
         onProvenanceChange={setProvenance}
         onOpenJudgeMode={() => setIsJudgeModeOpen(true)}
+      />
+
+      {/* ── Sticky Mini-Summary Bar (Appears on scroll past KPI cards) ─ */}
+      <StickySummaryBar
+        totalRevenueAtRisk={kpis.totalRevenueAtRisk}
+        totalRevenueRecovered={kpis.totalRevenueRecovered}
+        overallRecoveryRate={kpis.overallRecoveryRate}
+        budgetedCount={kpis.budgetedCount}
+        budgetLimit={budget}
+        brierScore={kpis.brierScore}
+        onReSimulate={handleReSimulate}
       />
 
       {/* ── Main Application Workspace ─────────────────────────── */}
