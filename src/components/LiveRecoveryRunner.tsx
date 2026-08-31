@@ -19,6 +19,8 @@ import {
   UserCheck,
   Zap,
   ShieldCheck,
+  Volume2,
+  VolumeX,
 } from 'lucide-react';
 import type { FailedPayment } from '@/types';
 import type {
@@ -33,6 +35,11 @@ import {
 } from '@/lib/engine/stateMachine';
 import { formatPaiseToINR } from '@/lib/engine/financial';
 import type { FrozenPotentialOutcomes } from '@/lib/engine/outcomeEnvironment';
+import {
+  playRecoveredTone,
+  playSafetyStopTone,
+  playHumanReviewTone,
+} from '@/lib/utils/audioCues';
 
 interface LiveRecoveryRunnerProps {
   payments: FailedPayment[];
@@ -61,6 +68,7 @@ export function LiveRecoveryRunner({
   const [activeWorkflow, setActiveWorkflow] = useState<RecoveryWorkflowInstance>(() =>
     initRecoveryWorkflow(payments[0] ?? ({} as FailedPayment)),
   );
+  const [isSoundEnabled, setIsSoundEnabled] = useState<boolean>(false);
   const [manualReviewNote, setManualReviewNote] = useState<string>('');
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -73,6 +81,12 @@ export function LiveRecoveryRunner({
 
     if (current.currentState === 'DETECTED') {
       stepWorkflowDiagnosisAndEligibility(current, { autoApproveHighEV: false });
+      const updatedState = (current as { currentState: RecoveryState }).currentState;
+      if (updatedState === 'APPROVAL_REQUIRED') {
+        playHumanReviewTone(!isSoundEnabled);
+      } else if (updatedState === 'STOPPED') {
+        playSafetyStopTone(!isSoundEnabled);
+      }
     } else if (current.currentState === 'APPROVAL_REQUIRED') {
       setIsPlaying(false);
       return;
@@ -103,11 +117,13 @@ export function LiveRecoveryRunner({
           settledAmountPaise: outcome.settledAmountPaise,
         });
         current.recoveredAmountPaise = outcome.settledAmountPaise;
+        playRecoveredTone(!isSoundEnabled);
       } else if (outcome.disputed) {
         transitionWorkflowState(current, 'STOPPED', 'customer', 'DISPUTE_SIGNAL_HALT', {
           reason: 'Customer initiated chargeback signal',
         });
         current.terminalReason = 'Customer dispute halt enforced';
+        playSafetyStopTone(!isSoundEnabled);
       } else if (current.cycleCount < 3) {
         transitionWorkflowState(current, 'RETRY_SCHEDULED', 'system_engine', 'EXPONENTIAL_BACKOFF_SCHEDULED', {
           nextAttempt: current.cycleCount + 1,
@@ -117,6 +133,7 @@ export function LiveRecoveryRunner({
           attempts: current.cycleCount,
         });
         current.terminalReason = 'Max recovery attempts (3/3) exhausted';
+        playSafetyStopTone(!isSoundEnabled);
       }
     } else if (current.currentState === 'RETRY_SCHEDULED' || current.currentState === 'ESCALATED') {
       transitionWorkflowState(current, 'SCHEDULED', 'system_engine', 'BACKOFF_WINDOW_ELAPSED', {
@@ -237,6 +254,25 @@ export function LiveRecoveryRunner({
               <option value="quiet_hours">5. Quiet-Hours Scheduling Compliance</option>
             </select>
           </div>
+
+          {/* Audio Cues Mute/Unmute Toggle */}
+          <button
+            onClick={() => setIsSoundEnabled(!isSoundEnabled)}
+            data-testid="toggle-sound-btn"
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition cursor-pointer ${
+              isSoundEnabled
+                ? 'bg-emerald-50 text-emerald-800 border-emerald-300 shadow-2xs'
+                : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'
+            }`}
+            title="Toggle Audio Cues for Recovery Pipeline Events (Web Audio API)"
+          >
+            {isSoundEnabled ? (
+              <Volume2 className="w-3.5 h-3.5 text-emerald-600" />
+            ) : (
+              <VolumeX className="w-3.5 h-3.5 text-slate-400" />
+            )}
+            <span>{isSoundEnabled ? 'Sound: On' : 'Sound: Muted'}</span>
+          </button>
 
           <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-lg border border-slate-200 text-xs">
             <span className="text-slate-500 font-medium px-1">Speed:</span>
