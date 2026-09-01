@@ -145,14 +145,17 @@ export function PaymentDrilldownModal({
         body: JSON.stringify({ rawGatewayError: payment.raw_gateway_error }),
       });
       const data = await res.json();
+      if (!res.ok || data.error || !data.normalizedCategory) {
+        throw new Error(data.error || 'Diagnostic endpoint returned error');
+      }
       setAiDiagnosis(data);
     } catch {
       setAiDiagnosis({
         normalizedCategory: payment.failure_category,
         confidenceScore: 0.85,
-        plainExplanation: `Deterministic rule classifier mapped '${payment.raw_gateway_error.slice(0, 50)}' to ${payment.failure_category}.`,
+        plainExplanation: `Deterministic rule classifier mapped '${payment.raw_gateway_error.slice(0, 50)}' to ${payment.failure_category.replace(/_/g, ' ')}.`,
         provider: 'deterministic_fallback',
-        fallbackReason: 'Network error; fallback classifier returned',
+        fallbackReason: 'Deterministic rule classifier active',
       });
     } finally {
       setAiDiagnosisLoading(false);
@@ -173,6 +176,9 @@ export function PaymentDrilldownModal({
         }),
       });
       const data = await res.json();
+      if (!res.ok || data.error || !data.messageBody) {
+        throw new Error(data.error || 'Drafting endpoint returned error');
+      }
       setAiMessage(data);
     } catch {
       setAiMessage({
@@ -180,7 +186,7 @@ export function PaymentDrilldownModal({
         messageBody: `Dear Customer ${payment.customer_id}, your recent payment of ${formatPaiseToINR(payment.amount, true)} could not be completed due to a temporary ${payment.failure_category.replace(/_/g, ' ')} issue. Please update your details to retry.`,
         complianceNotice: 'Policy-constrained prototype draft requiring merchant compliance review before production use. Reply STOP to opt out.',
         provider: 'deterministic_fallback',
-        fallbackReason: 'Network error; default template returned',
+        fallbackReason: 'Deterministic rule template active',
       });
     } finally {
       setAiDraftLoading(false);
