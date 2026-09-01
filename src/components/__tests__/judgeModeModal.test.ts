@@ -15,10 +15,11 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { JUDGE_STEPS } from '../JudgeModeModal';
+import { CURATED_5_STEPS, JUDGE_STEPS } from '../JudgeModeModal';
 
 describe('Judge Mode Walkthrough Structure & Content', () => {
-  it('contains exactly 10 comprehensive submission steps', () => {
+  it('contains curated 5-stop pitch and 10 deep-dive steps', () => {
+    expect(CURATED_5_STEPS.length).toBe(5);
     expect(JUDGE_STEPS.length).toBe(10);
   });
 
@@ -36,17 +37,26 @@ describe('Judge Mode Walkthrough Structure & Content', () => {
     }
   });
 
-  it('includes navigation to the hand-curated safety fixture in step 4', () => {
-    const step4 = JUDGE_STEPS.find((s) => s.id === 4);
-    expect(step4).toBeDefined();
-    expect(step4?.recommendedAction?.provenance).toBe('hand_curated_safety');
-    expect(step4?.technicalDetails.some((d) => d.includes('Hand-Curated Safety Fixture'))).toBe(true);
+  it('includes navigation to the hand-curated safety fixture in approval gate step', () => {
+    const approvalStep = JUDGE_STEPS.find((s) => s.title.includes('Approval Gate'));
+    expect(approvalStep).toBeDefined();
+    expect(approvalStep?.recommendedAction?.provenance).toBe('hand_curated_safety');
+    expect(approvalStep?.technicalDetails.some((d) => d.includes('Hand-Curated Safety Fixture'))).toBe(true);
   });
 
-  it('verifies that step 7 covers the two zero-drift financial equations', () => {
-    const step7 = JUDGE_STEPS.find((s) => s.id === 7);
-    expect(step7).toBeDefined();
-    expect(step7?.technicalDetails.some((d) => d.includes('Equation 1'))).toBe(true);
-    expect(step7?.technicalDetails.some((d) => d.includes('Equation 2'))).toBe(true);
+  it('verifies that the reconciled accounting step covers the two zero-drift financial equations', () => {
+    const accountingStep = JUDGE_STEPS.find((s) => s.title.includes('Reconciled Recovery Accounting'));
+    expect(accountingStep).toBeDefined();
+    expect(accountingStep?.technicalDetails.some((d) => d.includes('Equation 1'))).toBe(true);
+    expect(accountingStep?.technicalDetails.some((d) => d.includes('Equation 2'))).toBe(true);
+  });
+
+  it('verifies the 5-stop curated pitch covers all high-leverage review stops', () => {
+    const titles = CURATED_5_STEPS.map((s) => s.title);
+    expect(titles).toContain('KPIs, Trust Score & Connected Webhooks');
+    expect(titles).toContain('Explainable Decision Waterfall');
+    expect(titles).toContain('Live Cryptographic Tamper Demo');
+    expect(titles).toContain('Risk Persona & Policy Adjustment');
+    expect(titles).toContain('Blind-Bot vs PayBack Replay Arena');
   });
 });

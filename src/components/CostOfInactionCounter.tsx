@@ -73,13 +73,18 @@ export function CostOfInactionCounter({
           </button>
 
           {showTooltip && (
-            <div className="absolute right-0 bottom-full mb-2 w-64 p-2.5 bg-slate-900 text-white text-[11px] rounded-lg shadow-xl border border-slate-700 z-40 leading-relaxed">
-              <span className="font-bold block text-rose-300 mb-1 flex items-center gap-1">
+            <div className="absolute right-0 bottom-full mb-2 w-72 p-2.5 bg-slate-900 text-white text-[11px] rounded-lg shadow-xl border border-slate-700 z-40 leading-relaxed space-y-1.5">
+              <span className="font-bold block text-rose-300 flex items-center gap-1">
                 <Clock className="w-3 h-3 text-rose-400" />
                 Industry Delinquency Decay
               </span>
-              Standard subscription benchmarks assume a{' '}
-              <strong>{metrics.decayRatePercentage}% / hour</strong> decay rate (~18% in 24h) due to card churn, invalid mandates, and customer inertia.
+              <p>
+                Standard subscription benchmarks assume a{' '}
+                <strong>{metrics.decayRatePercentage}% / hour</strong> decay rate (~18% in 24h) due to card churn, invalid mandates, and customer inertia.
+              </p>
+              <div className="pt-1 border-t border-slate-800 text-[10px] text-slate-400 italic">
+                Methodology note: Simulated metric based on current cohort revenue at risk and internal dunning decay formulas; not third-party validated.
+              </div>
             </div>
           )}
         </div>

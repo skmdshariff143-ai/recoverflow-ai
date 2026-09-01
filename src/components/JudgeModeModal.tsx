@@ -26,14 +26,11 @@ import {
   Award,
   ShieldAlert,
   Search,
-  Zap,
   UserCheck,
-  Cpu,
   RefreshCw,
   TrendingUp,
   Shield,
   FileCheck2,
-  FileCode,
   CheckCircle2,
 } from 'lucide-react';
 import type { DashboardTab } from '@/types/pipeline';
@@ -62,31 +59,111 @@ interface StepContent {
   };
 }
 
-export const JUDGE_STEPS: StepContent[] = [
+export const CURATED_5_STEPS: StepContent[] = [
   {
     id: 1,
-    title: 'Problem & Batch Ingestion',
-    category: '1. Detect Revenue at Risk',
-    badge: '100 INVOICES / ₹6.88L AT RISK',
+    title: 'KPIs, Trust Score & Connected Webhooks',
+    category: 'Pitch Stop 1 / 5 · Command Center',
+    badge: 'NET RECOVERY & LIVE WEBHOOK',
     icon: ShieldAlert,
-    headline: 'High-volume merchants burn fees on blind retries during gateway downtime.',
+    headline: 'Real-time revenue exposure, net unit economics, and Razorpay test-mode connection.',
     description:
-      'PayBack AI ingests failed payment records and immediately computes revenue exposure in strict integer paise. Each invoice is mapped with customer history, tenure, and prior attempts.',
+      'PayBack AI computes gross vs net recovery after deducting per-channel operational fees (₹1.25 for SMS, ₹2.50 for gateway retries). The Explainability & Safety Trust Score combines Brier calibration (0.1637), 7 safety rules, and 100% hash-chained ledger coverage.',
     technicalDetails: [
-      'Ingests 100 failed transactions totaling ₹6,87,694.53 (68,769,453 paise).',
-      'All monetary accounting uses integer paise. Expected-value calculations convert probability scores to integer basis points before applying them to money.',
-      'Parses raw gateway strings, error codes, and customer communication preferences.',
+      'Net Recovery Equation: Net = Gross Recovered - (SMS @ ₹1.25 + Retry @ ₹2.50).',
+      'Explainability & Safety Trust Score evaluates calibration, safety rules, and audit completeness.',
+      'Active test-mode listener (POST /api/webhooks/razorpay) ingests real HMAC-verified events.',
     ],
     recommendedAction: {
-      label: 'View Command Center & Queue',
+      label: 'View Command Center & Trust Score',
       tab: 'dashboard',
       provenance: 'synthetic_fixture',
     },
   },
   {
     id: 2,
+    title: 'Explainable Decision Waterfall',
+    category: 'Pitch Stop 2 / 5 · Explainability',
+    badge: 'EV = AMOUNT × BPS / 10000',
+    icon: Search,
+    headline: 'Deterministic 6-factor waterfall with zero-write authority Gemini copilot.',
+    description:
+      'Every priority rank is explainable down to the paisa. A 6-factor waterfall quantifies base recovery rate, customer on-time history (+12%), and tenure boosts (+5%). An authority-isolated Gemini 3.6 Flash copilot normalizes messy error logs without execution privileges.',
+    technicalDetails: [
+      'Expected Value: EV_paise = round(amount_paise * bps / 10000).',
+      'Authority Boundary: Gemini has zero financial execution authority and cannot change amounts.',
+      '8-stage multi-cycle visual timeline tracks payments from ingestion to verified settlement.',
+    ],
+    recommendedAction: {
+      label: 'Inspect Priority Queue & Drill-Down',
+      tab: 'dashboard',
+    },
+  },
+  {
+    id: 3,
+    title: 'Live Cryptographic Tamper Demo',
+    category: 'Pitch Stop 3 / 5 · Audit Integrity',
+    badge: 'TRY TO BREAK IT (SHA-256)',
+    icon: FileCheck2,
+    headline: 'Interactive cryptographic break test: mutate a record and watch the hash chain break.',
+    description:
+      'Every state transition, operator note, and settlement receipt is chained into an append-only SHA-256 ledger. Clicking "Tamper Record" simulates payload manipulation—the verification engine instantly flags block corruption and breaks the chain.',
+    technicalDetails: [
+      'Genesis block anchor with parent hash chaining for all chronological state transitions.',
+      'Browser cryptographic engine recomputes every block hash in real time upon mutation.',
+      'One-click restoration returns ledger to mathematically verified state.',
+    ],
+    recommendedAction: {
+      label: 'Launch Live Tamper Demo',
+      tab: 'audit_ledger',
+    },
+  },
+  {
+    id: 4,
+    title: 'Risk Persona & Policy Adjustment',
+    category: 'Pitch Stop 4 / 5 · Policy Optimization',
+    badge: 'CONSERVATIVE · AGGRESSIVE · FINTECH',
+    icon: TrendingUp,
+    headline: 'Dynamic policy simulation across 3 distinct merchant risk-appetite profiles.',
+    description:
+      'Merchants configure recovery aggression with built-in guardrails: Conservative SaaS (2 attempts, strict quiet hours), Aggressive E-Commerce (4 attempts, short cooldown), or Regulated FinTech (strict dual-custody approval above ₹25,000).',
+    technicalDetails: [
+      'Pre-fills compliant retry caps, TRAI quiet-hours tolerance, and dual-custody thresholds.',
+      'Live recalculation of projected recovery rates and net financial yields across the cohort.',
+      'Evaluated against frozen potential outcome matrices with zero circular feedback loops.',
+    ],
+    recommendedAction: {
+      label: 'Test Persona Builder in Lab',
+      tab: 'evaluation_lab',
+    },
+  },
+  {
+    id: 5,
+    title: 'Blind-Bot vs PayBack Replay Arena',
+    category: 'Pitch Stop 5 / 5 · Comparative Benchmark',
+    badge: '+470% NET LIFT / 0 VIOLATIONS',
+    icon: Award,
+    headline: 'Head-to-head execution against naive fixed-retry bot on identical 40-slot budget.',
+    description:
+      'The Replay Arena pit PayBack AI against a standard blind-retry bot. While the naive bot spams opted-out customers and wastes retries on dead bank accounts, PayBack AI captures +₹3,93,159 (+470%) net revenue lift with 0 safety violations.',
+    technicalDetails: [
+      'Direct head-to-head comparison on identical frozen ground-truth outcome vectors.',
+      'Flags naive bot blunders: retrying closed accounts, violating opt-outs, breaching quiet hours.',
+      'Comprehensive final scorecard with net revenue, Brier score, and safety audit breakdown.',
+    ],
+    recommendedAction: {
+      label: 'Open Replay Arena Scorecard',
+      tab: 'evaluation_lab',
+    },
+  },
+];
+
+export const DEEP_DIVE_STEPS: StepContent[] = [
+  ...CURATED_5_STEPS,
+  {
+    id: 6,
     title: 'Diagnostic Error Classification',
-    category: '2. Diagnose Root Cause',
+    category: 'Deep Dive 6 / 10 · Diagnostics',
     badge: '10 CANONICAL CATEGORIES',
     icon: Search,
     headline: 'Deterministic rule classification paired with authority-isolated Gemini copilot.',
@@ -103,28 +180,9 @@ export const JUDGE_STEPS: StepContent[] = [
     },
   },
   {
-    id: 3,
-    title: 'Intervention & Expected Value',
-    category: '3. Determine Intervention',
-    badge: 'EV = AMOUNT × BPS / 10000',
-    icon: Zap,
-    headline: 'Expected Value ranking allocates limited contact capacity to highest-yield invoices.',
-    description:
-      'Rather than retry every transaction blindly, PayBack AI calculates recovery probability (basis points) and Expected Value in integer paise, selecting from retry, reminder, both, or none.',
-    technicalDetails: [
-      'Expected Value: EV_paise = round(amount_paise * bps / 10000).',
-      'Intervention strategy: retry (downtime), reminder (auth/funds), both, or none (closed).',
-      'Budget capacity slider dynamically allocates top-ranked priority slots.',
-    ],
-    recommendedAction: {
-      label: 'Adjust Budget Slider',
-      tab: 'dashboard',
-    },
-  },
-  {
-    id: 4,
+    id: 7,
     title: 'Human-in-the-Loop Approval Gate',
-    category: '4. Governance & Safety',
+    category: 'Deep Dive 7 / 10 · Dual Custody',
     badge: 'HIGH-VALUE THRESHOLD > ₹10,000',
     icon: UserCheck,
     headline: 'High-value enterprise invoices halt at an approval gate requiring operator sign-off.',
@@ -142,28 +200,9 @@ export const JUDGE_STEPS: StepContent[] = [
     },
   },
   {
-    id: 5,
-    title: 'Execution Adapter Boundary',
-    category: '5. Execute Intervention',
-    badge: 'SIMULATOR & TEST-MODE ADAPTER',
-    icon: Cpu,
-    headline: 'Secure adapter layer for offline reproducible simulation and Razorpay sandbox.',
-    description:
-      'Executions dispatch through strict TypeScript adapter boundaries. Live Razorpay keys (rzp_live_*) are strictly rejected at startup. Payment link creation explicitly records ₹0.00 recovered.',
-    technicalDetails: [
-      'Deterministic Simulator: Instant offline execution for testing and batch evaluation.',
-      'Razorpay Test-Mode Adapter: Generates sandbox payment links (rzp_test_* only).',
-      'Accounting Invariant: Payment-link creation counts as ₹0.00 recovered until verified settlement.',
-    ],
-    recommendedAction: {
-      label: 'Open Live Recovery Runner',
-      tab: 'live_runner',
-    },
-  },
-  {
-    id: 6,
-    title: 'Outcome Observation Layer',
-    category: '6. Observe Settlement',
+    id: 8,
+    title: 'Closed-Loop Outcome Observation',
+    category: 'Deep Dive 8 / 10 · Telemetry',
     badge: 'PROACTIVE STATUS POLLING',
     icon: RefreshCw,
     headline: 'Closed-loop settlement verification without exposing public webhook surface area.',
@@ -171,7 +210,7 @@ export const JUDGE_STEPS: StepContent[] = [
       'To prevent spoofing and eliminate unauthenticated attack surface, PayBack AI uses outbound status polling (GET /api/recovery/status/:id) and internal telemetry actors.',
     technicalDetails: [
       'Internal Telemetry Actors: outcome_observer (polling) & gateway_webhook (internal telemetry).',
-      'Public webhook receiver (POST /api/recovery/webhook) is permanently removed (HTTP 404).',
+      'Payment link creation explicitly records ₹0.00 recovered until verified settlement.',
       'Duplicate observation prevention blocks duplicate event IDs from double-crediting funds.',
     ],
     recommendedAction: {
@@ -180,9 +219,9 @@ export const JUDGE_STEPS: StepContent[] = [
     },
   },
   {
-    id: 7,
+    id: 9,
     title: 'Reconciled Recovery Accounting',
-    category: '7. Financial Accounting',
+    category: 'Deep Dive 9 / 10 · Zero Drift',
     badge: 'ZERO PAISE DRIFT PROOF',
     icon: TrendingUp,
     headline: 'Mutually exclusive batch partitions satisfying exact financial balance equations.',
@@ -191,7 +230,7 @@ export const JUDGE_STEPS: StepContent[] = [
     technicalDetails: [
       'Equation 1: Gross at Risk = Halted + Review + Deferred + In-Flight + Recovered.',
       'Equation 2: Remaining Exposure = Halted + Review + Deferred + In-Flight.',
-      'All monetary accounting uses integer paise. Expected-value calculations convert probability scores to integer basis points before applying them to money.',
+      'All monetary accounting uses integer paise without floating-point precision loss.',
     ],
     recommendedAction: {
       label: 'View Reconciled Waterfall',
@@ -199,9 +238,9 @@ export const JUDGE_STEPS: StepContent[] = [
     },
   },
   {
-    id: 8,
-    title: 'Stopping Rules & Escalation',
-    category: '8. Guardrails & Compliance',
+    id: 10,
+    title: 'Stopping Rules & Compliance Guardrails',
+    category: 'Deep Dive 10 / 10 · Compliance',
     badge: 'ZERO OPT-OUT VIOLATIONS',
     icon: Shield,
     headline: 'Hard stopping rules prevent harassment, wasted fees, and regulatory friction.',
@@ -217,45 +256,9 @@ export const JUDGE_STEPS: StepContent[] = [
       tab: 'dashboard',
     },
   },
-  {
-    id: 9,
-    title: 'Cryptographic Audit Trail',
-    category: '9. Inspect Audit Ledger',
-    badge: 'SHA-256 HASH-CHAIN LEDGER',
-    icon: FileCheck2,
-    headline: 'Append-only tamper-evident ledger where every state transition is chained.',
-    description:
-      'Every detection, score, approval, execution, and settlement event is recorded into a cryptographic SHA-256 hash chain with real-time browser verification.',
-    technicalDetails: [
-      'Genesis block anchor with parent hash chaining for all chronological events.',
-      'Real-time verification badge detects payload mutation, insertion, or reordering.',
-      'One-click exportable audit trail in CSV and structured JSON formats.',
-    ],
-    recommendedAction: {
-      label: 'Inspect Audit Ledger',
-      tab: 'audit_ledger',
-    },
-  },
-  {
-    id: 10,
-    title: 'Evaluation Proof & Judge Pack',
-    category: '10. Benchmark Verification',
-    badge: 'ONE-CLICK EVIDENCE PACK',
-    icon: FileCode,
-    headline: 'Honest counterfactual policy evaluation against internally generated frozen matrices.',
-    description:
-      'Evaluated across 200 Development Records and 80 Held-Out Adversarial Cases against 7 comparative policies. Instant one-click download of the complete Judge Evidence Pack.',
-    technicalDetails: [
-      'Evaluated against frozen potential outcomes with zero circular prediction loops.',
-      'Includes dataset SHA-256 hashes, reproduction CLI command, and limitations disclosure.',
-      'Instant export of JSON Evidence Pack and CSV case logs for external audit.',
-    ],
-    recommendedAction: {
-      label: 'Export Judge Evidence Pack',
-      tab: 'evaluation_lab',
-    },
-  },
 ];
+
+export const JUDGE_STEPS = DEEP_DIVE_STEPS;
 
 export const JudgeModeModal: React.FC<JudgeModeModalProps> = ({
   isOpen,
@@ -263,15 +266,17 @@ export const JudgeModeModal: React.FC<JudgeModeModalProps> = ({
   onNavigateTab,
   onSetProvenance,
 }) => {
+  const [viewMode, setViewMode] = useState<'curated' | 'deep_dive'>('curated');
   const [currentStepIndex, setCurrentStepIndex] = useState<number>(0);
 
-  const step = JUDGE_STEPS[currentStepIndex];
+  const activeSteps = viewMode === 'curated' ? CURATED_5_STEPS : DEEP_DIVE_STEPS;
+  const step = activeSteps[currentStepIndex] || activeSteps[0];
 
   const handleNext = useCallback(() => {
-    if (currentStepIndex < JUDGE_STEPS.length - 1) {
+    if (currentStepIndex < activeSteps.length - 1) {
       setCurrentStepIndex((prev) => prev + 1);
     }
-  }, [currentStepIndex]);
+  }, [currentStepIndex, activeSteps.length]);
 
   const handlePrev = useCallback(() => {
     if (currentStepIndex > 0) {
@@ -332,13 +337,13 @@ export const JudgeModeModal: React.FC<JudgeModeModalProps> = ({
             </div>
             <div>
               <h3 id="judge-modal-title" className="text-sm font-bold text-white flex items-center gap-2">
-                Judge Mode — 10-Step Submission Walkthrough
+                Judge Mode — {viewMode === 'curated' ? '5-Minute Pitch Path' : 'Complete 10-Step Deep Dive'}
                 <span className="text-[10px] font-mono bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded border border-emerald-500/30">
-                  Step {step.id} of {JUDGE_STEPS.length}
+                  Stop {step.id} of {activeSteps.length}
                 </span>
               </h3>
               <p className="text-[11px] text-slate-400">
-                Track 3: AI Revenue Recovery · Guided Product Verification
+                Track 3: AI Revenue Recovery · Guided Submission Walkthrough
               </p>
             </div>
           </div>
@@ -352,9 +357,45 @@ export const JudgeModeModal: React.FC<JudgeModeModalProps> = ({
           </button>
         </div>
 
+        {/* ── Pitch Mode vs Deep Dive Mode Selector ─────────────────── */}
+        <div className="bg-slate-950/80 px-6 py-2 border-b border-slate-800/80 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 bg-slate-900 p-1 rounded-lg border border-slate-800">
+            <button
+              onClick={() => {
+                setViewMode('curated');
+                setCurrentStepIndex(0);
+              }}
+              className={`px-2.5 py-1 rounded text-[11px] font-semibold transition cursor-pointer ${
+                viewMode === 'curated'
+                  ? 'bg-indigo-600 text-white shadow-xs'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              ⭐ 5-Stop Pitch (Recommended)
+            </button>
+            <button
+              onClick={() => {
+                setViewMode('deep_dive');
+                setCurrentStepIndex(0);
+              }}
+              className={`px-2.5 py-1 rounded text-[11px] font-semibold transition cursor-pointer ${
+                viewMode === 'deep_dive'
+                  ? 'bg-indigo-600 text-white shadow-xs'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              🔬 All 10 Deep Dives
+            </button>
+          </div>
+
+          <span className="text-[10px] text-slate-400 font-mono hidden sm:inline">
+            Use ← → arrow keys to navigate
+          </span>
+        </div>
+
         {/* ── Step Progress Indicator ──────────────────────────────── */}
         <div className="bg-slate-950/50 px-6 py-2 border-b border-slate-800/80 flex items-center justify-between gap-1 overflow-x-auto">
-          {JUDGE_STEPS.map((s, idx) => (
+          {activeSteps.map((s, idx) => (
             <button
               key={s.id}
               onClick={() => setCurrentStepIndex(idx)}
@@ -365,8 +406,8 @@ export const JudgeModeModal: React.FC<JudgeModeModalProps> = ({
                   ? 'bg-emerald-500'
                   : 'bg-slate-800 hover:bg-slate-700'
               }`}
-              title={`Step ${s.id}: ${s.title}`}
-              aria-label={`Jump to Step ${s.id}: ${s.title}`}
+              title={`Stop ${s.id}: ${s.title}`}
+              aria-label={`Jump to Stop ${s.id}: ${s.title}`}
             />
           ))}
         </div>
@@ -436,7 +477,7 @@ export const JudgeModeModal: React.FC<JudgeModeModalProps> = ({
               <span>Back</span>
             </button>
 
-            {currentStepIndex < JUDGE_STEPS.length - 1 ? (
+            {currentStepIndex < activeSteps.length - 1 ? (
               <button
                 onClick={handleNext}
                 className="flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer"

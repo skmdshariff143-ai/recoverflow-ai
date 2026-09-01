@@ -72,7 +72,7 @@ export function MetricsOverview({ kpis }: MetricsOverviewProps) {
         <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm" data-testid="revenue-recovered-card">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              Recovered Revenue
+              Simulated Recovered (Test Mode)
             </span>
             <div className="p-2 rounded-lg bg-emerald-50 text-emerald-600">
               <CheckCircle2 className="w-4 h-4" />
@@ -89,14 +89,14 @@ export function MetricsOverview({ kpis }: MetricsOverviewProps) {
             </span>
           </div>
           <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-xs" data-testid="net-recovery-metric">
-            <span className="text-slate-500 font-medium">Net (after channel costs):</span>
+            <span className="text-slate-600 font-medium">Net (after channel costs):</span>
             <span className="font-bold text-emerald-700">
               ₹{((kpis.netRevenueRecovered ?? kpis.totalRevenueRecovered) / 100).toLocaleString('en-IN', {
                 maximumFractionDigits: 0,
               })}
             </span>
           </div>
-          <p className="mt-1 text-[11px] text-slate-400">
+          <p className="mt-1 text-[11px] text-slate-600 font-medium">
             Deducts ~₹1.25–₹2.50 per retry/reminder intervention
           </p>
         </div>

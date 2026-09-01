@@ -192,6 +192,13 @@ export function TrustScoreWidget({ inputs }: TrustScoreWidgetProps) {
               {components.auditCompleteness.completenessRate}% of Pipeline Transitions Chained via SHA-256
             </div>
           </div>
+
+          {/* 4. Methodology & Transparency Disclosure */}
+          <div className="md:col-span-3 bg-slate-950/60 border border-slate-800/80 rounded-lg px-3 py-2 text-[11px] text-slate-400 flex items-center justify-between gap-2">
+            <span>
+              <strong className="text-slate-300">Methodology Note:</strong> This composite Trust Score is computed directly from this project&apos;s internal simulation and test-mode execution data (Brier score inverse, 7 zero-tolerance safety unit tests, and 100% SHA-256 ledger chaining), not external third-party certification.
+            </span>
+          </div>
         </div>
       )}
     </div>
