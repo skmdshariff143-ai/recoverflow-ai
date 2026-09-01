@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import type { useRecoveryBatch } from '@/hooks/useRecoveryBatch';
 import { TrustScoreWidget } from './TrustScoreWidget';
+import { CostOfInactionCounter } from './CostOfInactionCounter';
 
 interface MetricsOverviewProps {
   kpis: ReturnType<typeof useRecoveryBatch>['kpis'];
@@ -40,26 +41,31 @@ export function MetricsOverview({ kpis }: MetricsOverviewProps) {
       {/* ── Primary Financial & Calibration Row ─────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Revenue at Risk */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              Total Revenue at Risk
-            </span>
-            <div className="p-2 rounded-lg bg-rose-50 text-rose-600">
-              <IndianRupee className="w-4 h-4" />
+        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-col justify-between overflow-hidden">
+          <div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                Total Revenue at Risk
+              </span>
+              <div className="p-2 rounded-lg bg-rose-50 text-rose-600">
+                <IndianRupee className="w-4 h-4" />
+              </div>
             </div>
+            <div className="mt-2 flex items-baseline gap-2">
+              <span className="text-2xl font-bold text-slate-900">
+                ₹{(kpis.totalRevenueAtRisk / 100).toLocaleString('en-IN', {
+                  maximumFractionDigits: 0,
+                })}
+              </span>
+              <span className="text-xs font-medium text-slate-500">100 failed payments</span>
+            </div>
+            <p className="mt-1 text-xs text-slate-500">
+              Across 10 failure categories in current cycle
+            </p>
           </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-slate-900">
-              ₹{(kpis.totalRevenueAtRisk / 100).toLocaleString('en-IN', {
-                maximumFractionDigits: 0,
-              })}
-            </span>
-            <span className="text-xs font-medium text-slate-500">100 failed payments</span>
-          </div>
-          <p className="mt-1 text-xs text-slate-500">
-            Across 10 failure categories in current cycle
-          </p>
+
+          {/* Cost-of-Inaction Live Counter */}
+          <CostOfInactionCounter totalRevenueAtRiskPaise={kpis.totalRevenueAtRisk} />
         </div>
 
         {/* Revenue Recovered */}
