@@ -1,13 +1,10 @@
-/**
- * PayBack AI — Unit Tests for Policy Config Validation.
- */
-
 import { describe, test, expect } from 'vitest';
 import {
   validatePolicyConfig,
   DEFAULT_POLICY_CONFIG,
-} from '@/lib/engine/policyConfig';
-import { MAX_RECOVERY_ATTEMPTS } from '@/lib/engine/safetyFilter';
+  MERCHANT_PERSONAS,
+} from '../policyConfig';
+import { MAX_RECOVERY_ATTEMPTS } from '../safetyFilter';
 
 describe('validatePolicyConfig', () => {
   test('accepts valid default configuration', () => {
@@ -53,5 +50,17 @@ describe('validatePolicyConfig', () => {
     const res = validatePolicyConfig({ maxAttemptsCap: 0 });
     expect(res.valid).toBe(false);
     expect(res.sanitizedConfig.maxAttemptsCap).toBe(1);
+  });
+
+  test('all merchant risk-appetite personas pass validation and strictly obey safety limits', () => {
+    for (const [key, persona] of Object.entries(MERCHANT_PERSONAS)) {
+      const p = persona as any;
+      const res = validatePolicyConfig(p.config);
+      expect(res.valid, `Persona ${key} must be valid`).toBe(true);
+      expect(res.sanitizedConfig.maxAttemptsCap).toBeLessThanOrEqual(MAX_RECOVERY_ATTEMPTS);
+      expect(res.sanitizedConfig.maxAttemptsCap).toBeGreaterThanOrEqual(1);
+      expect(res.sanitizedConfig.budget).toBeGreaterThan(0);
+      expect(res.sanitizedConfig.approvalThresholdPaise).toBeGreaterThan(0);
+    }
   });
 });

@@ -28,6 +28,52 @@ export const DEFAULT_POLICY_CONFIG: Readonly<MerchantPolicyConfig> = {
   maxAttemptsCap: MAX_RECOVERY_ATTEMPTS, // 3
 };
 
+export type PersonaId = 'cautious_saas' | 'high_volume_d2c' | 'enterprise_b2b';
+
+export interface MerchantPersona {
+  id: PersonaId;
+  name: string;
+  badge: string;
+  description: string;
+  config: MerchantPolicyConfig;
+}
+
+export const MERCHANT_PERSONAS: Record<PersonaId, MerchantPersona> = {
+  cautious_saas: {
+    id: 'cautious_saas',
+    name: 'Cautious SaaS',
+    badge: 'Low Risk',
+    description: 'Small budget, low high-value threshold, strict max 2 attempts to protect recurring customer relationships.',
+    config: {
+      budget: 25,
+      approvalThresholdPaise: 2_500_000, // ₹25,000
+      maxAttemptsCap: 2,
+    },
+  },
+  high_volume_d2c: {
+    id: 'high_volume_d2c',
+    name: 'High-Volume D2C',
+    badge: 'High Throughput',
+    description: 'Larger budget capacity, higher attempt tolerance (max 3), rapid multi-attempt recovery for fast checkout flows.',
+    config: {
+      budget: 65,
+      approvalThresholdPaise: 5_000_000, // ₹50,000
+      maxAttemptsCap: 3,
+    },
+  },
+  enterprise_b2b: {
+    id: 'enterprise_b2b',
+    name: 'Enterprise B2B',
+    badge: 'High Value',
+    description: 'Targeted budget, high approval threshold (₹1,00,000), conservative human-in-the-loop oversight on large invoices.',
+    config: {
+      budget: 35,
+      approvalThresholdPaise: 10_000_000, // ₹1,00,000
+      maxAttemptsCap: 2,
+    },
+  },
+};
+
 export interface PolicyValidationResult {
   valid: boolean;
   errors: Record<string, string>;

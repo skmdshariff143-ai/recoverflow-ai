@@ -12,11 +12,13 @@
 'use client';
 
 import { useState } from 'react';
-import { Sliders, ShieldCheck, AlertTriangle } from 'lucide-react';
+import { Sliders, ShieldCheck, AlertTriangle, UserCheck, Sparkles } from 'lucide-react';
 import {
   type MerchantPolicyConfig,
+  type PersonaId,
   validatePolicyConfig,
   DEFAULT_POLICY_CONFIG,
+  MERCHANT_PERSONAS,
 } from '@/lib/engine/policyConfig';
 import { MAX_RECOVERY_ATTEMPTS } from '@/lib/engine/safetyFilter';
 import { formatPaiseToINR } from '@/lib/engine/financial';
@@ -35,6 +37,7 @@ export function MerchantPolicyBuilder({
     Math.round(currentConfig.approvalThresholdPaise / 100),
   );
   const [maxAttempts, setMaxAttempts] = useState<number>(currentConfig.maxAttemptsCap);
+  const [selectedPersona, setSelectedPersona] = useState<PersonaId | null>(null);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [lastSaved, setLastSaved] = useState<string | null>(null);
 
@@ -52,29 +55,19 @@ export function MerchantPolicyBuilder({
     setLastSaved(new Date().toLocaleTimeString());
   };
 
-  const handlePreset = (preset: 'conservative' | 'balanced' | 'aggressive') => {
-    let pBudget = 40;
-    let pThreshold = 50000;
-    let pAttempts = 3;
+  const handleSelectPersona = (personaId: PersonaId) => {
+    const persona = MERCHANT_PERSONAS[personaId];
+    if (!persona) return;
 
-    if (preset === 'conservative') {
-      pBudget = 20;
-      pThreshold = 25000;
-      pAttempts = 2;
-    } else if (preset === 'balanced') {
-      pBudget = 40;
-      pThreshold = 50000;
-      pAttempts = 3;
-    } else if (preset === 'aggressive') {
-      pBudget = 60;
-      pThreshold = 100000;
-      pAttempts = 3;
-    }
+    setSelectedPersona(personaId);
+    const pBudget = persona.config.budget;
+    const pThresholdINR = Math.round(persona.config.approvalThresholdPaise / 100);
+    const pAttempts = persona.config.maxAttemptsCap;
 
     setBudget(pBudget);
-    setApprovalThresholdINR(pThreshold);
+    setApprovalThresholdINR(pThresholdINR);
     setMaxAttempts(pAttempts);
-    handleApply(pBudget, pThreshold, pAttempts);
+    handleApply(pBudget, pThresholdINR, pAttempts);
   };
 
   return (
@@ -89,31 +82,74 @@ export function MerchantPolicyBuilder({
             Merchant-Configurable Policy Builder
           </h3>
           <p className="text-xs text-slate-500 mt-0.5">
-            Tune live operational thresholds and re-evaluate policy yield across the frozen dataset.
+            Tune live operational thresholds or pick a pre-calibrated risk persona.
           </p>
         </div>
 
-        {/* Quick Presets */}
-        <div className="flex items-center gap-1.5 text-xs">
-          <span className="text-slate-400 font-medium text-[11px]">Presets:</span>
-          <button
-            onClick={() => handlePreset('conservative')}
-            className="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-[11px] transition cursor-pointer"
-          >
-            Conservative
-          </button>
-          <button
-            onClick={() => handlePreset('balanced')}
-            className="px-2 py-1 rounded bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold text-[11px] border border-indigo-200 transition cursor-pointer"
-          >
-            Balanced
-          </button>
-          <button
-            onClick={() => handlePreset('aggressive')}
-            className="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-[11px] transition cursor-pointer"
-          >
-            Aggressive
-          </button>
+        {lastSaved && (
+          <span className="text-[11px] font-mono text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+            Updated: {lastSaved}
+          </span>
+        )}
+      </div>
+
+      {/* ── Merchant Risk-Appetite Persona Picker ─────────────── */}
+      <div data-testid="persona-picker" className="space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+            <UserCheck className="w-3.5 h-3.5 text-indigo-600" />
+            Merchant Risk-Appetite Personas
+          </span>
+          <span className="text-[11px] text-slate-400">
+            Pre-fills compliant parameters; customize below at any time
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+          {(Object.keys(MERCHANT_PERSONAS) as PersonaId[]).map((pId) => {
+            const p = MERCHANT_PERSONAS[pId];
+            const isSelected = selectedPersona === pId;
+
+            return (
+              <button
+                key={pId}
+                type="button"
+                data-testid={`persona-btn-${pId}`}
+                onClick={() => handleSelectPersona(pId)}
+                className={`p-2.5 rounded-xl border text-left transition cursor-pointer flex flex-col justify-between ${
+                  isSelected
+                    ? 'bg-indigo-50/90 border-indigo-400 shadow-2xs ring-1.5 ring-indigo-500'
+                    : 'bg-slate-50/70 border-slate-200 hover:border-indigo-300 hover:bg-slate-100/80'
+                }`}
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className={`text-xs font-bold ${isSelected ? 'text-indigo-900' : 'text-slate-900'}`}>
+                      {p.name}
+                    </span>
+                    <span
+                      className={`text-[10px] font-semibold px-1.5 py-0.2 rounded ${
+                        isSelected
+                          ? 'bg-indigo-200 text-indigo-800'
+                          : 'bg-slate-200 text-slate-700'
+                      }`}
+                    >
+                      {p.badge}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-600 leading-tight">
+                    {p.description}
+                  </p>
+                </div>
+
+                <div className="mt-2 pt-1.5 border-t border-slate-200/60 flex items-center justify-between text-[10px] font-mono text-slate-500">
+                  <span>{p.config.budget} slots</span>
+                  <span>{formatPaiseToINR(p.config.approvalThresholdPaise, true)}</span>
+                  <span>max {p.config.maxAttemptsCap}x</span>
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
 
