@@ -22,6 +22,7 @@ import {
   ExternalLink,
   FilterX,
   RotateCcw,
+  Zap,
 } from 'lucide-react';
 import type { ExecutedItem } from '@/types';
 import { FAILURE_CATEGORIES } from '@/types';
@@ -39,6 +40,9 @@ interface RankedQueueTableProps {
   onSortFieldChange: (field: 'rank' | 'expected_value' | 'amount' | 'recovery_probability') => void;
   onSortAscToggle: () => void;
   onSelectPayment: (paymentId: string) => void;
+  provenance?: string;
+  onTriggerSampleWebhook?: () => void;
+  isLoadingLiveWebhooks?: boolean;
 }
 
 export function RankedQueueTable({
@@ -54,6 +58,9 @@ export function RankedQueueTable({
   onSortFieldChange,
   onSortAscToggle,
   onSelectPayment,
+  provenance = 'synthetic_fixture',
+  onTriggerSampleWebhook,
+  isLoadingLiveWebhooks = false,
 }: RankedQueueTableProps) {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(25);
@@ -193,16 +200,33 @@ export function RankedQueueTable({
       {/* ── Mobile Card List (sm:hidden) ───────────────────────── */}
       <div className="block sm:hidden space-y-3" data-testid="mobile-queue-card-list">
         {paginatedItems.length === 0 ? (
-          <div className="py-8 text-center bg-slate-50 rounded-lg p-4 border border-slate-200" data-testid="empty-queue-mobile">
-            <FilterX className="w-6 h-6 text-slate-500 mx-auto mb-2" />
-            <p className="text-xs font-bold text-slate-800">No payments match your filters</p>
-            <button
-              onClick={handleClearAllFilters}
-              className="mt-2 text-xs text-indigo-700 font-semibold bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-200"
-            >
-              Clear All Filters
-            </button>
-          </div>
+          provenance === 'razorpay_test_mode' && totalCount === 0 ? (
+            <div className="py-6 text-center bg-slate-900 text-white rounded-xl p-4 border border-indigo-500/40 shadow-sm space-y-3" data-testid="empty-queue-mobile">
+              <Zap className="w-6 h-6 text-amber-400 mx-auto animate-pulse" />
+              <p className="text-xs font-bold text-white">Connected — Waiting for Test-Mode Payment Failures</p>
+              <p className="text-[11px] text-slate-400">Endpoint: /api/webhooks/razorpay</p>
+              {onTriggerSampleWebhook && (
+                <button
+                  onClick={onTriggerSampleWebhook}
+                  disabled={isLoadingLiveWebhooks}
+                  className="mt-1 text-xs text-white font-bold bg-indigo-600 px-3 py-1.5 rounded-lg shadow-xs"
+                >
+                  ⚡ Trigger Sample Failure
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="py-8 text-center bg-slate-50 rounded-lg p-4 border border-slate-200" data-testid="empty-queue-mobile">
+              <FilterX className="w-6 h-6 text-slate-500 mx-auto mb-2" />
+              <p className="text-xs font-bold text-slate-800">No payments match your filters</p>
+              <button
+                onClick={handleClearAllFilters}
+                className="mt-2 text-xs text-indigo-700 font-semibold bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-200"
+              >
+                Clear All Filters
+              </button>
+            </div>
+          )
         ) : (
           paginatedItems.map((item) => {
             const isRecovered = item.execution_status === 'recovered';
@@ -344,27 +368,54 @@ export function RankedQueueTable({
             {paginatedItems.length === 0 ? (
               <tr>
                 <td colSpan={10} className="py-12 text-center" data-testid="empty-queue-state">
-                  <div className="flex flex-col items-center justify-center space-y-3 max-w-sm mx-auto">
-                    <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
-                      <FilterX className="w-6 h-6 text-slate-500" />
+                  {provenance === 'razorpay_test_mode' && totalCount === 0 ? (
+                    <div data-testid="razorpay-waiting-state" className="flex flex-col items-center justify-center space-y-3.5 max-w-md mx-auto p-4 bg-slate-900/90 text-white rounded-xl border border-indigo-500/40 shadow-inner">
+                      <div className="w-12 h-12 rounded-2xl bg-indigo-600/30 text-indigo-300 border border-indigo-500/40 flex items-center justify-center">
+                        <Zap className="w-6 h-6 animate-pulse text-amber-400" />
+                      </div>
+                      <div className="space-y-1">
+                        <h4 className="text-sm font-bold text-white">
+                          Connected — Waiting for Test-Mode Payment Failures
+                        </h4>
+                        <p className="text-xs text-slate-400">
+                          Webhook listener active at <code className="bg-slate-800 text-cyan-300 px-1.5 py-0.5 rounded font-mono">POST /api/webhooks/razorpay</code>. Trigger a failed payment in Razorpay Sandbox or dispatch a live sample event.
+                        </p>
+                      </div>
+                      {onTriggerSampleWebhook && (
+                        <button
+                          onClick={onTriggerSampleWebhook}
+                          data-testid="trigger-sample-webhook-btn"
+                          disabled={isLoadingLiveWebhooks}
+                          className="flex items-center gap-1.5 bg-gradient-to-r from-indigo-600 to-emerald-600 hover:from-indigo-500 hover:to-emerald-500 text-white font-bold px-3.5 py-1.5 rounded-lg text-xs shadow-sm transition cursor-pointer"
+                        >
+                          <Zap className="w-3.5 h-3.5 text-amber-300" />
+                          <span>{isLoadingLiveWebhooks ? 'Ingesting...' : '⚡ Trigger Sample Test-Mode Failure'}</span>
+                        </button>
+                      )}
                     </div>
-                    <div>
-                      <h4 className="text-sm font-bold text-slate-800">
-                        No payments match your filters
-                      </h4>
-                      <p className="text-xs text-slate-500 mt-1">
-                        Try adjusting your search query, status filter, or category selection to see recovery records.
-                      </p>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center space-y-3 max-w-sm mx-auto">
+                      <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+                        <FilterX className="w-6 h-6 text-slate-500" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-slate-800">
+                          No payments match your filters
+                        </h4>
+                        <p className="text-xs text-slate-500 mt-1">
+                          Try adjusting your search query, status filter, or category selection to see recovery records.
+                        </p>
+                      </div>
+                      <button
+                        onClick={handleClearAllFilters}
+                        data-testid="clear-filters-btn"
+                        className="flex items-center gap-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold px-3 py-1.5 rounded-lg text-xs border border-indigo-200 transition cursor-pointer"
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" />
+                        Clear All Filters
+                      </button>
                     </div>
-                    <button
-                      onClick={handleClearAllFilters}
-                      data-testid="clear-filters-btn"
-                      className="flex items-center gap-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold px-3 py-1.5 rounded-lg text-xs border border-indigo-200 transition cursor-pointer"
-                    >
-                      <RotateCcw className="w-3.5 h-3.5" />
-                      Clear All Filters
-                    </button>
-                  </div>
+                  )}
                 </td>
               </tr>
             ) : (

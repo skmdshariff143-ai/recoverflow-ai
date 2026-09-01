@@ -221,6 +221,34 @@ npm run verify:artifacts
 
 ---
 
+## ⚡ Connecting Live Razorpay Test-Mode Webhooks
+
+PayBack AI supports receiving live `payment.failed` webhook events from any Razorpay Sandbox/Test account:
+
+### 1. Configure Environment Variables
+Set your Razorpay API test credentials and Webhook secret in `.env.local` (or in your Vercel Project Environment Variables):
+```env
+RAZORPAY_KEY_ID=rzp_test_your_key_id
+RAZORPAY_KEY_SECRET=your_key_secret
+RAZORPAY_WEBHOOK_SECRET=your_webhook_secret_here
+```
+
+### 2. Configure Webhook URL in Razorpay Dashboard
+1. Log into your [Razorpay Dashboard](https://dashboard.razorpay.com/) and toggle to **Test Mode**.
+2. Navigate to **Settings** → **Webhooks** → **Add New Webhook**.
+3. Set **Webhook URL** to: `https://recoverflow-ai-kohl.vercel.app/api/webhooks/razorpay` (or your local ngrok URL).
+4. Set **Secret** to match your `RAZORPAY_WEBHOOK_SECRET`.
+5. Under **Active Events**, select `payment.failed`.
+6. Click **Create Webhook**.
+
+### 3. Trigger a Test Payment Failure
+- Create a test Payment Link or checkout in Razorpay Test Mode.
+- Trigger a test failure (e.g. Bank Downtime or Insufficient Funds).
+- Razorpay posts the `payment.failed` event to `/api/webhooks/razorpay`.
+- PayBack AI cryptographically verifies the HMAC SHA-256 `x-razorpay-signature`, maps error taxonomy into canonical failure categories, and displays it in the live ranked queue under **"Connected: Razorpay Test Mode"**.
+
+---
+
 ## ⚖️ License
 
 MIT License · Developed for the **Razorpay AI Buildathon — Track 3: AI Revenue Recovery**.

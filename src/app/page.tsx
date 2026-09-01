@@ -72,6 +72,9 @@ export default function Home() {
     // Exports
     handleExportCSV,
     handleExportJSON,
+    // Live Webhook trigger
+    triggerSampleWebhookFailure,
+    isLoadingLiveWebhooks,
   } = useRecoveryBatch();
 
   const [resetToast, setResetToast] = React.useState<string | null>(null);
@@ -199,6 +202,9 @@ export default function Home() {
               onSortFieldChange={setSortField}
               onSortAscToggle={() => setSortAsc((prev) => !prev)}
               onSelectPayment={(id) => setSelectedPaymentId(id)}
+              provenance={provenance}
+              onTriggerSampleWebhook={triggerSampleWebhookFailure}
+              isLoadingLiveWebhooks={isLoadingLiveWebhooks}
             />
           </div>
         )}

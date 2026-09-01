@@ -127,7 +127,7 @@ export function Header({
                   Hand-Curated Safety Fixture (6 Cases)
                 </option>
                 <option value="razorpay_test_mode" className="bg-slate-900 text-white">
-                  Development Benchmark (200 Dev)
+                  Connected: Razorpay Test Mode
                 </option>
                 <option value="imported_dataset" className="bg-slate-900 text-white">
                   Held-Out Stress (80 Adversarial)

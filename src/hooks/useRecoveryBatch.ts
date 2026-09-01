@@ -7,7 +7,7 @@
 
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import type { FailedPayment, BatchExecutionResult, ExecutedItem, DashboardTab } from '@/types';
 import { runRecoveryBatch } from '@/lib/engine/runBatch';
 import { generateSyntheticPayments } from '@/lib/engine/generateData';
@@ -53,6 +53,93 @@ export function useRecoveryBatch(options: UseRecoveryBatchOptions = {}) {
 
   const [scoringModel, setScoringModel] = useState<'heuristic' | 'trained_logistic'>('trained_logistic');
   const [provenance, setProvenance] = useState<DataProvenanceType>('synthetic_fixture');
+  const [liveWebhookPayments, setLiveWebhookPayments] = useState<FailedPayment[]>([]);
+  const [isLoadingLiveWebhooks, setIsLoadingLiveWebhooks] = useState<boolean>(false);
+
+  // Fetch real test-mode webhook events received from Razorpay
+  const fetchLiveWebhooks = useCallback(async () => {
+    try {
+      setIsLoadingLiveWebhooks(true);
+      const res = await fetch('/api/webhooks/razorpay');
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.payments)) {
+          setLiveWebhookPayments(data.payments);
+        }
+      }
+    } catch {
+      // Offline fallback: keep current events
+    } finally {
+      setIsLoadingLiveWebhooks(false);
+    }
+  }, []);
+
+  // Poll/fetch live webhooks when Razorpay Test Mode is active
+  useEffect(() => {
+    let isMounted = true;
+    if (provenance === 'razorpay_test_mode') {
+      fetch('/api/webhooks/razorpay')
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (isMounted && data && Array.isArray(data.payments)) {
+            setLiveWebhookPayments(data.payments);
+          }
+        })
+        .catch(() => {});
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [provenance]);
+
+  // Trigger a sample test-mode webhook event for instantaneous live demo
+  const triggerSampleWebhookFailure = useCallback(async () => {
+    try {
+      const sampleCategories = ['bank_downtime', 'insufficient_funds', 'auth_failure', 'expired_card', 'gateway_degradation'];
+      const pickedCategory = sampleCategories[Math.floor(Math.random() * sampleCategories.length)];
+      const sampleAmountPaise = Math.floor(Math.random() * 400000) + 50000; // ₹500 to ₹4,500
+
+      const samplePayload = {
+        entity: 'event',
+        account_id: 'acc_rzp_test_buildathon',
+        event: 'payment.failed',
+        created_at: Math.floor(Date.now() / 1000),
+        payload: {
+          payment: {
+            entity: {
+              id: `pay_test_${Math.random().toString(36).slice(2, 9)}`,
+              amount: sampleAmountPaise,
+              currency: 'INR',
+              status: 'failed',
+              customer_id: `cust_${Math.floor(Math.random() * 9000 + 1000)}`,
+              email: 'test_merchant@example.com',
+              contact: '+919876543210',
+              error_code: 'BAD_REQUEST_ERROR',
+              error_description: `Payment failed during authorization: ${pickedCategory.replace(/_/g, ' ')}.`,
+              error_source: pickedCategory === 'bank_downtime' ? 'issuing_bank' : 'gateway',
+              created_at: Math.floor(Date.now() / 1000),
+              notes: {
+                opt_out: 'false',
+                on_time_rate: 0.85,
+              },
+            },
+          },
+        },
+      };
+
+      const res = await fetch('/api/webhooks/razorpay', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(samplePayload),
+      });
+
+      if (res.ok) {
+        await fetchLiveWebhooks();
+      }
+    } catch (err) {
+      console.error('Failed to dispatch test webhook', err);
+    }
+  }, [fetchLiveWebhooks]);
 
   // Dynamically resolve active payment cohort
   const payments = useMemo(() => {
@@ -60,13 +147,13 @@ export function useRecoveryBatch(options: UseRecoveryBatchOptions = {}) {
       return JUDGE_SAFETY_SCENARIO_PAYMENTS;
     }
     if (provenance === 'razorpay_test_mode') {
-      return loadDevelopmentBenchmark().payments;
+      return liveWebhookPayments;
     }
     if (provenance === 'imported_dataset') {
       return loadAdversarialStressFixture().payments;
     }
     return basePayments;
-  }, [provenance, basePayments]);
+  }, [provenance, basePayments, liveWebhookPayments]);
 
   // Session-persistent reviewer actions
   const [reviewerDecisions, setReviewerDecisions] = useState<Record<string, ReviewerAction>>({});
@@ -373,5 +460,10 @@ export function useRecoveryBatch(options: UseRecoveryBatchOptions = {}) {
     // Exports
     handleExportCSV,
     handleExportJSON,
+    // Live Razorpay Webhook utilities
+    fetchLiveWebhooks,
+    triggerSampleWebhookFailure,
+    isLoadingLiveWebhooks,
+    liveWebhookCount: liveWebhookPayments.length,
   };
 }
