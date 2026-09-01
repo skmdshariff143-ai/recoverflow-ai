@@ -13,7 +13,7 @@ test.describe('PayBack AI — Mobile-Responsive Judge View', () => {
     await page.waitForSelector('header');
 
     // 1. Check headline KPIs and Trust Score are visible
-    const trustScore = page.locator('[data-testid="trust-score-widget"]');
+    const trustScore = page.locator('[data-testid="trust-score-card"]');
     await expect(trustScore).toBeVisible();
 
     const costOfInaction = page.locator('[data-testid="cost-of-inaction-counter"]');
@@ -56,7 +56,7 @@ test.describe('PayBack AI — Mobile-Responsive Judge View', () => {
     await page.goto('/');
     await page.waitForSelector('header');
 
-    const trustScore = page.locator('[data-testid="trust-score-widget"]');
+    const trustScore = page.locator('[data-testid="trust-score-card"]');
     await expect(trustScore).toBeVisible();
 
     // On tablet (768px >= 640px), the structured table is visible

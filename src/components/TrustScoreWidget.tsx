@@ -40,7 +40,7 @@ export function TrustScoreWidget({ inputs }: TrustScoreWidgetProps) {
 
   return (
     <div
-      data-testid="trust-score-widget"
+      data-testid="trust-score-card"
       className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-2xl border border-indigo-500/40 p-4 shadow-md transition-all"
     >
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">

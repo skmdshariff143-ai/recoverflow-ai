@@ -56,6 +56,7 @@ const NAVIGATION_COMMANDS: CommandItem[] = [
 ];
 
 const ACTION_COMMANDS: CommandItem[] = [
+  { id: 'act-reset-demo', label: 'Reset Demo State (Clean Slate · Shift+R)', keywords: ['reset', 'demo', 'state', 'clean', 'slate', 'defaults', 'restart', 'clear'], category: 'action' },
   { id: 'act-guide-tour', label: 'Guide Me (Self-Playing Proof Tour)', keywords: ['guide', 'tour', 'me', 'autoplay', 'walkthrough', 'presentation'], category: 'action' },
   { id: 'act-resimulate', label: 'Re-Simulate Batch', keywords: ['resimulate', 'batch', 'seed', 'rerun'], category: 'action' },
   { id: 'act-verify-ledger', label: 'Verify Ledger Integrity', keywords: ['verify', 'ledger', 'integrity', 'hash', 'sha256'], category: 'action' },
@@ -85,6 +86,8 @@ interface CommandPaletteProps {
   onOpenCheatSheet?: () => void;
   /** Open Self-Playing Guide Tour. */
   onOpenGuideTour?: () => void;
+  /** Reset all session-based demo state back to defaults. */
+  onResetDemoState?: () => void;
 }
 
 export function CommandPalette({
@@ -97,6 +100,7 @@ export function CommandPalette({
   onOpenReplayArena,
   onOpenCheatSheet,
   onOpenGuideTour,
+  onResetDemoState,
 }: CommandPaletteProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -197,6 +201,8 @@ export function CommandPalette({
         onNavigateTab('dashboard');
         // Slight delay so the tab renders first
         requestAnimationFrame(() => onSelectPayment(paymentId));
+      } else if (item.id === 'act-reset-demo') {
+        onResetDemoState?.();
       } else if (item.id === 'act-guide-tour') {
         onOpenGuideTour?.();
       } else if (item.id === 'act-resimulate') {
@@ -211,7 +217,7 @@ export function CommandPalette({
         onOpenCheatSheet?.();
       }
     },
-    [onNavigateTab, onSelectPayment, onReSimulate, onVerifyLedger, onOpenJudgeMode, onOpenReplayArena, onOpenCheatSheet, onOpenGuideTour],
+    [onNavigateTab, onSelectPayment, onReSimulate, onVerifyLedger, onOpenJudgeMode, onOpenReplayArena, onOpenCheatSheet, onOpenGuideTour, onResetDemoState],
   );
 
   // Keyboard navigation within the palette

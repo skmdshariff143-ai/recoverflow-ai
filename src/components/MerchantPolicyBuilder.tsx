@@ -12,7 +12,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Sliders, ShieldCheck, AlertTriangle, UserCheck, Sparkles } from 'lucide-react';
+import { Sliders, ShieldCheck, AlertTriangle, UserCheck } from 'lucide-react';
 import {
   type MerchantPolicyConfig,
   type PersonaId,

@@ -74,13 +74,76 @@ export default function Home() {
     handleExportJSON,
   } = useRecoveryBatch();
 
+  const [resetToast, setResetToast] = React.useState<string | null>(null);
+
+  const handleResetDemoState = React.useCallback(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        sessionStorage.clear();
+        localStorage.removeItem('payback_spotlight_dismissed_v1');
+        localStorage.removeItem('payback_guide_completed_v1');
+      }
+    } catch {
+      // Ignore storage errors in restricted sandboxes
+    }
+
+    setBudget(40);
+    setSimulationSeed(42);
+    setScoringModel('trained_logistic');
+    setProvenance('synthetic_fixture');
+    setActiveTab('dashboard');
+    setSelectedPaymentId(null);
+    setStatusFilter('all');
+    setCategoryFilter('all');
+    setSearchQuery('');
+    setSortField('rank');
+    setSortAsc(true);
+
+    setIsJudgeModeOpen(false);
+    setIsReplayModalOpen(false);
+    setIsCheatSheetOpen(false);
+    setIsGuideTourOpen(false);
+
+    setResetToast('Demo state reset: Seed 42, 40 slots, clean presentation cache');
+    setTimeout(() => setResetToast(null), 3000);
+  }, [
+    setBudget,
+    setSimulationSeed,
+    setScoringModel,
+    setProvenance,
+    setActiveTab,
+    setSelectedPaymentId,
+    setStatusFilter,
+    setCategoryFilter,
+    setSearchQuery,
+    setSortField,
+    setSortAsc,
+  ]);
+
+  // Global Shift+R keyboard shortcut for instant demo reset
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      const isInput =
+        target?.tagName === 'INPUT' ||
+        target?.tagName === 'TEXTAREA' ||
+        target?.isContentEditable;
+      if (!isInput && e.shiftKey && (e.key === 'R' || e.key === 'r')) {
+        e.preventDefault();
+        handleResetDemoState();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleResetDemoState]);
+
   const handleReSimulate = () => {
     // Generate new random seed for simulation rerun
     setSimulationSeed(Math.floor(Math.random() * 100000) + 1);
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900 flex flex-col font-sans selection:bg-indigo-500 selection:text-white overflow-x-hidden w-full max-w-full">
+    <div className="min-h-screen bg-slate-100 text-slate-900 flex flex-col font-sans selection:bg-indigo-500 selection:text-white w-full max-w-full">
       {/* ── Global Header & Navigation ─────────────────────────── */}
       <Header
         activeTab={activeTab}
@@ -109,7 +172,7 @@ export default function Home() {
       />
 
       {/* ── Main Application Workspace ─────────────────────────── */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 overflow-hidden max-w-full">
         {/* Workspace 1: Dashboard & Ranked Queue */}
         {activeTab === 'dashboard' && (
           <div className="space-y-6">
@@ -231,7 +294,21 @@ export default function Home() {
         onOpenReplayArena={() => setIsReplayModalOpen(true)}
         onOpenCheatSheet={() => setIsCheatSheetOpen(true)}
         onOpenGuideTour={() => setIsGuideTourOpen(true)}
+        onResetDemoState={handleResetDemoState}
       />
+
+      {/* ── Demo Reset Notification Toast ─────────────────────────── */}
+      {resetToast && (
+        <div
+          data-testid="demo-reset-toast"
+          role="status"
+          aria-live="polite"
+          className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white px-4 py-3 rounded-xl border border-indigo-500/50 shadow-2xl flex items-center gap-3 animate-fade-in text-xs font-semibold"
+        >
+          <div className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+          <span>{resetToast}</span>
+        </div>
+      )}
 
       {/* ── Printable Judge Cheat Sheet Modal & QR Code Summary ─────── */}
       <JudgeCheatSheetModal
@@ -247,7 +324,7 @@ export default function Home() {
       />
 
       {/* ── First-Time Visitor Dismissible Spotlight ─────────────── */}
-      {!isGuideTourOpen && !isJudgeModeOpen && !isReplayModalOpen && !isCheatSheetOpen && (
+      {!isGuideTourOpen && !isJudgeModeOpen && !isReplayModalOpen && !isCheatSheetOpen && !selectedItem && (
         <FirstTimeVisitorSpotlight />
       )}
 

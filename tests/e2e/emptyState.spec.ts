@@ -20,11 +20,11 @@ test.describe('PayBack AI — Deliberate Empty & Filter Clear States', () => {
 
     // Designed empty state should be visible
     await expect(page.getByTestId('empty-queue-state')).toBeVisible();
-    await expect(page.getByText(/No payments match your filters/i)).toBeVisible();
-    await expect(page.getByTestId('clear-filters-btn')).toBeVisible();
+    await expect(page.locator('[data-testid="empty-queue-state"]').getByText(/No payments match your filters/i)).toBeVisible();
+    await expect(page.getByTestId('clear-filters-btn').first()).toBeVisible();
 
     // Click "Clear All Filters" button
-    await page.getByTestId('clear-filters-btn').click();
+    await page.getByTestId('clear-filters-btn').first().click();
 
     // Queue rows should be restored
     await expect(page.getByTestId('empty-queue-state')).not.toBeVisible();
