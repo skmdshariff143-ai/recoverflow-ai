@@ -11,6 +11,8 @@ import {
   assertMatchingCurrency,
   sumPaise,
   formatPaiseToINR,
+  calculateInterventionCostPaise,
+  computeBatchNetRecoveryPaise,
   FinancialValidationError,
   MAX_SAFE_PAISE,
 } from '../financial';
@@ -110,6 +112,40 @@ describe('Financial & Monetary Arithmetic Core', () => {
       expect(formatPaiseToINR(14690025, false)).toBe('₹1,46,900');
       expect(formatPaiseToINR(0, true)).toBe('₹0.00');
       expect(formatPaiseToINR(1, true)).toBe('₹0.01');
+    });
+  });
+
+  describe('Unit Economics & Net-of-Cost Recovery Calculations (Task 2)', () => {
+    it('accurately computes per-channel intervention costs', () => {
+      expect(calculateInterventionCostPaise('retry')).toBe(250); // ₹2.50
+      expect(calculateInterventionCostPaise('scheduled_retry')).toBe(250);
+      expect(calculateInterventionCostPaise('reminder')).toBe(125); // ₹1.25
+      expect(calculateInterventionCostPaise('both')).toBe(375); // ₹3.75
+      expect(calculateInterventionCostPaise('unknown_action')).toBe(200);
+    });
+
+    it('computes batch net recovery and ROI multiplier given gross recovery and interventions', () => {
+      // 40 executed interventions: 20 retries (20 * 250 = 5000), 10 reminders (10 * 125 = 1250), 10 both (10 * 375 = 3750)
+      // Total cost = 10,000 paise = ₹100.00
+      const interventions = [
+        ...Array(20).fill({ action: 'retry' }),
+        ...Array(10).fill({ action: 'reminder' }),
+        ...Array(10).fill({ action: 'both' }),
+      ];
+
+      const grossRecoveredPaise = 27646700; // ₹2,76,467.00
+      const result = computeBatchNetRecoveryPaise(grossRecoveredPaise, interventions);
+
+      expect(result.grossRecoveredPaise).toBe(27646700);
+      expect(result.totalInterventionCostPaise).toBe(10000); // ₹100.00
+      expect(result.netRecoveredPaise).toBe(27636700); // ₹2,76,367.00
+      expect(result.roiMultiplier).toBeGreaterThan(100);
+    });
+
+    it('clamps net recovery at zero when intervention costs exceed gross recovery', () => {
+      const interventions = Array(50).fill({ action: 'retry' }); // 50 * 250 = 12,500 paise = ₹125.00
+      const result = computeBatchNetRecoveryPaise(5000, interventions); // Gross ₹50.00
+      expect(result.netRecoveredPaise).toBe(0);
     });
   });
 });

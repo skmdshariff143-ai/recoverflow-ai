@@ -119,3 +119,72 @@ export function formatPaiseToINR(amountPaise: number, showDecimals: boolean = tr
     maximumFractionDigits: 2,
   })}`;
 }
+
+// ─── Unit Economics & Configurable Intervention Cost Constants ───────
+
+export interface ChannelInterventionCosts {
+  /** Gateway direct retry fee in paise (default: ₹2.50 = 250 paise). */
+  retryCostPaise: number;
+  /** SMS / WhatsApp interactive payment reminder cost in paise (default: ₹1.25 = 125 paise). */
+  reminderCostPaise: number;
+  /** Combined multi-channel dispatch cost in paise (default: ₹3.75 = 375 paise). */
+  bothCostPaise: number;
+  /** Standard baseline fallback intervention cost in paise (default: ₹2.00 = 200 paise). */
+  defaultCostPaise: number;
+}
+
+export const DEFAULT_INTERVENTION_COSTS: ChannelInterventionCosts = {
+  retryCostPaise: 250, // ₹2.50
+  reminderCostPaise: 125, // ₹1.25
+  bothCostPaise: 375, // ₹3.75
+  defaultCostPaise: 200, // ₹2.00
+};
+
+/**
+ * Computes estimated operational cost for a single recovery intervention.
+ */
+export function calculateInterventionCostPaise(
+  action: 'retry' | 'reminder' | 'both' | 'scheduled_retry' | string,
+  costs: ChannelInterventionCosts = DEFAULT_INTERVENTION_COSTS,
+): number {
+  if (action === 'retry' || action === 'scheduled_retry') return costs.retryCostPaise;
+  if (action === 'reminder') return costs.reminderCostPaise;
+  if (action === 'both') return costs.bothCostPaise;
+  return costs.defaultCostPaise;
+}
+
+/**
+ * Computes net recovered revenue across a batch given gross recovery and executed interventions.
+ */
+export function computeBatchNetRecoveryPaise(
+  grossRecoveredPaise: number,
+  executedInterventions: Array<{ action?: string }>,
+  costs: ChannelInterventionCosts = DEFAULT_INTERVENTION_COSTS,
+): {
+  grossRecoveredPaise: number;
+  totalInterventionCostPaise: number;
+  netRecoveredPaise: number;
+  roiMultiplier: number;
+} {
+  validatePaiseAmount(grossRecoveredPaise);
+
+  const totalInterventionCostPaise = executedInterventions.reduce((sum, item) => {
+    return sum + calculateInterventionCostPaise(item.action || 'retry', costs);
+  }, 0);
+
+  const netRecoveredPaise = Math.max(0, grossRecoveredPaise - totalInterventionCostPaise);
+  const roiMultiplier =
+    totalInterventionCostPaise > 0
+      ? Number((grossRecoveredPaise / totalInterventionCostPaise).toFixed(1))
+      : grossRecoveredPaise > 0
+      ? 999.0
+      : 0.0;
+
+  return {
+    grossRecoveredPaise,
+    totalInterventionCostPaise,
+    netRecoveredPaise,
+    roiMultiplier,
+  };
+}
+

@@ -355,9 +355,22 @@ export function useRecoveryBatch(options: UseRecoveryBatchOptions = {}) {
       ((unsuccessfulAttempts / Math.max(1, budgetedItems.length)) * 100).toFixed(1),
     );
 
+    // Compute Net Recovery after channel operational costs
+    const totalInterventionCost = budgetedItems.reduce((sum, item) => {
+      const action = item.action ?? item.score.recommended_intervention ?? 'retry';
+      if (action === 'retry' || action === 'scheduled_retry') return sum + 250; // ₹2.50
+      if (action === 'reminder') return sum + 125; // ₹1.25
+      if (action === 'both') return sum + 375; // ₹3.75
+      return sum + 200;
+    }, 0);
+
+    const netRevenueRecovered = Math.max(0, totalRevRecovered - totalInterventionCost);
+
     return {
       totalRevenueAtRisk: totalRevAtRisk,
       totalRevenueRecovered: totalRevRecovered,
+      totalInterventionCost,
+      netRevenueRecovered,
       overallRecoveryRate: Number(overallRate.toFixed(1)),
       predictedRecoveryRate: Number(
         (batchResult.calibration.predicted_recovery_rate * 100).toFixed(1),
