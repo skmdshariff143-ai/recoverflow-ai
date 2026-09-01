@@ -21,6 +21,7 @@ import {
   Award,
 } from 'lucide-react';
 import { computeTrustScore, type TrustScoreInputs } from '@/lib/engine/trustScore';
+import { RegulatoryFootprintBadge } from './RegulatoryFootprintBadge';
 
 interface TrustScoreWidgetProps {
   inputs: TrustScoreInputs;
@@ -82,7 +83,7 @@ export function TrustScoreWidget({ inputs }: TrustScoreWidgetProps) {
           </div>
 
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <h3 className="text-sm font-bold text-white tracking-tight flex items-center gap-1.5">
                 <Award className="w-4 h-4 text-amber-400" />
                 Explainability &amp; Safety Trust Score
@@ -90,6 +91,7 @@ export function TrustScoreWidget({ inputs }: TrustScoreWidgetProps) {
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                 {grade}
               </span>
+              <RegulatoryFootprintBadge />
             </div>
             <p className="text-xs text-slate-400 mt-0.5 max-w-xl">
               Composite telemetry synthesized from calibration reliability, zero-tolerance safety rule tests, and append-only cryptographic ledger completeness.
