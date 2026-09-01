@@ -56,6 +56,7 @@ const NAVIGATION_COMMANDS: CommandItem[] = [
 ];
 
 const ACTION_COMMANDS: CommandItem[] = [
+  { id: 'act-guide-tour', label: 'Guide Me (Self-Playing Proof Tour)', keywords: ['guide', 'tour', 'me', 'autoplay', 'walkthrough', 'presentation'], category: 'action' },
   { id: 'act-resimulate', label: 'Re-Simulate Batch', keywords: ['resimulate', 'batch', 'seed', 'rerun'], category: 'action' },
   { id: 'act-verify-ledger', label: 'Verify Ledger Integrity', keywords: ['verify', 'ledger', 'integrity', 'hash', 'sha256'], category: 'action' },
   { id: 'act-replay-arena', label: 'Blind-Bot vs PayBack AI Replay Arena', keywords: ['replay', 'arena', 'blind', 'bot', 'versus', 'side-by-side', 'comparison'], category: 'action' },
@@ -82,6 +83,8 @@ interface CommandPaletteProps {
   onOpenReplayArena?: () => void;
   /** Open Judge Cheat Sheet. */
   onOpenCheatSheet?: () => void;
+  /** Open Self-Playing Guide Tour. */
+  onOpenGuideTour?: () => void;
 }
 
 export function CommandPalette({
@@ -93,6 +96,7 @@ export function CommandPalette({
   onOpenJudgeMode,
   onOpenReplayArena,
   onOpenCheatSheet,
+  onOpenGuideTour,
 }: CommandPaletteProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -193,6 +197,8 @@ export function CommandPalette({
         onNavigateTab('dashboard');
         // Slight delay so the tab renders first
         requestAnimationFrame(() => onSelectPayment(paymentId));
+      } else if (item.id === 'act-guide-tour') {
+        onOpenGuideTour?.();
       } else if (item.id === 'act-resimulate') {
         onReSimulate();
       } else if (item.id === 'act-verify-ledger') {
@@ -205,7 +211,7 @@ export function CommandPalette({
         onOpenCheatSheet?.();
       }
     },
-    [onNavigateTab, onSelectPayment, onReSimulate, onVerifyLedger, onOpenJudgeMode, onOpenReplayArena, onOpenCheatSheet],
+    [onNavigateTab, onSelectPayment, onReSimulate, onVerifyLedger, onOpenJudgeMode, onOpenReplayArena, onOpenCheatSheet, onOpenGuideTour],
   );
 
   // Keyboard navigation within the palette

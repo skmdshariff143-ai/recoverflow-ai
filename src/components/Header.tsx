@@ -20,6 +20,7 @@ import {
   Award,
   Swords,
   FileText,
+  Compass,
 } from 'lucide-react';
 import type { DashboardTab } from '@/types/pipeline';
 
@@ -37,6 +38,7 @@ interface HeaderProps {
   onOpenJudgeMode?: () => void;
   onOpenReplayArena?: () => void;
   onOpenCheatSheet?: () => void;
+  onOpenGuideTour?: () => void;
 }
 
 export function Header({
@@ -51,6 +53,7 @@ export function Header({
   onOpenJudgeMode,
   onOpenReplayArena,
   onOpenCheatSheet,
+  onOpenGuideTour,
 }: HeaderProps) {
   return (
     <header className="bg-slate-900 border-b border-slate-800 text-white sticky top-0 z-30 shadow-md">
@@ -137,6 +140,17 @@ export function Header({
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
               <span>TEST-MODE ONLY</span>
             </div>
+
+            {/* Guide Me Self-Playing Tour Button */}
+            <button
+              onClick={onOpenGuideTour}
+              data-testid="open-guide-tour-btn"
+              className="flex items-center gap-1.5 bg-gradient-to-r from-teal-600 to-indigo-600 hover:from-teal-500 hover:to-indigo-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm transition cursor-pointer border border-teal-400/40"
+              title="Launch Automated 7-Pillar Self-Playing Proof Tour"
+            >
+              <Compass className="w-3.5 h-3.5 text-teal-200" />
+              <span>Guide Me</span>
+            </button>
 
             {/* Replay Arena Launcher Button */}
             <button

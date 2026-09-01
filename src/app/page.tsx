@@ -25,11 +25,13 @@ import { StickySummaryBar } from '@/components/StickySummaryBar';
 import { BlindBotReplayModal } from '@/components/BlindBotReplayModal';
 import { JudgeCheatSheetModal } from '@/components/JudgeCheatSheetModal';
 import { FirstTimeVisitorSpotlight } from '@/components/FirstTimeVisitorSpotlight';
+import { GuideMeTourModal } from '@/components/GuideMeTourModal';
 
 export default function Home() {
   const [isJudgeModeOpen, setIsJudgeModeOpen] = React.useState<boolean>(false);
   const [isReplayModalOpen, setIsReplayModalOpen] = React.useState<boolean>(false);
   const [isCheatSheetOpen, setIsCheatSheetOpen] = React.useState<boolean>(false);
+  const [isGuideTourOpen, setIsGuideTourOpen] = React.useState<boolean>(false);
   const {
     payments,
     budget,
@@ -92,6 +94,7 @@ export default function Home() {
         onOpenJudgeMode={() => setIsJudgeModeOpen(true)}
         onOpenReplayArena={() => setIsReplayModalOpen(true)}
         onOpenCheatSheet={() => setIsCheatSheetOpen(true)}
+        onOpenGuideTour={() => setIsGuideTourOpen(true)}
       />
 
       {/* ── Sticky Mini-Summary Bar (Appears on scroll past KPI cards) ─ */}
@@ -227,12 +230,21 @@ export default function Home() {
         onOpenJudgeMode={() => setIsJudgeModeOpen(true)}
         onOpenReplayArena={() => setIsReplayModalOpen(true)}
         onOpenCheatSheet={() => setIsCheatSheetOpen(true)}
+        onOpenGuideTour={() => setIsGuideTourOpen(true)}
       />
 
       {/* ── Printable Judge Cheat Sheet Modal & QR Code Summary ─────── */}
       <JudgeCheatSheetModal
         isOpen={isCheatSheetOpen}
         onClose={() => setIsCheatSheetOpen(false)}
+      />
+
+      {/* ── Self-Playing Guided Proof Tour Modal ───────────────────── */}
+      <GuideMeTourModal
+        isOpen={isGuideTourOpen}
+        onClose={() => setIsGuideTourOpen(false)}
+        onNavigateTab={setActiveTab}
+        onOpenReplayArena={() => setIsReplayModalOpen(true)}
       />
 
       {/* ── First-Time Visitor Dismissible Spotlight ─────────────── */}
