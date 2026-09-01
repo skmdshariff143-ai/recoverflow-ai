@@ -24,6 +24,7 @@ import { CommandPalette } from '@/components/CommandPalette';
 import { StickySummaryBar } from '@/components/StickySummaryBar';
 import { BlindBotReplayModal } from '@/components/BlindBotReplayModal';
 import { JudgeCheatSheetModal } from '@/components/JudgeCheatSheetModal';
+import { FirstTimeVisitorSpotlight } from '@/components/FirstTimeVisitorSpotlight';
 
 export default function Home() {
   const [isJudgeModeOpen, setIsJudgeModeOpen] = React.useState<boolean>(false);
@@ -233,6 +234,9 @@ export default function Home() {
         isOpen={isCheatSheetOpen}
         onClose={() => setIsCheatSheetOpen(false)}
       />
+
+      {/* ── First-Time Visitor Dismissible Spotlight ─────────────── */}
+      <FirstTimeVisitorSpotlight />
 
       {/* ── Global Footer ───────────────────────────────────────── */}
       <footer className="bg-slate-900 border-t border-slate-800 text-slate-400 py-6 text-xs text-center">
