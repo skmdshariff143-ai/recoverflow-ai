@@ -8,7 +8,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ShieldCheck, Scale, CheckCircle2, ChevronRight, Lock } from 'lucide-react';
+import { ShieldCheck, Scale, CheckCircle2 } from 'lucide-react';
 
 interface ComplianceRuleItem {
   id: string;

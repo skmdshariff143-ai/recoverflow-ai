@@ -26,6 +26,7 @@ import { BlindBotReplayModal } from '@/components/BlindBotReplayModal';
 import { JudgeCheatSheetModal } from '@/components/JudgeCheatSheetModal';
 import { FirstTimeVisitorSpotlight } from '@/components/FirstTimeVisitorSpotlight';
 import { GuideMeTourModal } from '@/components/GuideMeTourModal';
+import { AutonomousControlRoom } from '@/components/AutonomousControlRoom';
 
 export default function Home() {
   const [isJudgeModeOpen, setIsJudgeModeOpen] = React.useState<boolean>(false);
@@ -181,6 +182,19 @@ export default function Home() {
           <div className="space-y-6">
             {/* KPI Metrics Overview & Trust Score (Front and Center on Command Center) */}
             <MetricsOverview kpis={kpis} />
+
+            {/* Autonomous Recovery Control Room (Hero Loop & 3-Cycle Decision Engine) */}
+            <AutonomousControlRoom
+              items={filteredQueueItems}
+              payments={payments}
+              batchResult={batchResult}
+              evaluationReport={devReport}
+              budget={budget}
+              onBudgetChange={setBudget}
+              onSelectPayment={(id) => setSelectedPaymentId(id)}
+              onNavigateTab={setActiveTab}
+              onReSimulate={handleReSimulate}
+            />
 
             <CalibrationVisualizer
               calibration={batchResult.calibration}
