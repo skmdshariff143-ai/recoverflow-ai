@@ -257,7 +257,7 @@ export default function Home() {
           <p className="font-medium text-slate-300">
             PayBack AI — Autonomous Bounded Revenue Recovery Engine
           </p>
-          <p className="text-slate-500">
+          <p className="text-slate-400">
             Submission for Razorpay AI Buildathon · Track 3: AI Revenue Recovery · Deterministic Calibration &amp; Cryptographic Audit Ledger
           </p>
         </div>

@@ -124,9 +124,10 @@ export function RankedQueueTable({
         <div className="flex flex-wrap items-center gap-2.5 flex-1">
           {/* Search Input */}
           <div className="relative flex-1 min-w-[200px] max-w-xs">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" aria-hidden="true" />
             <input
               type="text"
+              aria-label="Search payment records"
               placeholder="Search ID, customer, error..."
               value={searchQuery}
               onChange={(e) => {
@@ -139,7 +140,7 @@ export function RankedQueueTable({
 
           {/* Status Filter */}
           <div className="flex items-center gap-1.5 text-xs text-slate-600">
-            <Filter className="w-3.5 h-3.5 text-slate-400" />
+            <Filter className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
             <select
               aria-label="Filter by workflow status"
               data-testid="status-filter"
@@ -163,6 +164,7 @@ export function RankedQueueTable({
           {/* Category Filter */}
           <div className="flex items-center gap-1.5 text-xs text-slate-600">
             <select
+              aria-label="Filter by failure category"
               value={categoryFilter}
               onChange={(e) => {
                 onCategoryFilterChange(e.target.value);
@@ -181,7 +183,7 @@ export function RankedQueueTable({
         </div>
 
         {/* Total records badge */}
-        <div className="text-xs text-slate-500 flex items-center gap-2">
+        <div aria-live="polite" aria-atomic="true" className="text-xs text-slate-500 flex items-center gap-2">
           <span>
             Showing <strong className="text-slate-800">{items.length}</strong> of {totalCount} records
           </span>
@@ -307,7 +309,7 @@ export function RankedQueueTable({
                     </td>
 
                     {/* Customer ID */}
-                    <td className="py-2.5 px-3 text-slate-500 font-mono">
+                    <td className="py-2.5 px-3 text-slate-700 font-mono font-medium">
                       {item.payment.customer_id}
                     </td>
 
@@ -362,31 +364,49 @@ export function RankedQueueTable({
                     {/* Execution / Pipeline Status */}
                     <td className="py-2.5 px-3 text-center">
                       {isRecovered ? (
-                        <span className="inline-flex items-center gap-1 font-bold text-[11px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
-                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                        <span
+                          role="status"
+                          aria-label="Status: Recovered"
+                          className="inline-flex items-center gap-1 font-bold text-[11px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300"
+                        >
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600" aria-hidden="true" />
                           Recovered
                         </span>
                       ) : isStopped ? (
                         <span
+                          role="status"
+                          aria-label={`Status: Stopped (${item.stop_detail || 'Safety rule enforced'})`}
                           className="inline-flex items-center gap-1 font-semibold text-[11px] px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-200"
                           title={item.stop_detail}
                         >
-                          <ShieldAlert className="w-3 h-3 text-rose-600" />
+                          <ShieldAlert className="w-3 h-3 text-rose-600" aria-hidden="true" />
                           Stopped
                         </span>
                       ) : isPending ? (
-                        <span className="inline-flex items-center gap-1 font-semibold text-[11px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
-                          <AlertCircle className="w-3 h-3 text-amber-600" />
+                        <span
+                          role="status"
+                          aria-label="Status: Pending Enterprise Approval"
+                          className="inline-flex items-center gap-1 font-semibold text-[11px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200"
+                        >
+                          <AlertCircle className="w-3 h-3 text-amber-600" aria-hidden="true" />
                           Pending Approval
                         </span>
                       ) : isDeferred ? (
-                        <span className="inline-flex items-center gap-1 font-semibold text-[11px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
-                          <PauseCircle className="w-3 h-3 text-slate-400" />
+                        <span
+                          role="status"
+                          aria-label="Status: Deferred outside current contact budget"
+                          className="inline-flex items-center gap-1 font-semibold text-[11px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200"
+                        >
+                          <PauseCircle className="w-3 h-3 text-slate-400" aria-hidden="true" />
                           Deferred
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 font-semibold text-[11px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-200">
-                          <Clock className="w-3 h-3 text-blue-600" />
+                        <span
+                          role="status"
+                          aria-label="Status: Retry Scheduled"
+                          className="inline-flex items-center gap-1 font-semibold text-[11px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-200"
+                        >
+                          <Clock className="w-3 h-3 text-blue-600" aria-hidden="true" />
                           Retry Scheduled
                         </span>
                       )}
@@ -417,12 +437,13 @@ export function RankedQueueTable({
         <div className="flex items-center gap-2">
           <span>Rows per page:</span>
           <select
+            aria-label="Select rows per page"
             value={pageSize}
             onChange={(e) => {
               setPageSize(Number(e.target.value));
               setCurrentPage(1);
             }}
-            className="border border-slate-300 rounded px-2 py-1 bg-white text-slate-700"
+            className="border border-slate-300 rounded px-2 py-1 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
             <option value={10}>10</option>
             <option value={25}>25</option>
@@ -437,18 +458,22 @@ export function RankedQueueTable({
           </span>
           <div className="flex items-center gap-1">
             <button
+              type="button"
+              aria-label="Previous page"
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              className="p-1 rounded border border-slate-300 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="p-1 rounded border border-slate-300 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-4 h-4" aria-hidden="true" />
             </button>
             <button
+              type="button"
+              aria-label="Next page"
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
-              className="p-1 rounded border border-slate-300 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="p-1 rounded border border-slate-300 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
             >
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-4 h-4" aria-hidden="true" />
             </button>
           </div>
         </div>

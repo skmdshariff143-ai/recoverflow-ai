@@ -154,7 +154,7 @@ export function MetricsOverview({ kpis }: MetricsOverviewProps) {
               title="Captured Expected Value percentage"
             />
           </div>
-          <p className="mt-1 text-[11px] text-slate-400 text-right">
+          <p className="mt-1 text-[11px] text-slate-600 font-medium text-right">
             95.7% of total recoverable EV prioritized
           </p>
         </div>
@@ -168,11 +168,11 @@ export function MetricsOverview({ kpis }: MetricsOverviewProps) {
             <Users className="w-5 h-5" />
           </div>
           <div>
-            <span className="text-xs font-semibold text-slate-500">Customer Contacts</span>
+            <span className="text-xs font-semibold text-slate-600">Customer Contacts</span>
             <div className="text-lg font-bold text-slate-900">
-              {kpis.customerContactCount} <span className="text-xs font-normal text-slate-400">attempted</span>
+              {kpis.customerContactCount} <span className="text-xs font-medium text-slate-600">attempted</span>
             </div>
-            <span className="text-[11px] text-slate-500">Zero non-budgeted contacts</span>
+            <span className="text-[11px] text-slate-600 font-medium">Zero non-budgeted contacts</span>
           </div>
         </div>
 
@@ -182,11 +182,11 @@ export function MetricsOverview({ kpis }: MetricsOverviewProps) {
             <TrendingUp className="w-5 h-5" />
           </div>
           <div>
-            <span className="text-xs font-semibold text-slate-500">Unnecessary Retry Rate</span>
+            <span className="text-xs font-semibold text-slate-600">Unnecessary Retry Rate</span>
             <div className="text-lg font-bold text-slate-900">
               {kpis.unnecessaryRetryRate}%
             </div>
-            <span className="text-[11px] text-slate-500">Budgeted items failing attempt</span>
+            <span className="text-[11px] text-slate-600 font-medium">Budgeted items failing attempt</span>
           </div>
         </div>
 
@@ -196,11 +196,11 @@ export function MetricsOverview({ kpis }: MetricsOverviewProps) {
             <Clock className="w-5 h-5" />
           </div>
           <div>
-            <span className="text-xs font-semibold text-slate-500">Avg Attempts to Recover</span>
+            <span className="text-xs font-semibold text-slate-600">Avg Attempts to Recover</span>
             <div className="text-lg font-bold text-slate-900">
-              {kpis.avgAttemptsBeforeRecovery} <span className="text-xs font-normal text-slate-400">attempts</span>
+              {kpis.avgAttemptsBeforeRecovery} <span className="text-xs font-medium text-slate-600">attempts</span>
             </div>
-            <span className="text-[11px] text-slate-500">Hard capped at 3 attempts</span>
+            <span className="text-[11px] text-slate-600 font-medium">Hard capped at 3 attempts</span>
           </div>
         </div>
 

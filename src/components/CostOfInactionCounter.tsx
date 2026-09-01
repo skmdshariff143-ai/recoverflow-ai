@@ -92,9 +92,9 @@ export function CostOfInactionCounter({
             className="text-sm font-extrabold text-rose-700 font-mono"
           >
             ₹{metrics.hourlyLossRupees.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
-            <span className="text-[10px] font-medium text-rose-600 font-sans ml-0.5">/hr</span>
+            <span className="text-[10px] font-bold text-rose-800 font-sans ml-0.5">/hr</span>
           </span>
-          <span className="text-[10px] text-slate-500 block">
+          <span className="text-[10px] text-slate-600 block font-medium">
             estimated loss rate
           </span>
         </div>
@@ -102,11 +102,11 @@ export function CostOfInactionCounter({
         <div className="text-right">
           <span
             data-testid="cost-of-inaction-accumulated"
-            className="text-xs font-bold text-rose-800 font-mono bg-rose-100/80 px-2 py-0.5 rounded border border-rose-200"
+            className="text-xs font-bold text-rose-900 font-mono bg-rose-100/90 px-2 py-0.5 rounded border border-rose-300"
           >
             +₹{accumulatedLossRupees}
           </span>
-          <span className="text-[9px] text-slate-400 block mt-0.5">
+          <span className="text-[10px] text-slate-600 font-medium block mt-0.5">
             lost since load ({elapsedSeconds.toFixed(1)}s)
           </span>
         </div>

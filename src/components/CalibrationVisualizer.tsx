@@ -92,34 +92,34 @@ export function CalibrationVisualizer({
         </div>
 
         {/* ── Key Calibration Metrics ─────────────────────────────── */}
-        <div className="mt-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div aria-live="polite" aria-atomic="true" className="mt-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
+            <span className="text-xs font-semibold text-slate-600 uppercase tracking-wider block">
               Calibration Overview
             </span>
             <div className="mt-1 flex items-baseline gap-3">
               <div className="text-2xl font-bold text-slate-900">
                 {((calibration.predicted_recovery_rate ?? calibration.overall_predicted_rate) * 100).toFixed(1)}%
-                <span className="text-xs text-slate-500 font-normal ml-1">predicted</span>
+                <span className="text-xs text-slate-600 font-medium ml-1">predicted</span>
               </div>
-              <span className="text-slate-400 font-medium">vs</span>
+              <span className="text-slate-600 font-bold">vs</span>
               <div className="text-2xl font-bold text-indigo-600">
                 {((calibration.actual_recovery_rate ?? calibration.overall_actual_rate) * 100).toFixed(1)}%
-                <span className="text-xs text-slate-500 font-normal ml-1">actual</span>
+                <span className="text-xs text-slate-600 font-medium ml-1">actual</span>
               </div>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
             <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-2 text-center min-w-[90px]">
-              <span className="block text-slate-500 font-medium text-[10px]">Brier Score</span>
+              <span className="block text-indigo-950 font-bold text-[10px]">Brier Score</span>
               <span className="text-base font-bold text-indigo-700">
                 {(calibration.brier_score ?? calibration.overall_brier_score ?? 0).toFixed(4)}
               </span>
             </div>
 
             <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-2 text-center min-w-[90px]">
-              <span className="block text-slate-500 font-medium text-[10px]">Mean Cat Error</span>
+              <span className="block text-emerald-950 font-bold text-[10px]">Mean Cat Error</span>
               <span className="text-base font-bold text-emerald-700">
                 {(meanCatError * 100).toFixed(1)}%
               </span>
