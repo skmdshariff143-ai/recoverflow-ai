@@ -190,6 +190,7 @@ export function Header({
         <div className="flex border-t border-slate-800/80 pt-1 -mb-px space-x-6 text-xs font-medium overflow-x-auto">
           <button
             onClick={() => onSelectTab('dashboard')}
+            data-testid="tab-dashboard"
             className={`pb-2.5 flex items-center gap-2 border-b-2 transition cursor-pointer whitespace-nowrap ${
               activeTab === 'dashboard'
                 ? 'border-indigo-400 text-white font-semibold'
@@ -202,6 +203,7 @@ export function Header({
 
           <button
             onClick={() => onSelectTab('live_runner')}
+            data-testid="tab-live-runner"
             className={`pb-2.5 flex items-center gap-2 border-b-2 transition cursor-pointer whitespace-nowrap ${
               activeTab === 'live_runner'
                 ? 'border-indigo-400 text-white font-semibold'
@@ -214,6 +216,7 @@ export function Header({
 
           <button
             onClick={() => onSelectTab('evaluation_lab')}
+            data-testid="tab-evaluation-lab"
             className={`pb-2.5 flex items-center gap-2 border-b-2 transition cursor-pointer whitespace-nowrap ${
               activeTab === 'evaluation_lab'
                 ? 'border-indigo-400 text-white font-semibold'
@@ -226,6 +229,7 @@ export function Header({
 
           <button
             onClick={() => onSelectTab('promise_to_pay')}
+            data-testid="tab-promise-to-pay"
             className={`pb-2.5 flex items-center gap-2 border-b-2 transition cursor-pointer whitespace-nowrap ${
               activeTab === 'promise_to_pay'
                 ? 'border-indigo-400 text-white font-semibold'
@@ -238,6 +242,7 @@ export function Header({
 
           <button
             onClick={() => onSelectTab('audit_ledger')}
+            data-testid="tab-audit-ledger"
             className={`pb-2.5 flex items-center gap-2 border-b-2 transition cursor-pointer whitespace-nowrap ${
               activeTab === 'audit_ledger'
                 ? 'border-indigo-400 text-white font-semibold'
@@ -250,6 +255,7 @@ export function Header({
 
           <button
             onClick={() => onSelectTab('methodology_guide')}
+            data-testid="tab-guide"
             className={`pb-2.5 flex items-center gap-2 border-b-2 transition cursor-pointer whitespace-nowrap ${
               activeTab === 'methodology_guide'
                 ? 'border-indigo-400 text-white font-semibold'
