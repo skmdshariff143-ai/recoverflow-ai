@@ -15,7 +15,6 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
-  Sparkles,
   Award,
   Target,
   LineChart,
@@ -106,14 +105,12 @@ interface GuideMeTourModalProps {
   isOpen: boolean;
   onClose: () => void;
   onNavigateTab: (tab: DashboardTab) => void;
-  onOpenReplayArena?: () => void;
 }
 
 export function GuideMeTourModal({
   isOpen,
   onClose,
   onNavigateTab,
-  onOpenReplayArena,
 }: GuideMeTourModalProps) {
   const [stepIndex, setStepIndex] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(true);
@@ -143,10 +140,12 @@ export function GuideMeTourModal({
   }, [isOpen, isPlaying, stepIndex]);
 
   const handlePrev = useCallback(() => {
+    setIsPlaying(false);
     setStepIndex((prev) => Math.max(0, prev - 1));
   }, []);
 
   const handleNext = useCallback(() => {
+    setIsPlaying(false);
     if (stepIndex < TOUR_STEPS.length - 1) {
       setStepIndex((prev) => prev + 1);
     } else {

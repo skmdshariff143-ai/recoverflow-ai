@@ -244,11 +244,12 @@ export default function Home() {
         isOpen={isGuideTourOpen}
         onClose={() => setIsGuideTourOpen(false)}
         onNavigateTab={setActiveTab}
-        onOpenReplayArena={() => setIsReplayModalOpen(true)}
       />
 
       {/* ── First-Time Visitor Dismissible Spotlight ─────────────── */}
-      <FirstTimeVisitorSpotlight />
+      {!isGuideTourOpen && !isJudgeModeOpen && !isReplayModalOpen && !isCheatSheetOpen && (
+        <FirstTimeVisitorSpotlight />
+      )}
 
       {/* ── Global Footer ───────────────────────────────────────── */}
       <footer className="bg-slate-900 border-t border-slate-800 text-slate-400 py-6 text-xs text-center">

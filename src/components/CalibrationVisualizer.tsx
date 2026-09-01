@@ -7,7 +7,7 @@
 
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Target,
   Layers,
@@ -16,6 +16,8 @@ import {
   ArrowRight,
   Sparkles,
   Zap,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import type { CalibrationReport, ModelComparisonReport } from '@/types';
 
@@ -32,6 +34,7 @@ export function CalibrationVisualizer({
   scoringModel = 'trained_logistic',
   onScoringModelChange,
 }: CalibrationVisualizerProps) {
+  const [isDetailExpanded, setIsDetailExpanded] = useState<boolean>(false);
   const binnedMetrics = calibration.binned_metrics ?? calibration.by_bin ?? [];
   const categoryMetrics = calibration.category_metrics ?? calibration.by_category ?? [];
   const meanCatError = calibration.mean_category_calibration_error ?? calibration.overall_calibration_error ?? 0;
@@ -191,17 +194,43 @@ export function CalibrationVisualizer({
           </div>
         )}
 
-        {/* ── 5-Bin Reliability Diagram ───────────────────────────── */}
-        <div className="mt-8">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
-              <Target className="w-4 h-4 text-indigo-600" />
-              5-Bin Probability Reliability Diagram
-            </h3>
-            <span className="text-xs text-slate-500">
-              Closer bar heights = Higher statistical calibration
-            </span>
-          </div>
+        {/* ── Collapsible Calibration Detail Toggle ───────────────── */}
+        <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
+          <button
+            onClick={() => setIsDetailExpanded(!isDetailExpanded)}
+            data-testid="toggle-calibration-detail-btn"
+            className="flex items-center gap-1.5 text-xs font-bold text-indigo-700 hover:text-indigo-900 transition cursor-pointer bg-indigo-50 hover:bg-indigo-100 px-3.5 py-2 rounded-lg border border-indigo-200 shadow-2xs"
+          >
+            {isDetailExpanded ? (
+              <>
+                <ChevronUp className="w-4 h-4 text-indigo-600" />
+                <span>Hide Full Calibration Detail</span>
+              </>
+            ) : (
+              <>
+                <ChevronDown className="w-4 h-4 text-indigo-600" />
+                <span>Show Full Calibration Detail (5-Bin Diagram &amp; Category Tables)</span>
+              </>
+            )}
+          </button>
+          <span className="text-[11px] text-slate-500 font-medium">
+            {isDetailExpanded ? 'Showing 5 reliability bins & 10 categories' : 'Collapsed for fast-scan overview'}
+          </span>
+        </div>
+
+        {/* ── 5-Bin Reliability Diagram (Collapsible) ─────────────── */}
+        {isDetailExpanded && (
+          <div data-testid="calibration-detail-section" className="mt-8 pt-6 border-t border-slate-100 space-y-6">
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
+                  <Target className="w-4 h-4 text-indigo-600" />
+                  5-Bin Probability Reliability Diagram
+                </h3>
+                <span className="text-xs text-slate-500">
+                  Closer bar heights = Higher statistical calibration
+                </span>
+              </div>
 
           <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
             {binnedMetrics.map((bin) => {
@@ -279,73 +308,75 @@ export function CalibrationVisualizer({
             })}
           </div>
         </div>
-      </div>
 
-      {/* ── Category-Level Calibration Breakdown Table ──────────── */}
-      <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm overflow-hidden">
-        <h3 className="text-sm font-semibold text-slate-800 mb-3 flex items-center gap-2">
-          <Layers className="w-4 h-4 text-indigo-600" />
-          Category-Level Calibration Breakdown (Budgeted Cohort)
-        </h3>
+        {/* ── Category-Level Calibration Breakdown Table ──────────── */}
+        <div className="mt-6 pt-6 border-t border-slate-200/80 overflow-hidden">
+          <h3 className="text-sm font-semibold text-slate-800 mb-3 flex items-center gap-2">
+            <Layers className="w-4 h-4 text-indigo-600" />
+            Category-Level Calibration Breakdown (Budgeted Cohort)
+          </h3>
 
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-xs text-left">
-            <thead className="bg-slate-50 border-y border-slate-200 text-slate-600 font-semibold uppercase tracking-wider">
-              <tr>
-                <th className="py-2.5 px-3">Failure Category</th>
-                <th className="py-2.5 px-3 text-center">Budgeted</th>
-                <th className="py-2.5 px-3 text-center">Recovered</th>
-                <th className="py-2.5 px-3 text-right">Predicted Rate</th>
-                <th className="py-2.5 px-3 text-right">Actual Rate</th>
-                <th className="py-2.5 px-3 text-right">Calibration Error</th>
-                <th className="py-2.5 px-3 text-right">Expected Revenue</th>
-                <th className="py-2.5 px-3 text-right">Actual Recovered</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 text-slate-700">
-              {categoryMetrics.map((cat) => {
-                const predRate = (cat.predicted_recovery_rate * 100).toFixed(1);
-                const actRate = (cat.actual_recovery_rate * 100).toFixed(1);
-                const err = (cat.calibration_error * 100).toFixed(1);
-                const isAccurate = cat.calibration_error <= 0.15;
-                const evPaise = cat.expected_value ?? 0;
-                const recPaise = cat.recovered_amount ?? 0;
+          <div className="overflow-x-auto bg-white rounded-xl border border-slate-200">
+            <table className="min-w-full text-xs text-left">
+              <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase tracking-wider">
+                <tr>
+                  <th className="py-2.5 px-3">Failure Category</th>
+                  <th className="py-2.5 px-3 text-center">Budgeted</th>
+                  <th className="py-2.5 px-3 text-center">Recovered</th>
+                  <th className="py-2.5 px-3 text-right">Predicted Rate</th>
+                  <th className="py-2.5 px-3 text-right">Actual Rate</th>
+                  <th className="py-2.5 px-3 text-right">Calibration Error</th>
+                  <th className="py-2.5 px-3 text-right">Expected Revenue</th>
+                  <th className="py-2.5 px-3 text-right">Actual Recovered</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-slate-700">
+                {categoryMetrics.map((cat) => {
+                  const predRate = (cat.predicted_recovery_rate * 100).toFixed(1);
+                  const actRate = (cat.actual_recovery_rate * 100).toFixed(1);
+                  const err = (cat.calibration_error * 100).toFixed(1);
+                  const isAccurate = cat.calibration_error <= 0.15;
+                  const evPaise = cat.expected_value ?? 0;
+                  const recPaise = cat.recovered_amount ?? 0;
 
-                return (
-                  <tr key={cat.category} className="hover:bg-slate-50/80 transition">
-                    <td className="py-2.5 px-3 font-semibold text-slate-900 capitalize">
-                      {cat.category.replace(/_/g, ' ')}
-                    </td>
-                    <td className="py-2.5 px-3 text-center font-medium">{cat.budgeted_count}</td>
-                    <td className="py-2.5 px-3 text-center font-bold text-emerald-600">
-                      {cat.recovered_count}
-                    </td>
-                    <td className="py-2.5 px-3 text-right font-medium text-indigo-600">{predRate}%</td>
-                    <td className="py-2.5 px-3 text-right font-bold text-slate-900">{actRate}%</td>
-                    <td className="py-2.5 px-3 text-right">
-                      <span
-                        className={`inline-flex items-center gap-1 font-semibold px-2 py-0.5 rounded text-[11px] ${
-                          isAccurate
-                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                            : 'bg-amber-50 text-amber-700 border border-amber-200'
-                        }`}
-                      >
-                        Δ {err}%
-                      </span>
-                    </td>
-                    <td className="py-2.5 px-3 text-right font-medium text-slate-600">
-                      ₹{(evPaise / 100).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
-                    </td>
-                    <td className="py-2.5 px-3 text-right font-bold text-emerald-700">
-                      ₹{(recPaise / 100).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                  return (
+                    <tr key={cat.category} className="hover:bg-slate-50/80 transition">
+                      <td className="py-2.5 px-3 font-semibold text-slate-900 capitalize">
+                        {cat.category.replace(/_/g, ' ')}
+                      </td>
+                      <td className="py-2.5 px-3 text-center font-medium">{cat.budgeted_count}</td>
+                      <td className="py-2.5 px-3 text-center font-bold text-emerald-600">
+                        {cat.recovered_count}
+                      </td>
+                      <td className="py-2.5 px-3 text-right font-medium text-indigo-600">{predRate}%</td>
+                      <td className="py-2.5 px-3 text-right font-bold text-slate-900">{actRate}%</td>
+                      <td className="py-2.5 px-3 text-right">
+                        <span
+                          className={`inline-flex items-center gap-1 font-semibold px-2 py-0.5 rounded text-[11px] ${
+                            isAccurate
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                              : 'bg-amber-50 text-amber-700 border border-amber-200'
+                          }`}
+                        >
+                          Δ {err}%
+                        </span>
+                      </td>
+                      <td className="py-2.5 px-3 text-right font-medium text-slate-600">
+                        ₹{(evPaise / 100).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                      </td>
+                      <td className="py-2.5 px-3 text-right font-bold text-emerald-700">
+                        ₹{(recPaise / 100).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
-    </div>
+    )}
+  </div>
+</div>
   );
 }
