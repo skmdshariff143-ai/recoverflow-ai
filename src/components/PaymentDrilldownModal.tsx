@@ -287,6 +287,10 @@ export function PaymentDrilldownModal({
 
   return (
     <div
+      data-testid="payment-drilldown-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="drilldown-modal-title"
       className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-fade-in"
       onClick={onClose}
     >
@@ -305,7 +309,7 @@ export function PaymentDrilldownModal({
                 Customer: {payment.customer_id}
               </span>
             </div>
-            <h3 className="text-xl font-bold text-white flex items-center gap-2">
+            <h3 id="drilldown-modal-title" className="text-xl font-bold text-white flex items-center gap-2">
               <span>{formatPaiseToINR(payment.amount, true)}</span>
               <span className="text-xs font-normal text-slate-400 font-mono">
                 ({payment.amount.toLocaleString('en-IN')} Paise)
@@ -314,6 +318,7 @@ export function PaymentDrilldownModal({
           </div>
 
           <button
+            data-testid="close-drilldown-modal"
             onClick={onClose}
             aria-label="Close modal"
             className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"

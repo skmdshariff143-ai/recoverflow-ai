@@ -190,8 +190,109 @@ export function RankedQueueTable({
         </div>
       </div>
 
-      {/* ── Table ──────────────────────────────────────────────── */}
-      <div className="overflow-x-auto border border-slate-100 rounded-lg">
+      {/* ── Mobile Card List (sm:hidden) ───────────────────────── */}
+      <div className="block sm:hidden space-y-3" data-testid="mobile-queue-card-list">
+        {paginatedItems.length === 0 ? (
+          <div className="py-8 text-center bg-slate-50 rounded-lg p-4 border border-slate-200" data-testid="empty-queue-mobile">
+            <FilterX className="w-6 h-6 text-slate-500 mx-auto mb-2" />
+            <p className="text-xs font-bold text-slate-800">No payments match your filters</p>
+            <button
+              onClick={handleClearAllFilters}
+              className="mt-2 text-xs text-indigo-700 font-semibold bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-200"
+            >
+              Clear All Filters
+            </button>
+          </div>
+        ) : (
+          paginatedItems.map((item) => {
+            const isRecovered = item.execution_status === 'recovered';
+            const isStopped = item.status === 'stopped' || item.execution_status === 'stopped';
+            const isPending = item.status === 'pending_approval';
+            const isDeferred = item.status === 'deferred';
+
+            return (
+              <div
+                key={item.payment.payment_id}
+                data-testid="mobile-queue-card"
+                onClick={() => onSelectPayment(item.payment.payment_id)}
+                className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs space-y-2.5 active:bg-indigo-50/60 transition cursor-pointer"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {item.rank ? (
+                      <span className="bg-indigo-100 text-indigo-800 font-bold px-2 py-0.5 rounded text-[11px]">
+                        #{item.rank}
+                      </span>
+                    ) : null}
+                    <span className="font-mono font-bold text-xs text-slate-900">
+                      {item.payment.payment_id}
+                    </span>
+                  </div>
+                  {isRecovered ? (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
+                      Recovered
+                    </span>
+                  ) : isStopped ? (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-200">
+                      Stopped
+                    </span>
+                  ) : isPending ? (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+                      Pending
+                    </span>
+                  ) : isDeferred ? (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                      Deferred
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-200">
+                      Retry Scheduled
+                    </span>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                  <div>
+                    <span className="text-[10px] text-slate-600 block">Amount / Cust</span>
+                    <span className="font-bold text-slate-900">
+                      ₹{(item.payment.amount / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    </span>
+                    <span className="text-[10px] text-slate-700 font-mono block">{item.payment.customer_id}</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[10px] text-slate-600 block">Prob / Expected Value</span>
+                    <span className="font-bold text-emerald-700">
+                      ₹{(item.score.expected_value / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    </span>
+                    <span className="text-[10px] text-indigo-700 font-semibold block">
+                      {(item.score.recovery_probability * 100).toFixed(1)}% prob
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-1 border-t border-slate-100 text-xs">
+                  <span className="text-[10px] uppercase font-semibold text-slate-600">
+                    {item.suggested_intervention}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSelectPayment(item.payment.payment_id);
+                    }}
+                    className="text-indigo-600 font-bold flex items-center gap-1 text-xs"
+                  >
+                    Explain Drilldown <ExternalLink className="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* ── Desktop Table (hidden sm:block) ────────────────────── */}
+      <div className="hidden sm:block overflow-x-auto border border-slate-100 rounded-lg">
         <table data-testid="ranked-queue-table" className="min-w-full text-xs text-left">
           <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase tracking-wider">
             <tr>

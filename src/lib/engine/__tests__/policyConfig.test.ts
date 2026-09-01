@@ -54,8 +54,7 @@ describe('validatePolicyConfig', () => {
 
   test('all merchant risk-appetite personas pass validation and strictly obey safety limits', () => {
     for (const [key, persona] of Object.entries(MERCHANT_PERSONAS)) {
-      const p = persona as any;
-      const res = validatePolicyConfig(p.config);
+      const res = validatePolicyConfig(persona.config);
       expect(res.valid, `Persona ${key} must be valid`).toBe(true);
       expect(res.sanitizedConfig.maxAttemptsCap).toBeLessThanOrEqual(MAX_RECOVERY_ATTEMPTS);
       expect(res.sanitizedConfig.maxAttemptsCap).toBeGreaterThanOrEqual(1);

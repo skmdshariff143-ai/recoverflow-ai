@@ -22,10 +22,9 @@ test.describe('PayBack AI — Cost-of-Inaction Live Counter', () => {
     await expect(rate).toContainText(/₹/);
     await expect(rate).toContainText(/\/hr/);
 
-    // 3. Read initial accumulated loss value
+    // 3. Read accumulated loss element
     const accumulated = page.getByTestId('cost-of-inaction-accumulated');
     await expect(accumulated).toBeVisible();
-    const initialText = await accumulated.textContent();
 
     // 4. Wait for counter to increment
     await page.waitForTimeout(600);

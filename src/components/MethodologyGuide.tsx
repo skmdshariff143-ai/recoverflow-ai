@@ -488,7 +488,7 @@ export function MethodologyGuide() {
                 </div>
                 <h4 className="font-bold text-slate-900 text-xs">Tamper Demo, Replay &amp; Guide</h4>
                 <p className="text-slate-600 text-[11px] mt-1 leading-relaxed">
-                  Adversarial "Try to Break It" demo, Blind-Bot Replay Arena, Trust Score, Audio Cues, and Self-Playing Guide.
+                  Adversarial &quot;Try to Break It&quot; demo, Blind-Bot Replay Arena, Trust Score, Audio Cues, and Self-Playing Guide.
                 </p>
               </div>
               <div className="mt-3 pt-2 border-t border-slate-200/60 flex items-center justify-between text-[10px] font-mono text-slate-500">
