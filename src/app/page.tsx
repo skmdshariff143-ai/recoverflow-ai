@@ -106,12 +106,12 @@ export default function Home() {
 
       {/* ── Main Application Workspace ─────────────────────────── */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-        {/* KPI Metrics Overview (Visible across workspaces) */}
-        <MetricsOverview kpis={kpis} />
-
         {/* Workspace 1: Dashboard & Ranked Queue */}
         {activeTab === 'dashboard' && (
           <div className="space-y-6">
+            {/* KPI Metrics Overview & Trust Score (Front and Center on Command Center) */}
+            <MetricsOverview kpis={kpis} />
+
             <CalibrationVisualizer
               calibration={batchResult.calibration}
               modelComparison={modelComparison}

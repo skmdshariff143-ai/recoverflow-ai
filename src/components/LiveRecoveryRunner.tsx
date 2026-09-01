@@ -259,19 +259,19 @@ export function LiveRecoveryRunner({
           <button
             onClick={() => setIsSoundEnabled(!isSoundEnabled)}
             data-testid="toggle-sound-btn"
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border shadow-xs transition cursor-pointer ${
               isSoundEnabled
-                ? 'bg-emerald-50 text-emerald-800 border-emerald-300 shadow-2xs'
-                : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'
+                ? 'bg-emerald-600 text-white border-emerald-500 hover:bg-emerald-700 shadow-emerald-500/20'
+                : 'bg-slate-800 text-amber-300 border-amber-500/50 hover:bg-slate-700'
             }`}
             title="Toggle Audio Cues for Recovery Pipeline Events (Web Audio API)"
           >
             {isSoundEnabled ? (
-              <Volume2 className="w-3.5 h-3.5 text-emerald-600" />
+              <Volume2 className="w-4 h-4 text-emerald-200 animate-pulse" />
             ) : (
-              <VolumeX className="w-3.5 h-3.5 text-slate-400" />
+              <VolumeX className="w-4 h-4 text-amber-400" />
             )}
-            <span>{isSoundEnabled ? 'Sound: On' : 'Sound: Muted'}</span>
+            <span>{isSoundEnabled ? '🔊 Sound: On' : '🔇 Sound: Muted'}</span>
           </button>
 
           <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-lg border border-slate-200 text-xs">
