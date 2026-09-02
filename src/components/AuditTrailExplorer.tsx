@@ -26,7 +26,9 @@ import {
   Sparkles,
   Send,
   CheckCircle2,
+  Smartphone,
 } from 'lucide-react';
+import { QRCodeSVG } from '@/components/QRCodeSVG';
 import type { ChainedAuditRecord, LedgerVerificationResult } from '@/lib/engine/hashChainLedger';
 import { tamperWorkingLedgerCopy, verifyLedgerIntegrity } from '@/lib/engine/hashChainLedger';
 import { queryAuditLedger, type LedgerQueryResponse } from '@/lib/engine/askLedger';
@@ -358,6 +360,46 @@ export function AuditTrailExplorer({
               <Bug className="w-3.5 h-3.5" />
               Tamper &amp; Verify
             </button>
+          </div>
+        </div>
+
+        {/* ── Judge-Triggered Live Failure QR Code & Link (Participation Moment) ── */}
+        <div
+          data-testid="judge-trigger-qr-panel"
+          className="pt-3 mt-3 border-t border-amber-200/60 flex flex-col sm:flex-row items-center justify-between gap-3 bg-white/90 rounded-lg p-3 border border-amber-200/60"
+        >
+          <div className="flex items-center gap-3">
+            <div className="shrink-0 bg-white p-1 rounded-lg border border-slate-200 shadow-2xs">
+              <QRCodeSVG
+                url={typeof window !== 'undefined' ? `${window.location.origin}/trigger` : 'https://recoverflow-ai-kohl.vercel.app/trigger'}
+                size={56}
+              />
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5 font-bold text-xs text-slate-900">
+                <Smartphone className="w-3.5 h-3.5 text-indigo-600" />
+                <span>Judge Participation: Trigger Live Failure</span>
+                <span className="text-[9px] bg-rose-100 text-rose-800 font-bold px-1.5 py-0.2 rounded border border-rose-200">
+                  LIVE TEST ADAPTER
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-600 mt-0.5">
+                Scan with smartphone camera to trigger a real test-mode payment failure event that appears on this screen in ~2 seconds.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+            <a
+              href="/trigger"
+              target="_blank"
+              rel="noopener noreferrer"
+              data-testid="open-trigger-page-link"
+              className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-xs shadow-xs transition flex items-center gap-1 cursor-pointer"
+            >
+              <span>Open Trigger Page</span>
+              <span className="text-indigo-200 font-bold">↗</span>
+            </a>
           </div>
         </div>
       </div>

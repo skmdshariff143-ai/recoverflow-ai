@@ -74,23 +74,34 @@ export function useRecoveryBatch(options: UseRecoveryBatchOptions = {}) {
     }
   }, []);
 
-  // Poll/fetch live webhooks when Razorpay Test Mode is active
+  // Poll/fetch live webhooks periodically so judge live triggers reflect within ~2.5s
   useEffect(() => {
     let isMounted = true;
-    if (provenance === 'razorpay_test_mode') {
+
+    const poll = () => {
       fetch('/api/webhooks/razorpay')
         .then((res) => (res.ok ? res.json() : null))
         .then((data) => {
           if (isMounted && data && Array.isArray(data.payments)) {
-            setLiveWebhookPayments(data.payments);
+            setLiveWebhookPayments((prev) => {
+              if (JSON.stringify(prev) !== JSON.stringify(data.payments)) {
+                return data.payments;
+              }
+              return prev;
+            });
           }
         })
         .catch(() => {});
-    }
+    };
+
+    poll();
+    const intervalId = setInterval(poll, 2500);
+
     return () => {
       isMounted = false;
+      clearInterval(intervalId);
     };
-  }, [provenance]);
+  }, []);
 
   // Trigger a sample test-mode webhook event for instantaneous live demo
   const triggerSampleWebhookFailure = useCallback(async () => {
@@ -151,6 +162,12 @@ export function useRecoveryBatch(options: UseRecoveryBatchOptions = {}) {
     }
     if (provenance === 'imported_dataset') {
       return loadAdversarialStressFixture().payments;
+    }
+    // Prepend live webhook payments so judge-triggered live events are visible immediately!
+    if (liveWebhookPayments.length > 0) {
+      const liveIds = new Set(liveWebhookPayments.map((p) => p.payment_id));
+      const filteredBase = basePayments.filter((p) => !liveIds.has(p.payment_id));
+      return [...liveWebhookPayments, ...filteredBase];
     }
     return basePayments;
   }, [provenance, basePayments, liveWebhookPayments]);

@@ -15,10 +15,25 @@ import {
   mapRazorpayWebhookToFailedPayment,
   type RazorpayWebhookPayload,
 } from '@/lib/adapters/razorpayWebhook';
+import { checkRateLimit } from '@/lib/server/rateLimiter';
 import { liveWebhookStore } from '@/lib/server/liveWebhookStore';
 
 export async function POST(req: NextRequest) {
   try {
+    const forwardedFor = req.headers.get('x-forwarded-for') || '127.0.0.1';
+    const clientIp = forwardedFor.split(',')[0].trim();
+    const rateLimit = checkRateLimit(clientIp, 60, 60000);
+
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        {
+          error: 'Rate limit exceeded on webhook ingestion endpoint.',
+          retryAfterSeconds: rateLimit.resetInSeconds,
+        },
+        { status: 429 },
+      );
+    }
+
     const rawBody = await req.text();
     const signature = req.headers.get('x-razorpay-signature');
     const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
