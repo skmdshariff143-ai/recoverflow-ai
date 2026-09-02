@@ -14,6 +14,7 @@ import {
   ShieldAlert,
   Clock,
   Briefcase,
+  Sparkles,
 } from 'lucide-react';
 import type { useRecoveryBatch } from '@/hooks/useRecoveryBatch';
 import { TrustScoreWidget } from './TrustScoreWidget';
@@ -21,11 +22,29 @@ import { CostOfInactionCounter } from './CostOfInactionCounter';
 
 interface MetricsOverviewProps {
   kpis: ReturnType<typeof useRecoveryBatch>['kpis'];
+  onNavigateTab?: (tab: 'dashboard' | 'live_runner' | 'evaluation_lab' | 'promise_to_pay' | 'audit_ledger' | 'methodology_guide') => void;
+  recomputeFeedback?: string | null;
 }
 
-export function MetricsOverview({ kpis }: MetricsOverviewProps) {
+export function MetricsOverview({ kpis, onNavigateTab, recomputeFeedback }: MetricsOverviewProps) {
   return (
     <div className="space-y-4">
+      {/* ── Live Recompute Feedback Toast ─────────────────────── */}
+      {recomputeFeedback && (
+        <div
+          data-testid="recompute-feedback-toast"
+          className="flex items-center justify-between p-2.5 px-4 bg-indigo-50/95 border border-indigo-200 text-indigo-900 rounded-xl shadow-xs text-xs font-semibold animate-in fade-in slide-in-from-top-1 duration-150"
+        >
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-indigo-600 animate-spin" />
+            <span>{recomputeFeedback}</span>
+          </div>
+          <span className="text-[10px] font-mono text-indigo-600 bg-indigo-100 px-2 py-0.5 rounded">
+            Live Recomputed
+          </span>
+        </div>
+      )}
+
       {/* ── Explainability & Safety Trust Score Headline Banner ─── */}
       <TrustScoreWidget
         inputs={{
@@ -36,6 +55,7 @@ export function MetricsOverview({ kpis }: MetricsOverviewProps) {
           totalDecisions: 100,
           loggedAuditRecords: 100,
         }}
+        onNavigateTab={onNavigateTab}
       />
 
       {/* ── Primary Financial & Calibration Row ─────────────────── */}

@@ -3,6 +3,10 @@ import { test, expect } from '@playwright/test';
 test.describe('PayBack AI — Command Palette (Cmd/Ctrl+K)', () => {
 
   test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem('payback_spotlight_dismissed_v1', 'true');
+      localStorage.setItem('payback_guide_completed_v1', 'true');
+    });
     await page.goto('/');
     await page.waitForSelector('header');
   });
@@ -31,7 +35,7 @@ test.describe('PayBack AI — Command Palette (Cmd/Ctrl+K)', () => {
     await expect(page.getByTestId('command-palette')).not.toBeVisible();
 
     // Drill-down modal should appear
-    await expect(page.getByText(/Deterministic Scoring Waterfall/i)).toBeVisible();
+    await expect(page.getByTestId('payment-drilldown-modal')).toBeVisible();
   });
 
   test('navigates tabs via command palette', async ({ page }) => {

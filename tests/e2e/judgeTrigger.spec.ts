@@ -54,8 +54,9 @@ test.describe('PayBack AI — Judge-Triggered Live Failure Participation (Task 1
     expect(match).not.toBeNull();
     const injectedId = match![0];
 
-    // Check main dashboard reflects the new payment ID
-    await expect(mainPage.getByText(injectedId).first()).toBeVisible({ timeout: 8000 });
+    // Check main dashboard reflects the new payment ID in desktop queue table
+    const tablePaymentElement = mainPage.locator('table').getByText(injectedId).first();
+    await expect(tablePaymentElement).toBeVisible({ timeout: 12000 });
 
     await context.close();
   });

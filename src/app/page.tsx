@@ -141,6 +141,45 @@ export default function Home() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleResetDemoState]);
 
+  const [recomputeFeedback, setRecomputeFeedback] = React.useState<string | null>(null);
+  const isFirstRender = React.useRef(true);
+  const prevBudgetRef = React.useRef(budget);
+  const prevSeedRef = React.useRef(simulationSeed);
+  const prevScoringModelRef = React.useRef(scoringModel);
+
+  React.useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    if (prevBudgetRef.current !== budget) {
+      prevBudgetRef.current = budget;
+      setRecomputeFeedback(`Allocation recomputed for ${budget} slots`);
+      const timer = setTimeout(() => setRecomputeFeedback(null), 2200);
+      return () => clearTimeout(timer);
+    }
+  }, [budget]);
+
+  React.useEffect(() => {
+    if (isFirstRender.current) return;
+    if (prevSeedRef.current !== simulationSeed) {
+      prevSeedRef.current = simulationSeed;
+      setRecomputeFeedback(`Simulated new payment cohort (Seed #${simulationSeed})`);
+      const timer = setTimeout(() => setRecomputeFeedback(null), 2200);
+      return () => clearTimeout(timer);
+    }
+  }, [simulationSeed]);
+
+  React.useEffect(() => {
+    if (isFirstRender.current) return;
+    if (prevScoringModelRef.current !== scoringModel) {
+      prevScoringModelRef.current = scoringModel;
+      setRecomputeFeedback(`Model re-ranked: ${scoringModel === 'trained_logistic' ? 'v1.1 Trained Logistic' : 'v1.0 Heuristic'}`);
+      const timer = setTimeout(() => setRecomputeFeedback(null), 2200);
+      return () => clearTimeout(timer);
+    }
+  }, [scoringModel]);
+
   const handleReSimulate = () => {
     // Generate new random seed for simulation rerun
     setSimulationSeed(Math.floor(Math.random() * 100000) + 1);
@@ -180,29 +219,14 @@ export default function Home() {
         {/* Workspace 1: Dashboard & Ranked Queue */}
         {activeTab === 'dashboard' && (
           <div className="space-y-6">
-            {/* KPI Metrics Overview & Trust Score (Front and Center on Command Center) */}
-            <MetricsOverview kpis={kpis} />
-
-            {/* Autonomous Recovery Control Room (Hero Loop & 3-Cycle Decision Engine) */}
-            <AutonomousControlRoom
-              items={filteredQueueItems}
-              payments={payments}
-              batchResult={batchResult}
-              evaluationReport={devReport}
-              budget={budget}
-              onBudgetChange={setBudget}
-              onSelectPayment={(id) => setSelectedPaymentId(id)}
+            {/* Supporting Financial Context & Trust Score */}
+            <MetricsOverview
+              kpis={kpis}
               onNavigateTab={setActiveTab}
-              onReSimulate={handleReSimulate}
+              recomputeFeedback={recomputeFeedback}
             />
 
-            <CalibrationVisualizer
-              calibration={batchResult.calibration}
-              modelComparison={modelComparison}
-              scoringModel={scoringModel}
-              onScoringModelChange={setScoringModel}
-            />
-
+            {/* PRIMARY ACTION WORKSPACE: Ranked Payment Recovery Queue */}
             <RankedQueueTable
               items={filteredQueueItems}
               totalCount={batchResult.executed_items.length}
@@ -219,6 +243,27 @@ export default function Home() {
               provenance={provenance}
               onTriggerSampleWebhook={triggerSampleWebhookFailure}
               isLoadingLiveWebhooks={isLoadingLiveWebhooks}
+            />
+
+            {/* Supporting Architecture: Autonomous Recovery Control Room */}
+            <AutonomousControlRoom
+              items={filteredQueueItems}
+              payments={payments}
+              batchResult={batchResult}
+              evaluationReport={devReport}
+              budget={budget}
+              onBudgetChange={setBudget}
+              onSelectPayment={(id) => setSelectedPaymentId(id)}
+              onNavigateTab={setActiveTab}
+              onReSimulate={handleReSimulate}
+            />
+
+            {/* Supporting Benchmark: Model Calibration Visualizer */}
+            <CalibrationVisualizer
+              calibration={batchResult.calibration}
+              modelComparison={modelComparison}
+              scoringModel={scoringModel}
+              onScoringModelChange={setScoringModel}
             />
           </div>
         )}

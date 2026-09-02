@@ -19,15 +19,17 @@ import {
   Target,
   Lock,
   Award,
+  ShieldAlert,
 } from 'lucide-react';
 import { computeTrustScore, type TrustScoreInputs } from '@/lib/engine/trustScore';
 import { RegulatoryFootprintBadge } from './RegulatoryFootprintBadge';
 
 interface TrustScoreWidgetProps {
   inputs: TrustScoreInputs;
+  onNavigateTab?: (tab: 'dashboard' | 'live_runner' | 'evaluation_lab' | 'promise_to_pay' | 'audit_ledger' | 'methodology_guide') => void;
 }
 
-export function TrustScoreWidget({ inputs }: TrustScoreWidgetProps) {
+export function TrustScoreWidget({ inputs, onNavigateTab }: TrustScoreWidgetProps) {
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
   const trustBreakdown = computeTrustScore(inputs);
 
@@ -121,6 +123,18 @@ export function TrustScoreWidget({ inputs }: TrustScoreWidgetProps) {
               </div>
             </div>
           </div>
+
+          {onNavigateTab && (
+            <button
+              onClick={() => onNavigateTab('audit_ledger')}
+              data-testid="jump-to-tamper-demo-btn"
+              className="flex items-center gap-1.5 bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white font-bold text-xs px-3.5 py-2 rounded-xl shadow-xs transition cursor-pointer border border-rose-400/40 shrink-0"
+              title="Jump directly to the Live Cryptographic Tamper Demo"
+            >
+              <ShieldAlert className="w-3.5 h-3.5 text-rose-200" />
+              <span>Try to Break It &rarr;</span>
+            </button>
+          )}
 
           <button
             onClick={() => setIsExpanded(!isExpanded)}

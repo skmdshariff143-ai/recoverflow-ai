@@ -169,7 +169,7 @@ export function CommandPalette({
   // Global keyboard shortcut: Cmd/Ctrl+K and Escape
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
         e.preventDefault();
         toggleOpen();
       } else if (e.key === 'Escape' && isOpen) {
@@ -177,8 +177,8 @@ export function CommandPalette({
         setIsOpen(false);
       }
     };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [toggleOpen, isOpen]);
 
   // Focus input when opened
@@ -346,7 +346,7 @@ export function CommandPalette({
                   return (
                     <button
                       key={item.id}
-                      data-selected={isSelected}
+                      data-selected={isSelected ? 'true' : 'false'}
                       data-testid="command-palette-item"
                       onClick={() => executeCommand(item)}
                       onMouseEnter={() => setSelectedIndex(item.globalIdx)}

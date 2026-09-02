@@ -12,7 +12,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Sliders, ShieldCheck, AlertTriangle, UserCheck } from 'lucide-react';
+import { Sliders, ShieldCheck, AlertTriangle, UserCheck, Sparkles } from 'lucide-react';
 import {
   type MerchantPolicyConfig,
   type PersonaId,
@@ -87,8 +87,12 @@ export function MerchantPolicyBuilder({
         </div>
 
         {lastSaved && (
-          <span className="text-[11px] font-mono text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-            Updated: {lastSaved}
+          <span
+            data-testid="policy-recompute-badge"
+            className="text-[11px] font-mono text-emerald-700 bg-emerald-100/90 px-2.5 py-0.5 rounded-full border border-emerald-300 flex items-center gap-1 animate-pulse"
+          >
+            <Sparkles className="w-3 h-3 text-emerald-600" />
+            <span>Policy Re-simulated ({lastSaved})</span>
           </span>
         )}
       </div>

@@ -107,21 +107,31 @@ export function RankedQueueTable({
     <div
       tabIndex={0}
       onKeyDown={handleKeyDown}
-      className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden space-y-4 p-4 focus:outline-none focus:ring-1 focus:ring-indigo-300"
+      data-testid="ranked-queue-workspace"
+      className="bg-white rounded-2xl border-2 border-indigo-200 shadow-md ring-1 ring-indigo-500/10 overflow-hidden space-y-4 p-5 focus:outline-none focus:ring-2 focus:ring-indigo-400"
     >
-      {/* ── Table Header & Evidence Provenance ─────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+      {/* ── Table Header & Primary Action Callout ───────────────── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-indigo-100 pb-4 bg-gradient-to-r from-indigo-50/60 via-slate-50/40 to-white -mx-5 -mt-5 p-5">
         <div>
-          <div className="flex items-center gap-2">
-            <h3 className="font-bold text-slate-900 text-sm">
-              Prioritized Recovery Queue ({items.length} of {totalCount} Invoices)
-            </h3>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[10px] font-bold tracking-wider uppercase bg-indigo-600 text-white px-2 py-0.5 rounded shadow-2xs">
+              PRIMARY WORKSPACE
+            </span>
+            <h2 className="font-bold text-slate-900 text-base flex items-center gap-2">
+              <span>Prioritized Recovery Queue</span>
+              <span className="text-xs text-slate-500 font-normal font-mono">
+                ({items.length} of {totalCount} Invoices)
+              </span>
+            </h2>
             <span className="text-[10px] font-mono font-bold bg-amber-50 text-amber-800 px-2 py-0.5 rounded border border-amber-200 uppercase">
               {totalCount === 6 ? 'HAND-CURATED SAFETY FIXTURE' : 'SYNTHETIC'}
             </span>
           </div>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Ranked by Expected Value (EV = Amount × Probability). Click any row to inspect explainability waterfall.
+          <p className="text-xs text-indigo-950 font-medium mt-1.5 flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-indigo-600 inline-block shrink-0 animate-ping" />
+            <span>
+              <strong>Primary Action:</strong> Click any row below to open the Explainable 6-Factor Decision Waterfall, Bounded Gemini Diagnosis &amp; Live Dispatch Controls.
+            </span>
           </p>
         </div>
       </div>

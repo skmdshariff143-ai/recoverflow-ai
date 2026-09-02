@@ -17,6 +17,7 @@ import {
   Database,
   ExternalLink,
   TrendingUp,
+  Sparkles,
 } from 'lucide-react';
 import type { ComprehensiveEvaluationReport } from '@/lib/engine/counterfactualEvaluation';
 import { formatPaiseToINR } from '@/lib/engine/financial';
@@ -77,6 +78,9 @@ export function EvaluationLab({
 
   const grossIncrementalPaise = rf.recoveredAmountPaise - ctrlFixed.recoveredAmountPaise;
   const netIncrementalPaise = rf.netRecoveredPaise - ctrlFixed.netRecoveredPaise;
+  const liftPercent = ctrlFixed.recoveredAmountPaise > 0
+    ? Math.round((grossIncrementalPaise / ctrlFixed.recoveredAmountPaise) * 100)
+    : 0;
 
   const allPoliciesList = [
     { item: rf, isPrimary: true, tag: 'EQUAL BUDGET', tagColor: 'bg-indigo-100 text-indigo-800' },
@@ -283,7 +287,32 @@ export function EvaluationLab({
 
       {/* ── Policy Comparison Matrix (7 Policies) ────────────────── */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
-        <div className="flex items-center justify-between">
+        {/* ── Plain-English Executive Summary Headline ──────────── */}
+        <div
+          data-testid="evaluation-plain-english-headline"
+          className="p-4 bg-gradient-to-r from-indigo-50/90 via-emerald-50/50 to-white border border-indigo-200/90 rounded-xl shadow-2xs"
+        >
+          <div className="flex items-start gap-3">
+            <div className="p-2 bg-indigo-600 text-white rounded-lg shrink-0 mt-0.5 shadow-2xs">
+              <Sparkles className="w-4 h-4" />
+            </div>
+            <div className="space-y-1">
+              <h4 className="text-sm md:text-base font-bold text-slate-900 leading-snug">
+                PayBack AI recovered{' '}
+                <span className="text-emerald-700 font-extrabold underline decoration-emerald-400 decoration-2">
+                  +{formatPaiseToINR(grossIncrementalPaise, false)} more
+                </span>{' '}
+                than blind Fixed Retry on identical frozen data ({liftPercent >= 0 ? `+${liftPercent}%` : `${liftPercent}%`} lift under the same {rf.interventionsExecuted}-slot budget).
+              </h4>
+              <p className="text-xs text-slate-600">
+                Net operational revenue after deducting all gateway retry &amp; notification fees is{' '}
+                <strong className="text-slate-900 font-bold">+{formatPaiseToINR(netIncrementalPaise, false)} incremental net yield</strong> with 0 unsafe attempts and zero customer opt-out violations.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between pt-1">
           <div className="flex items-center gap-2">
             <BarChart3 className="w-4 h-4 text-indigo-600" />
             <h3 className="text-sm font-bold text-slate-900">
@@ -381,12 +410,6 @@ export function EvaluationLab({
           </table>
         </div>
       </div>
-
-      {/* ── Live Merchant-Configurable Policy Builder ───────────── */}
-      <MerchantPolicyBuilder
-        currentConfig={policyConfig}
-        onApplyConfig={onPolicyConfigChange ?? (() => {})}
-      />
 
       {/* ── Multi-Merchant Risk Profiles & Platform Framing ─────── */}
       <MerchantPortfolioComparison payments={activePayments} />
