@@ -10,18 +10,21 @@ interface RateLimitRecord {
   resetAt: number;
 }
 
-const rateLimitStore = new Map<string, RateLimitRecord>();
+const globalForRateLimit = globalThis as unknown as { rateLimitStore?: Map<string, RateLimitRecord> };
+const rateLimitStore = globalForRateLimit.rateLimitStore ?? new Map<string, RateLimitRecord>();
+globalForRateLimit.rateLimitStore = rateLimitStore;
 
-// Clean up expired buckets periodically (every 5 minutes)
-if (typeof setInterval !== 'undefined') {
-  setInterval(() => {
-    const now = Date.now();
+/**
+ * Lazy cleanup of expired records to prevent memory leak without serverless setInterval timers.
+ */
+function cleanupExpiredRecords(now: number): void {
+  if (rateLimitStore.size > 200) {
     for (const [key, record] of rateLimitStore.entries()) {
       if (record.resetAt <= now) {
         rateLimitStore.delete(key);
       }
     }
-  }, 300000);
+  }
 }
 
 export interface RateLimitResult {
@@ -36,6 +39,7 @@ export function checkRateLimit(
   windowMs: number = 60000,
 ): RateLimitResult {
   const now = Date.now();
+  cleanupExpiredRecords(now);
   const record = rateLimitStore.get(identifier);
 
   if (!record || record.resetAt <= now) {

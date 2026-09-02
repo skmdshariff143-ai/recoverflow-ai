@@ -41,7 +41,4 @@ class LiveWebhookStore {
 const globalForWebhook = globalThis as unknown as { liveWebhookStore?: LiveWebhookStore };
 
 export const liveWebhookStore = globalForWebhook.liveWebhookStore ?? new LiveWebhookStore();
-
-if (process.env.NODE_ENV !== 'production') {
-  globalForWebhook.liveWebhookStore = liveWebhookStore;
-}
+globalForWebhook.liveWebhookStore = liveWebhookStore;

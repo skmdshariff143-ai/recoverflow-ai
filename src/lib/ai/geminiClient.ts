@@ -132,7 +132,7 @@ export async function diagnoseGatewayErrorWithGemini(
     return deterministicDiagnosticFallback(cleanInput, 'Gemini API key unconfigured; using deterministic rule classifier');
   }
 
-  const modelName = process.env.GEMINI_MODEL ?? 'gemini-2.5-flash';
+  const modelName = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
 
   try {
     const ai = new GoogleGenAI({ apiKey });
@@ -157,7 +157,7 @@ Strict rules:
           responseMimeType: 'application/json',
         },
       }),
-      3500,
+      8000,
     );
 
     const rawText = response.text?.trim() ?? '';
@@ -205,7 +205,7 @@ export async function draftCustomerCommunicationWithGemini(
     return fallbackTemplate;
   }
 
-  const modelName = process.env.GEMINI_MODEL ?? 'gemini-2.5-flash';
+  const modelName = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
 
   try {
     const ai = new GoogleGenAI({ apiKey });
@@ -229,7 +229,7 @@ Channel: ${channel}`;
           responseMimeType: 'application/json',
         },
       }),
-      3500,
+      8000,
     );
 
     const rawText = response.text?.trim() ?? '';
