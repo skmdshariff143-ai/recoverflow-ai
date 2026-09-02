@@ -160,6 +160,14 @@ export function EvaluationLab({
           </span>
         </div>
 
+        {/* ── Merchant Risk-Appetite Persona & Policy Builder ─────── */}
+        <div className="mt-5">
+          <MerchantPolicyBuilder
+            currentConfig={policyConfig}
+            onApplyConfig={onPolicyConfigChange ?? (() => {})}
+          />
+        </div>
+
         {/* ── Key Comparative Headline Metrics ───────────────────── */}
         <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-gradient-to-br from-indigo-50 to-white border border-indigo-200 rounded-xl p-4">
