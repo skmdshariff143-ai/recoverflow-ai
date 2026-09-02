@@ -113,10 +113,10 @@ test.describe('Live Production QA Rehearsal Walkthrough', () => {
     await page.waitForTimeout(400);
 
     // Verify Persona Picker and Counterfactual Table
-    await expect(page.getByText('Conservative SaaS')).toBeVisible();
-    await expect(page.getByText('Aggressive E-Commerce')).toBeVisible();
-    await expect(page.getByText('Regulated FinTech')).toBeVisible();
-    await expect(page.getByText('Counterfactual Policy Simulation')).toBeVisible();
+    await expect(page.getByTestId('persona-btn-cautious_saas').first()).toBeVisible();
+    await expect(page.getByTestId('persona-btn-high_volume_d2c').first()).toBeVisible();
+    await expect(page.getByTestId('persona-btn-enterprise_b2b').first()).toBeVisible();
+    await expect(page.getByText(/Evaluation Lab & Counterfactual/i).first()).toBeVisible();
 
     const stop4Time = Date.now() - startStop4;
     console.log(`Stop 4 (Evaluation Lab & Persona Picker) verified in ${stop4Time}ms.`);
@@ -125,16 +125,21 @@ test.describe('Live Production QA Rehearsal Walkthrough', () => {
     const startStop5 = Date.now();
     // Launch Replay Arena
     await page.getByTestId('open-replay-arena-btn').click();
+    await expect(page.getByRole('dialog')).toBeVisible();
     await expect(page.getByText(/Blind-Bot vs PayBack AI/i)).toBeVisible();
-    await expect(page.getByTestId('replay-skip-btn')).toBeVisible();
-    await page.getByTestId('replay-skip-btn').click();
-    await expect(page.getByText(/Final Scorecard/i)).toBeVisible({ timeout: 8000 });
 
-    // Close Replay Arena
-    const closeReplayBtn = page.locator('button[aria-label="Close Replay Arena"]').or(page.getByRole('button', { name: /Exit Arena/i })).first();
-    if (await closeReplayBtn.isVisible()) {
-      await closeReplayBtn.click();
-    }
+    const skipBtn = page.getByTestId('skip-replay-btn');
+    await expect(skipBtn).toBeVisible();
+    await skipBtn.click();
+
+    // Verify final head-to-head scorecard displays
+    const scorecard = page.getByTestId('replay-final-scorecard');
+    await expect(scorecard).toBeVisible({ timeout: 8000 });
+    await expect(scorecard).toContainText(/Final Head-to-Head Outcome Scorecard/i);
+
+    // Close Modal
+    await page.getByTestId('close-replay-modal').click();
+    await expect(page.getByRole('dialog')).not.toBeVisible();
 
     const stop5Time = Date.now() - startStop5;
     console.log(`Stop 5 (Replay Arena & Scorecard) verified in ${stop5Time}ms.`);
