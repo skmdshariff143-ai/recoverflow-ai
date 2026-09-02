@@ -62,8 +62,27 @@ interface StepContent {
 export const CURATED_5_STEPS: StepContent[] = [
   {
     id: 1,
+    title: 'Live Cryptographic Tamper Demo',
+    category: 'Pitch Stop 1 / 5 · Audit Integrity',
+    badge: 'TRY TO BREAK IT (SHA-256)',
+    icon: FileCheck2,
+    headline: 'Interactive cryptographic break test: mutate a record and watch the hash chain break.',
+    description:
+      'Before I show you anything else, try to break it yourself. Every state transition, operator note, and settlement receipt is chained into an append-only SHA-256 ledger. Clicking "Tamper Record" simulates payload manipulation—the verification engine instantly flags block corruption and breaks the chain.',
+    technicalDetails: [
+      'Genesis block anchor with parent hash chaining for all chronological state transitions.',
+      'Browser cryptographic engine recomputes every block hash in real time upon mutation.',
+      'One-click restoration returns ledger to mathematically verified state.',
+    ],
+    recommendedAction: {
+      label: 'Launch Live Tamper Demo',
+      tab: 'audit_ledger',
+    },
+  },
+  {
+    id: 2,
     title: 'KPIs, Trust Score & Connected Webhooks',
-    category: 'Pitch Stop 1 / 5 · Command Center',
+    category: 'Pitch Stop 2 / 5 · Command Center',
     badge: 'NET RECOVERY & LIVE WEBHOOK',
     icon: ShieldAlert,
     headline: 'Real-time revenue exposure, net unit economics, and Razorpay test-mode connection.',
@@ -81,9 +100,9 @@ export const CURATED_5_STEPS: StepContent[] = [
     },
   },
   {
-    id: 2,
+    id: 3,
     title: 'Explainable Decision Waterfall',
-    category: 'Pitch Stop 2 / 5 · Explainability',
+    category: 'Pitch Stop 3 / 5 · Explainability',
     badge: 'EV = AMOUNT × BPS / 10000',
     icon: Search,
     headline: 'Deterministic 6-factor waterfall with zero-write authority Gemini copilot.',
@@ -97,25 +116,6 @@ export const CURATED_5_STEPS: StepContent[] = [
     recommendedAction: {
       label: 'Inspect Priority Queue & Drill-Down',
       tab: 'dashboard',
-    },
-  },
-  {
-    id: 3,
-    title: 'Live Cryptographic Tamper Demo',
-    category: 'Pitch Stop 3 / 5 · Audit Integrity',
-    badge: 'TRY TO BREAK IT (SHA-256)',
-    icon: FileCheck2,
-    headline: 'Interactive cryptographic break test: mutate a record and watch the hash chain break.',
-    description:
-      'Every state transition, operator note, and settlement receipt is chained into an append-only SHA-256 ledger. Clicking "Tamper Record" simulates payload manipulation—the verification engine instantly flags block corruption and breaks the chain.',
-    technicalDetails: [
-      'Genesis block anchor with parent hash chaining for all chronological state transitions.',
-      'Browser cryptographic engine recomputes every block hash in real time upon mutation.',
-      'One-click restoration returns ledger to mathematically verified state.',
-    ],
-    recommendedAction: {
-      label: 'Launch Live Tamper Demo',
-      tab: 'audit_ledger',
     },
   },
   {

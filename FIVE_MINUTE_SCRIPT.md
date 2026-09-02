@@ -18,18 +18,30 @@
 ```
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
 │  5-STOP CURATED PITCH PATH                                                             │
-│  [1] KPI & Trust Score  ──▶  [2] Explainability  ──▶  [3] Live Tamper Demo             │
-│      & Razorpay Badge            Drill-Down               (Cryptographic Break Test)   │
-│                                      │                                                 │
-│                                      ▼                                                 │
-│  [5] Blind-Bot Replay   ◀──  [4] Persona / Policy                                      │
-│      Arena Scorecard             Builder Dynamic Yield                                 │
+│  [1] Live Tamper Demo       ──▶  [2] KPI & Trust Score   ──▶  [3] Explainability       │
+│      (Try to Break It)               & Razorpay Badge             Drill-Down           │
+│                                                                       │                │
+│                                                                       ▼                │
+│  [5] Blind-Bot Replay       ◀──  [4] Persona / Policy                                  │
+│      Arena Scorecard                 Builder Dynamic Yield                             │
 └────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-### 🛑 STOP 1: Command Center KPIs, Trust Score & Connected Webhook Badge (0:00 – 1:00)
+### 🛑 STOP 1: Live Cryptographic Tamper Demo ("Try to Break It") (0:00 – 1:00)
+- **Where**: Navigate to **Audit Ledger** tab $\to$ Live Tamper Demo Panel.
+- **What to Point Out**:
+  1. Frame the opening: *"Before I show you any dashboards or recovery metrics, try to break the system yourself."*
+  2. Click **"Tamper & Verify"** on any record (or select a record and change decision/audit reason).
+  3. Watch the live cryptographic verification engine recompute hashes: the target block instantly turns red, the SHA-256 hash chain invalidates, and an invariant violation alert is raised.
+  4. Click **"Reset Demo"**: Cryptographic integrity turns green instantly from genesis hash `00000000...`.
+- **What to Say**:  
+  *"In automated payment recovery, hallucinated logs and audit evasion are fatal risks. PayBack AI cryptographically chains every single recovery decision into an immutable SHA-256 ledger. If anyone modifies a past decision, the mathematical chain breaks instantly."*
+
+---
+
+### 🛑 STOP 2: Command Center KPIs, Trust Score & Connected Webhook Badge (1:00 – 2:00)
 - **Where**: Main Command Center header & top KPI row.
 - **What to Point Out**:
   1. **Top Financial KPIs**: Show Total Revenue at Risk (`₹6,87,695`), Gross Recovered (`₹1,46,900`), and **Net Recovery** after operational fees (`₹1,36,900`).
@@ -40,7 +52,7 @@
 
 ---
 
-### 🛑 STOP 2: Explainable Payment Drill-Down & Decision Waterfall (1:00 – 2:00)
+### 🛑 STOP 3: Explainable Payment Drill-Down & Decision Waterfall (2:00 – 3:00)
 - **Where**: Ranked Priority Queue Table $\to$ click row `pay_00001` (or press `Enter` on any row).
 - **What to Point Out**:
   1. **Deterministic 6-Factor Waterfall**: Step through base category recovery rate, customer on-time history (+12%), tenure boost (+5%), recency decay, and promise-to-pay penalty.
@@ -49,17 +61,6 @@
   4. **Multi-Cycle Stepper**: 8-stage visual progression from ingestion through quiet-hours check to verified settlement.
 - **What to Say**:  
   *"Every priority rank is mathematically explainable down to the paisa. AI normalizes unstructured error logs into plain English, but AI never has authority to execute money or change amounts."*
-
----
-
-### 🛑 STOP 3: Live Cryptographic Tamper Demo ("Try to Break It") (2:00 – 3:00)
-- **Where**: Navigate to **Audit Ledger** tab $\to$ click the **"⚡ Try to Break It (Live Tamper Demo)"** button.
-- **What to Point Out**:
-  1. Click **"Tamper Record #12 (Alter Amount to ₹99,999)"**.
-  2. Watch the live cryptographic verification engine recompute hashes: Block #12 instantly turns red, the SHA-256 hash chain breaks, and an alert is raised.
-  3. Click **"Restore Original Data"**: Cryptographic integrity turns green instantly from genesis hash `00000000...`.
-- **What to Say**:  
-  *"In production recovery, fraud and audit evasion are real risks. PayBack AI chains every decision, operator note, and settlement receipt into an append-only SHA-256 ledger. Watch what happens if someone attempts to manipulate a ledger entry—the chain breaks immediately."*
 
 ---
 
