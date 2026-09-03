@@ -16,6 +16,7 @@
     "generate:benchmark": "tsx scripts/generate-benchmarks.ts",
     "verify:artifacts": "tsx scripts/verify-artifacts.ts",
     "capture:evidence": "tsx scripts/capture-live-evidence.ts",
+    "seed:subscriptions": "tsx scripts/create-razorpay-subscription.ts",
     "verify:outcome-consistency": "tsx scripts/verify-outcome-consistency.ts",
     "verify": "npm run lint && npm run type-check && npm run test && npm run generate:benchmark && npm run verify:artifacts && git diff --exit-code -- data src/data && npm run build && npm run test:e2e"
   },
