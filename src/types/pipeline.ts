@@ -44,6 +44,7 @@ export type ApprovalStatus = 'approved' | 'auto_approved' | 'pending' | 'rejecte
 
 export type DashboardTab =
   | 'dashboard'
+  | 'subscriptions'
   | 'live_runner'
   | 'evaluation_lab'
   | 'audit_ledger'

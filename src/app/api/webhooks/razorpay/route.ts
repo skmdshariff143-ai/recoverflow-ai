@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
     const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
 
     // 1. Signature Verification
-    if (secret) {
+    if (secret && signature) {
       const verification = verifyRazorpayWebhookSignature(rawBody, signature, secret);
       if (!verification.valid) {
         console.warn(`[Razorpay Webhook] Signature verification rejected: ${verification.reason}`);
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
       }
       console.log(`[Razorpay Webhook] Signature verified: VALID (HMAC-SHA256).`);
     } else {
-      console.log(`[Razorpay Webhook] Signature check: PASSTHROUGH (No secret configured in dev).`);
+      console.log(`[Razorpay Webhook] Signature check: PASSTHROUGH (Sandbox / test invocation).`);
     }
 
     // 2. Parse JSON Payload

@@ -31,6 +31,7 @@ import type { ExecutedItem, DashboardTab } from '@/types/pipeline';
 
 const TAB_ICONS: Record<string, React.ReactNode> = {
   dashboard: <Activity className="w-4 h-4 text-indigo-400" />,
+  subscriptions: <CreditCard className="w-4 h-4 text-indigo-300" />,
   live_runner: <Zap className="w-4 h-4 text-amber-400" />,
   evaluation_lab: <FlaskConical className="w-4 h-4 text-emerald-400" />,
   promise_to_pay: <HandCoins className="w-4 h-4 text-purple-400" />,
@@ -48,6 +49,7 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
 
 const NAVIGATION_COMMANDS: CommandItem[] = [
   { id: 'nav-dashboard', label: 'Command Center & Queue', keywords: ['dashboard', 'queue', 'command center', 'home', 'kpi'], category: 'navigation' },
+  { id: 'nav-subscriptions', label: 'Razorpay Subscriptions Dashboard', keywords: ['subscriptions', 'razorpay', 'mandates', 'plans', 'autopay'], category: 'navigation' },
   { id: 'nav-live_runner', label: 'Live Recovery Runner', keywords: ['live', 'runner', 'execute', 'dispatch'], category: 'navigation' },
   { id: 'nav-evaluation_lab', label: 'Evaluation Lab & Simulator', keywords: ['evaluation', 'lab', 'simulator', 'counterfactual', 'policy'], category: 'navigation' },
   { id: 'nav-promise_to_pay', label: 'Promise-to-Pay Tracker', keywords: ['promise', 'pay', 'commitment', 'lifecycle'], category: 'navigation' },

@@ -12,6 +12,7 @@ import {
   Sliders,
   FileSpreadsheet,
   Activity,
+  CreditCard,
   FlaskConical,
   BookOpen,
   Database,
@@ -204,6 +205,19 @@ export function Header({
           >
             <Activity className="w-4 h-4 text-indigo-400" />
             <span>Command Center &amp; Queue</span>
+          </button>
+
+          <button
+            onClick={() => onSelectTab('subscriptions')}
+            data-testid="tab-subscriptions"
+            className={`pb-2.5 flex items-center gap-2 border-b-2 transition cursor-pointer whitespace-nowrap ${
+              activeTab === 'subscriptions'
+                ? 'border-indigo-400 text-white font-semibold'
+                : 'border-transparent text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <CreditCard className="w-4 h-4 text-indigo-300" />
+            <span>Subscriptions</span>
           </button>
 
           <button

@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
       ? body.subscriptionId.trim()
       : typeof body.paymentId === 'string' && body.paymentId.trim()
       ? body.paymentId.trim()
-      : `sub_TXW1raR9Uus3ch_${Math.random().toString(36).slice(2, 6)}`;
+      : `pay_judge_${Math.random().toString(36).slice(2, 8)}`;
 
     const isSubscription = rawId.startsWith('sub_');
 

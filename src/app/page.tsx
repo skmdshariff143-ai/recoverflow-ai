@@ -27,6 +27,7 @@ import { JudgeCheatSheetModal } from '@/components/JudgeCheatSheetModal';
 import { FirstTimeVisitorSpotlight } from '@/components/FirstTimeVisitorSpotlight';
 import { GuideMeTourModal } from '@/components/GuideMeTourModal';
 import { AutonomousControlRoom } from '@/components/AutonomousControlRoom';
+import { RazorpaySubscriptionsDashboard } from '@/components/RazorpaySubscriptionsDashboard';
 
 export default function Home() {
   const [isJudgeModeOpen, setIsJudgeModeOpen] = React.useState<boolean>(false);
@@ -266,6 +267,13 @@ export default function Home() {
               onScoringModelChange={setScoringModel}
             />
           </div>
+        )}
+
+        {/* Workspace: Razorpay Test-Mode Subscriptions Dashboard */}
+        {activeTab === 'subscriptions' && (
+          <RazorpaySubscriptionsDashboard
+            onNavigateToQueue={() => setActiveTab('dashboard')}
+          />
         )}
 
         {/* Workspace 2: Live Recovery Runner */}
