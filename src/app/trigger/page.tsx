@@ -20,13 +20,19 @@ import {
   ArrowLeft,
   Smartphone,
   Activity,
+  ExternalLink,
 } from 'lucide-react';
 
 const DEMO_SUBSCRIPTIONS = [
-  { id: 'sub_TXW1raR9Uus3ch', plan: 'SaaS Pro Monthly', amount: 1499, category: 'invalid_mandate', badge: 'Mandate Halted' },
-  { id: 'sub_Hk72Lp0Qrst89v', plan: 'Enterprise Annual', amount: 52000, category: 'bank_downtime', badge: 'Dual-Custody ₹52k' },
-  { id: 'sub_Bld99Replay01a', plan: 'Growth Autopay', amount: 4999, category: 'expired_card', badge: 'Card Expired' },
-  { id: 'sub_Ent88SaaS999', plan: 'Developer API Plan', amount: 12500, category: 'insufficient_funds', badge: 'Low Balance' },
+  { id: 'sub_TXdrmwWFp4rrc3', plan: 'SaaS Pro Monthly', amount: 1499, category: 'invalid_mandate', badge: 'Active Mandate', link: 'https://rzp.io/rzp/IjAxpIvF' },
+  { id: 'sub_TXdroGLUXyYIZO', plan: 'Enterprise Annual Tier', amount: 52000, category: 'bank_downtime', badge: 'Dual-Custody ₹52k', link: 'https://rzp.io/rzp/e5G8pcyS' },
+  { id: 'sub_TXdrpbWWASct8j', plan: 'Growth Autopay Plan', amount: 4999, category: 'expired_card', badge: 'Card Mandate', link: 'https://rzp.io/rzp/NHunz5h2' },
+  { id: 'sub_TXdrqtDrqR91IV', plan: 'Developer API Subscription', amount: 12500, category: 'insufficient_funds', badge: 'API Autopay', link: 'https://rzp.io/rzp/x2ojWWF' },
+  { id: 'sub_TXdwkIv72ok0Cj', plan: 'AI Copilot Add-On', amount: 3499, category: 'gateway_degradation', badge: 'AI Add-On', link: 'https://rzp.io/rzp/Qv4oz6Bg' },
+  { id: 'sub_TXdwlWncCBeBuf', plan: 'FinTech Compliance Suite', amount: 18500, category: 'invalid_mandate', badge: 'Compliance Tier', link: 'https://rzp.io/rzp/ZML9D7m' },
+  { id: 'sub_TXdwms7QX6F6HY', plan: 'Scale Tier Quarterly', amount: 24999, category: 'bank_downtime', badge: 'Scale Autopay', link: 'https://rzp.io/rzp/0UOWVfS' },
+  { id: 'sub_TXdwo7zLgvIhov', plan: 'Startup Accelerator Plan', amount: 999, category: 'insufficient_funds', badge: 'Starter Tier', link: 'https://rzp.io/rzp/JL1VfBVU' },
+  { id: 'sub_TXdwpRFnHIme90', plan: 'Global Payment Orchestrator', amount: 75000, category: 'bank_downtime', badge: 'Dual-Custody ₹75k', link: 'https://rzp.io/rzp/l7Lmydn' },
 ];
 
 const FAILURE_OPTIONS = [
@@ -279,6 +285,21 @@ export default function JudgeTriggerPage() {
                       <span className="text-slate-300 font-medium">{sub.plan}</span>
                       <span className="font-bold text-white">₹{sub.amount.toLocaleString('en-IN')}</span>
                     </div>
+                    {sub.link && (
+                      <div className="mt-1 pt-1 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-indigo-400 font-mono">
+                        <span className="truncate max-w-[180px]">{sub.link.replace('https://', '')}</span>
+                        <a
+                          href={sub.link}
+                          target="_blank"
+                          rel="noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="hover:text-indigo-300 flex items-center gap-0.5 underline shrink-0 ml-1"
+                        >
+                          <span>Open</span>
+                          <ExternalLink className="w-2.5 h-2.5" />
+                        </a>
+                      </div>
+                    )}
                   </div>
                 );
               })}
