@@ -128,10 +128,11 @@ export function TrustScoreWidget({ inputs, onNavigateTab }: TrustScoreWidgetProp
             <button
               onClick={() => onNavigateTab('audit_ledger')}
               data-testid="jump-to-tamper-demo-btn"
+              aria-label="Try to Break It — Jump directly to live tamper demo"
               className="flex items-center gap-1.5 bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white font-bold text-xs px-3.5 py-2 rounded-xl shadow-xs transition cursor-pointer border border-rose-400/40 shrink-0"
               title="Jump directly to the Live Cryptographic Tamper Demo"
             >
-              <ShieldAlert className="w-3.5 h-3.5 text-rose-200" />
+              <ShieldAlert className="w-3.5 h-3.5 text-rose-200" aria-hidden="true" />
               <span>Try to Break It &rarr;</span>
             </button>
           )}
@@ -139,10 +140,12 @@ export function TrustScoreWidget({ inputs, onNavigateTab }: TrustScoreWidgetProp
           <button
             onClick={() => setIsExpanded(!isExpanded)}
             data-testid="toggle-trust-breakdown-btn"
+            aria-label={isExpanded ? 'Hide Trust Score breakdown' : 'Show Trust Score breakdown'}
+            aria-expanded={isExpanded}
             className="flex items-center gap-1 bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-200 border border-indigo-500/40 text-xs font-semibold px-3 py-2 rounded-xl transition cursor-pointer shrink-0"
           >
             <span>{isExpanded ? 'Hide' : 'Breakdown'}</span>
-            {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            {isExpanded ? <ChevronUp className="w-3.5 h-3.5" aria-hidden="true" /> : <ChevronDown className="w-3.5 h-3.5" aria-hidden="true" />}
           </button>
         </div>
       </div>

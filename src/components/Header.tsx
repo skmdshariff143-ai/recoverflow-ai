@@ -83,12 +83,13 @@ export function Header({
           <div className="flex items-center flex-wrap gap-3">
             {/* Budget Capacity Slider */}
             <div className="flex items-center gap-2 bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700/60 text-xs">
-              <Sliders className="w-3.5 h-3.5 text-indigo-400" />
-              <span className="text-slate-300 font-medium">Budget:</span>
+              <Sliders className="w-3.5 h-3.5 text-indigo-400" aria-hidden="true" />
+              <label htmlFor="header-budget-slider" className="text-slate-300 font-medium">Budget:</label>
               <span className="text-white font-bold bg-indigo-600/40 px-1.5 py-0.5 rounded text-indigo-200">
                 {budget} slots
               </span>
               <input
+                id="header-budget-slider"
                 type="range"
                 min="10"
                 max="80"
@@ -97,24 +98,28 @@ export function Header({
                 onChange={(e) => onBudgetChange(Number(e.target.value))}
                 className="w-20 accent-indigo-500 cursor-pointer h-1.5 bg-slate-700 rounded-lg"
                 title={`Adjust contact budget capacity: ${budget}`}
+                aria-label={`Adjust contact budget capacity: ${budget} slots`}
               />
             </div>
 
             {/* Re-simulate Button */}
             <button
               onClick={onReSimulate}
+              aria-label="Re-Simulate Batch with new random seed"
               className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-700 transition cursor-pointer"
               title={`Simulation seed: ${simulationSeed}`}
             >
-              <RotateCcw className="w-3.5 h-3.5 text-emerald-400" />
+              <RotateCcw className="w-3.5 h-3.5 text-emerald-400" aria-hidden="true" />
               <span>Re-Simulate Batch</span>
             </button>
 
             {/* Data Provenance Selector */}
             <div className="flex items-center gap-1.5 bg-slate-800/80 px-2.5 py-1.5 rounded-lg border border-slate-700/60 text-xs">
-              <Database className="w-3.5 h-3.5 text-cyan-400" />
-              <span className="text-slate-400 font-medium hidden sm:inline">Source:</span>
+              <Database className="w-3.5 h-3.5 text-cyan-400" aria-hidden="true" />
+              <label htmlFor="header-data-provenance-select" className="text-slate-400 font-medium hidden sm:inline">Source:</label>
               <select
+                id="header-data-provenance-select"
+                aria-label="Select Active Data Provenance"
                 value={provenance}
                 onChange={(e) => onProvenanceChange?.(e.target.value as DataProvenanceSource)}
                 className="bg-transparent text-cyan-200 font-semibold focus:outline-none cursor-pointer text-xs"

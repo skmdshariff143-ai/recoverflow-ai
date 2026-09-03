@@ -126,6 +126,7 @@ export function FirstTimeVisitorSpotlight() {
           <button
             onClick={handleDismiss}
             data-testid="dismiss-spotlight-btn"
+            aria-label="Dismiss Tour"
             className="text-slate-400 hover:text-white p-1 rounded-lg transition cursor-pointer"
             title="Dismiss Tour (Esc)"
           >
