@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { subscriptionStore, type TestSubscription } from '@/lib/server/subscriptionStore';
 
 export async function GET() {
@@ -45,13 +45,15 @@ export async function POST(req: NextRequest) {
     let fallbackReason: string | undefined;
 
     // Check if test-mode credentials exist
-    if (!keyId || !keySecret || !keyId.startsWith('rzp_test_')) {
+    if (!keyId || !keySecret || !keyId.trim().startsWith('rzp_test_')) {
       fallbackReason = 'RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET missing or not starting with rzp_test_ in environment';
       console.warn(
         `⚠️ [Razorpay Subscriptions - LOCAL FALLBACK ACTIVATED] ${fallbackReason}. Generating deterministic mock subscription.`,
       );
     } else {
-      const auth = Buffer.from(`${keyId}:${keySecret}`).toString('base64');
+      const cleanKeyId = keyId.trim();
+      const cleanSecret = keySecret.trim();
+      const auth = Buffer.from(`${cleanKeyId}:${cleanSecret}`).toString('base64');
 
       try {
         // 1. Create Plan via official Razorpay Sandbox API

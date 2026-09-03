@@ -1,110 +1,252 @@
 {
   "host": "https://recoverflow-ai-kohl.vercel.app",
-  "capturedAt": "2026-08-30T11:29:42.752Z",
+  "capturedAt": "2026-09-03T23:54:08.675Z",
   "version": {
     "project": "PayBack AI",
     "track": "Razorpay AI Buildathon — Track 3: AI Revenue Recovery",
-    "commitSha": "b941b1b129770bce9cac29de94e8953584e6644f",
-    "buildVersion": "2.3.0-live-verified",
+    "commitSha": "54e311bc2a9c246e22f9bf6f70716ebc682ac461",
+    "buildVersion": "2.4.0-submission",
     "environmentName": "production",
-    "serverTimestamp": "2026-08-30T11:29:06.222Z",
+    "serverTimestamp": "2026-09-03T23:53:50.584Z",
     "serviceStatus": {
       "geminiMode": "live_api",
-      "razorpayMode": "deterministic_simulator",
-      "webhookVerification": "configured"
+      "razorpayMode": "razorpay_test_mode"
     }
   },
   "captures": {
-    "simulatorExecute": {
-      "endpoint": "/api/recovery/execute",
+    "subscriptionCreation": {
+      "endpoint": "/api/razorpay/subscriptions",
       "method": "POST",
-      "requestHeaders": {
-        "x-recovery-adapter": "simulator"
-      },
+      "requestHeaders": {},
       "requestBody": {
-        "paymentId": "pay_live_test_001",
-        "customerId": "cust_live_001",
-        "customerName": "Live Capture Customer",
-        "customerEmail": "finance@live-test.com",
-        "amountPaise": 450000,
-        "currency": "INR",
-        "intervention": "reminder",
-        "attemptCycle": 1,
-        "idempotencyKey": "idemp_live_1788089381498"
+        "planName": "Enterprise AI Autopay Tier",
+        "amountRupees": 9999,
+        "customerEmail": "audit.judge@buildathon.in"
       },
       "httpStatus": 200,
       "responseBody": {
-        "success": false,
-        "receipt": {
-          "success": false,
-          "transactionReference": "sim_txn_pay_live_test_001_c1",
-          "adapterUsed": "deterministic_simulator",
-          "settledAmountPaise": 0,
-          "status": "test_link_created",
-          "latencyMs": 15,
-          "timestamp": "2026-08-30T11:29:43.061Z",
-          "rawResponseSummary": "Deterministic simulated execution for reminder (cycle 1). Settlement: PENDING."
+        "success": true,
+        "dataSource": "local_fallback",
+        "fallbackReason": "Razorpay Plan Creation API failed with HTTP 401: {\"error\":{\"code\":\"BAD_REQUEST_ERROR\",\"description\":\"Authentication failed\"}}",
+        "message": "Local mock subscription created via deterministic fallback.",
+        "subscription": {
+          "subscription_id": "sub_jcderqd3",
+          "plan_id": "plan_1ynoq9",
+          "plan_name": "Enterprise AI Autopay Tier",
+          "subscription_link": "https://rzp.io/i/sub_jcderqd3",
+          "customer_id": "cust_jcderqd3",
+          "customer_email": "audit.judge@buildathon.in",
+          "amount_paise": 999900,
+          "next_due_on": "2026-10-03T23:54:08.363Z",
+          "created_at": "2026-09-03T23:54:08.363Z",
+          "status": "created",
+          "dataSource": "local_fallback"
         },
-        "serverTimestamp": "2026-08-30T11:29:43.061Z",
-        "idempotencyStatus": "new_execution_recorded",
-        "securityDisclaimer": "Executed in Test Mode. Zero real financial debit triggered."
+        "totalSubscriptions": 10
       },
-      "timestamp": "2026-08-30T11:29:41.498Z",
-      "latencyMs": 492
+      "timestamp": "2026-09-03T23:54:07.189Z",
+      "latencyMs": 913
     },
-    "statusQuery": {
-      "endpoint": "/api/recovery/status/sim_txn_pay_live_test_001_c1",
+    "subscriptionList": {
+      "endpoint": "/api/razorpay/subscriptions",
       "method": "GET",
       "requestHeaders": {},
       "httpStatus": 200,
       "responseBody": {
-        "reference": "sim_txn_pay_live_test_001_c1",
-        "status": "test_link_created",
-        "settledAmountPaise": 0,
-        "source": "simulator_memory",
-        "adapter": "deterministic_simulator",
-        "timestamp": "2026-08-30T11:29:43.341Z"
+        "success": true,
+        "count": 10,
+        "dataSource": "mixed",
+        "subscriptions": [
+          {
+            "subscription_id": "sub_jcderqd3",
+            "plan_id": "plan_1ynoq9",
+            "plan_name": "Enterprise AI Autopay Tier",
+            "subscription_link": "https://rzp.io/i/sub_jcderqd3",
+            "customer_id": "cust_jcderqd3",
+            "customer_email": "audit.judge@buildathon.in",
+            "amount_paise": 999900,
+            "next_due_on": "2026-10-03T23:54:08.363Z",
+            "created_at": "2026-09-03T23:54:08.363Z",
+            "status": "created",
+            "dataSource": "local_fallback"
+          },
+          {
+            "subscription_id": "sub_TXdwpRFnHIme90",
+            "plan_id": "plan_TXdwpE57FzejwX",
+            "plan_name": "Global Payment Orchestrator",
+            "subscription_link": "https://rzp.io/rzp/l7Lmydn",
+            "customer_id": "cust_TXdwpRFnHIme90",
+            "customer_email": "radhika.nair@globalvault.com",
+            "amount_paise": 7500000,
+            "next_due_on": "2026-09-30T00:00:00.000Z",
+            "created_at": "2026-09-03T17:16:55.000Z",
+            "status": "created",
+            "dataSource": "razorpay_live"
+          },
+          {
+            "subscription_id": "sub_TXdwo7zLgvIhov",
+            "plan_id": "plan_TXdwnsPYEZefFd",
+            "plan_name": "Startup Accelerator Plan",
+            "subscription_link": "https://rzp.io/rzp/JL1VfBVU",
+            "customer_id": "cust_TXdwo7zLgvIhov",
+            "customer_email": "karan.shroff@fintechlaunch.io",
+            "amount_paise": 99900,
+            "next_due_on": "2026-09-18T00:00:00.000Z",
+            "created_at": "2026-09-03T17:16:54.000Z",
+            "status": "created",
+            "dataSource": "razorpay_live"
+          },
+          {
+            "subscription_id": "sub_TXdwms7QX6F6HY",
+            "plan_id": "plan_TXdwmdp4jElb5q",
+            "plan_name": "Scale Tier Quarterly Autopay",
+            "subscription_link": "https://rzp.io/rzp/0UOWVfS",
+            "customer_id": "cust_TXdwms7QX6F6HY",
+            "customer_email": "vikram.singh@hypergrowth.tech",
+            "amount_paise": 2499900,
+            "next_due_on": "2026-10-15T00:00:00.000Z",
+            "created_at": "2026-09-03T17:16:53.000Z",
+            "status": "created",
+            "dataSource": "razorpay_live"
+          },
+          {
+            "subscription_id": "sub_TXdwlWncCBeBuf",
+            "plan_id": "plan_TXdwlMW9llKDfA",
+            "plan_name": "FinTech Compliance Suite",
+            "subscription_link": "https://rzp.io/rzp/ZML9D7m",
+            "customer_id": "cust_TXdwlWncCBeBuf",
+            "customer_email": "ananya.deshmukh@bharatpay.in",
+            "amount_paise": 1850000,
+            "next_due_on": "2026-09-25T00:00:00.000Z",
+            "created_at": "2026-09-03T17:16:52.000Z",
+            "status": "created",
+            "dataSource": "razorpay_live"
+          },
+          {
+            "subscription_id": "sub_TXdwkIv72ok0Cj",
+            "plan_id": "plan_TXdwjrA0U3wEht",
+            "plan_name": "AI Copilot Add-On",
+            "subscription_link": "https://rzp.io/rzp/Qv4oz6Bg",
+            "customer_id": "cust_TXdwkIv72ok0Cj",
+            "customer_email": "rohit.verma@neuralfin.ai",
+            "amount_paise": 349900,
+            "next_due_on": "2026-09-12T00:00:00.000Z",
+            "created_at": "2026-09-03T17:16:51.000Z",
+            "status": "created",
+            "dataSource": "razorpay_live"
+          },
+          {
+            "subscription_id": "sub_TXdrqtDrqR91IV",
+            "plan_id": "plan_TXdrqbKW7OuejG",
+            "plan_name": "Developer API Subscription",
+            "subscription_link": "https://rzp.io/rzp/x2ojWWF",
+            "customer_id": "cust_TXdrqtDrqR91IV",
+            "customer_email": "neha.patel@devstack.net",
+            "amount_paise": 1250000,
+            "next_due_on": "2026-09-05T00:00:00.000Z",
+            "created_at": "2026-09-03T17:12:12.000Z",
+            "status": "created",
+            "dataSource": "razorpay_live"
+          },
+          {
+            "subscription_id": "sub_TXdrpbWWASct8j",
+            "plan_id": "plan_TXdrpOBS7vr2zT",
+            "plan_name": "Growth Autopay Plan",
+            "subscription_link": "https://rzp.io/rzp/NHunz5h2",
+            "customer_id": "cust_TXdrpbWWASct8j",
+            "customer_email": "deepak.verma@scaleup.io",
+            "amount_paise": 499900,
+            "next_due_on": "2026-09-10T00:00:00.000Z",
+            "created_at": "2026-09-03T17:12:11.000Z",
+            "status": "created",
+            "dataSource": "razorpay_live"
+          },
+          {
+            "subscription_id": "sub_TXdroGLUXyYIZO",
+            "plan_id": "plan_TXdro5GE7dg51u",
+            "plan_name": "Enterprise Annual Tier",
+            "subscription_link": "https://rzp.io/rzp/e5G8pcyS",
+            "customer_id": "cust_TXdroGLUXyYIZO",
+            "customer_email": "arjun.mehta@fincloud.co",
+            "amount_paise": 5200000,
+            "next_due_on": "2026-09-20T00:00:00.000Z",
+            "created_at": "2026-09-03T17:12:10.000Z",
+            "status": "created",
+            "dataSource": "razorpay_live"
+          },
+          {
+            "subscription_id": "sub_TXdrmwWFp4rrc3",
+            "plan_id": "plan_TXdrmaT1ZglroT",
+            "plan_name": "SaaS Pro Monthly",
+            "subscription_link": "https://rzp.io/rzp/IjAxpIvF",
+            "customer_id": "cust_TXdrmwWFp4rrc3",
+            "customer_email": "priya.sharma@saasgrowth.in",
+            "amount_paise": 149900,
+            "next_due_on": "2026-09-15T00:00:00.000Z",
+            "created_at": "2026-09-03T17:12:09.000Z",
+            "status": "created",
+            "dataSource": "razorpay_live"
+          }
+        ],
+        "dashboardColumns": [
+          "Subscription Id",
+          "Plan Id",
+          "Subscription Link",
+          "Customer Id",
+          "Next Due on",
+          "Created At",
+          "Status"
+        ],
+        "timestamp": "2026-09-03T23:54:08.698Z"
       },
-      "timestamp": "2026-08-30T11:29:41.990Z",
-      "latencyMs": 280
+      "timestamp": "2026-09-03T23:54:08.102Z",
+      "latencyMs": 307
     },
-    "razorpayExecuteCheck": {
-      "endpoint": "/api/recovery/execute",
+    "webhookIngestion": {
+      "endpoint": "/api/webhooks/razorpay",
       "method": "POST",
       "requestHeaders": {
-        "x-recovery-adapter": "razorpay_test_mode"
+        "x-razorpay-signature": "b4cefb570bdb3d64207f6772fb31fb8dca3b877f4b4145b874b4c295a1a800ca"
       },
       "requestBody": {
-        "paymentId": "pay_rzp_check_001",
-        "customerId": "cust_rzp_001",
-        "customerName": "Razorpay Sandbox Test",
-        "customerEmail": "sandbox@merchant.com",
-        "amountPaise": 250000,
-        "currency": "INR",
-        "intervention": "retry",
-        "attemptCycle": 1,
-        "idempotencyKey": "idemp_rzp_1788089382270"
+        "entity": "event",
+        "account_id": "acc_rzp_live_buildathon",
+        "event": "subscription.halted",
+        "created_at": 1788479648,
+        "payload": {
+          "subscription": {
+            "entity": {
+              "id": "sub_jcderqd3",
+              "plan_id": "plan_1ynoq9",
+              "customer_id": "cust_audit_judge_001",
+              "status": "halted",
+              "paid_count": 2,
+              "remaining_count": 10,
+              "notes": {
+                "amount": 999900,
+                "plan_name": "Enterprise AI Autopay Tier",
+                "reason": "Mandate declined: Bank account temporarily frozen",
+                "customer_email": "audit.judge@buildathon.in",
+                "opt_out": "false",
+                "on_time_rate": 0.89
+              }
+            }
+          }
+        }
       },
       "httpStatus": 200,
       "responseBody": {
-        "success": false,
-        "receipt": {
-          "success": false,
-          "transactionReference": "rzp_unconfigured_pay_rzp_check_001",
-          "adapterUsed": "razorpay_test_mode",
-          "settledAmountPaise": 0,
-          "status": "failed",
-          "latencyMs": 5,
-          "timestamp": "2026-08-30T11:29:43.823Z",
-          "rawResponseSummary": "Razorpay Test-Mode credentials not configured in environment (RAZORPAY_KEY_ID must start with rzp_test_).",
-          "errorMessage": "RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET missing"
-        },
-        "serverTimestamp": "2026-08-30T11:29:43.824Z",
-        "idempotencyStatus": "new_execution_recorded",
-        "securityDisclaimer": "Executed in Test Mode. Zero real financial debit triggered."
+        "success": true,
+        "event": "subscription.halted",
+        "paymentId": "sub_jcderqd3",
+        "amountPaise": 999900,
+        "failureCategory": "invalid_mandate",
+        "invoiceTier": "standard",
+        "totalLiveEvents": 2,
+        "timestamp": "2026-09-03T23:54:09.010Z"
       },
-      "timestamp": "2026-08-30T11:29:42.270Z",
-      "latencyMs": 482
+      "timestamp": "2026-09-03T23:54:08.411Z",
+      "latencyMs": 264
     }
   }
 }

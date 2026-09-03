@@ -2,7 +2,7 @@
 
 > **Evidence Source**: Programmatically captured by `scripts/capture-live-evidence.ts`  
 > **Target Host**: `https://recoverflow-ai-kohl.vercel.app`  
-> **Capture Timestamp**: `2026-08-30T11:29:41.489Z`  
+> **Capture Timestamp**: `2026-09-03T23:54:07.179Z`  
 > **Evidence JSON**: [`docs/evidence/live-gemini.json`](./evidence/live-gemini.json)
 
 ---
@@ -32,13 +32,13 @@
   "responseBody": {
     "normalizedCategory": "bank_downtime",
     "confidenceScore": 0.95,
-    "plainExplanation": "The issuing bank's core system is temporarily unavailable and timing out.",
+    "plainExplanation": "The bank's core banking system is temporarily unavailable and timing out due to server downtime.",
     "isRecoverable": true,
     "suggestedAction": "retry",
     "provider": "gemini_gemini_3_6_flash"
   },
-  "timestamp": "2026-08-30T11:29:05.187Z",
-  "latencyMs": 3266
+  "timestamp": "2026-09-03T23:53:50.298Z",
+  "latencyMs": 3980
 }
 ```
 
@@ -60,14 +60,15 @@
   "httpStatus": 200,
   "responseBody": {
     "channel": "email",
-    "subject": "Payment Processing Update - Action Required",
-    "messageBody": "Dear Rajesh Sharma,\n\nWe were unable to complete your recent payment of ₹14,500.00 due to an authentication failure during the transaction.\n\nPlease log in to your secure account portal to update your payment authorization or retry the payment.\n\nIf you have already completed this payment or need help, please reach out to our support team.\n\nBest regards,\nPayBack AI Support",
+    "subject": "Action Required: Payment Update for Invoice (₹14,500.00)",
+    "messageBody": "Dear Rajesh Sharma, your recent payment of ₹14,500.00 could not be completed due to a temporary auth failure issue. Please visit your merchant customer portal to retry or update your payment details.",
     "tone": "empathetic",
-    "complianceNotice": "This is a payment status notification. PayBack AI will never ask for full card details, PINs, or banking passwords directly via email.",
-    "provider": "gemini_gemini_3_6_flash"
+    "complianceNotice": "Policy-constrained prototype communication requiring merchant compliance review before production use. Reply STOP to opt out.",
+    "provider": "deterministic_fallback",
+    "fallbackReason": "Gemini API call failed (Timeout after 8000ms); template fallback returned"
   },
-  "timestamp": "2026-08-30T11:29:08.453Z",
-  "latencyMs": 6572
+  "timestamp": "2026-09-03T23:53:54.278Z",
+  "latencyMs": 8299
 }
 ```
 
@@ -86,13 +87,13 @@
   "httpStatus": 200,
   "responseBody": {
     "normalizedCategory": "auth_failure",
-    "confidenceScore": 0.1,
-    "plainExplanation": "Unrecognized or invalid error text provided. Unable to map to a standard gateway failure.",
+    "confidenceScore": 0.85,
+    "plainExplanation": "The error string contained invalid or suspicious text rather than a recognized payment gateway failure code.",
     "isRecoverable": false,
     "suggestedAction": "none",
     "provider": "gemini_gemini_3_6_flash"
   },
-  "timestamp": "2026-08-30T11:29:15.025Z",
-  "latencyMs": 26464
+  "timestamp": "2026-09-03T23:54:02.577Z",
+  "latencyMs": 4602
 }
 ```
