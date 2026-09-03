@@ -266,9 +266,15 @@ export const AutonomousControlRoom: React.FC<AutonomousControlRoomProps> = ({
                 : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
             }`}
           >
-            <RotateCw className="w-3.5 h-3.5" />
+            <RotateCw className="w-3.5 h-3.5" aria-hidden="true" />
             <span>CYCLE 2: LEARN</span>
-            <span className="px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-200 text-[10px]">
+            <span
+              className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                currentCycle === 2
+                  ? 'bg-indigo-400/30 text-indigo-100'
+                  : 'bg-indigo-100 text-indigo-900 border border-indigo-200'
+              }`}
+            >
               Adaptive
             </span>
           </button>
@@ -284,9 +290,15 @@ export const AutonomousControlRoom: React.FC<AutonomousControlRoomProps> = ({
                 : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
             }`}
           >
-            <Sparkles className="w-3.5 h-3.5" />
+            <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
             <span>CYCLE 3: OPTIMIZE</span>
-            <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-200 text-[10px]">
+            <span
+              className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                currentCycle === 3
+                  ? 'bg-amber-400/30 text-amber-100'
+                  : 'bg-amber-100 text-amber-950 border border-amber-300'
+              }`}
+            >
               Next Best Action
             </span>
           </button>
@@ -299,9 +311,15 @@ export const AutonomousControlRoom: React.FC<AutonomousControlRoomProps> = ({
                 : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
             }`}
           >
-            <Award className="w-3.5 h-3.5 text-amber-400" />
+            <Award className="w-3.5 h-3.5 text-amber-400" aria-hidden="true" />
             <span>FINAL BENCHMARK</span>
-            <span className="text-[10px] text-emerald-950 font-bold bg-emerald-200 px-1.5 py-0.5 rounded">
+            <span
+              className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                currentCycle === 4
+                  ? 'bg-emerald-400/30 text-emerald-100'
+                  : 'bg-emerald-100 text-emerald-950 border border-emerald-300'
+              }`}
+            >
               +470% Lift
             </span>
           </button>
