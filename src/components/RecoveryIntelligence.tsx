@@ -222,10 +222,10 @@ export const RecoveryIntelligence: React.FC<RecoveryIntelligenceProps> = ({
                 <BarChart2 className="w-5 h-5 text-emerald-400" />
                 Batch Recovery Proof &amp; Mathematical Reconciliation
               </h2>
-              <span className="text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded border border-amber-500/40 uppercase">
+              <span className="text-[10px] font-mono font-bold bg-amber-950/80 text-amber-200 px-2 py-0.5 rounded border border-amber-500/50 uppercase">
                 SYNTHETIC EVALUATION
               </span>
-              <span className="text-[10px] font-mono bg-emerald-500/10 text-emerald-300 px-2 py-0.5 rounded border border-emerald-500/30">
+              <span className="text-[10px] font-mono font-bold bg-emerald-950/80 text-emerald-200 px-2 py-0.5 rounded border border-emerald-500/50">
                 100% Integer Paise Match
               </span>
             </div>

@@ -248,12 +248,12 @@ export const CaseRecoveryJourney: React.FC<CaseRecoveryJourneyProps> = ({
           <span
             className={`inline-block px-2.5 py-1 rounded text-xs font-semibold uppercase tracking-wider ${
               s7Status === 'recovered'
-                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                ? 'bg-emerald-950/80 text-emerald-200 border border-emerald-500/50'
                 : s4Status === 'stopped'
-                  ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
+                  ? 'bg-rose-950/80 text-rose-200 border border-rose-500/50'
                   : s5Status === 'in_progress'
-                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-                    : 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40'
+                    ? 'bg-amber-950/80 text-amber-200 border border-amber-500/50'
+                    : 'bg-indigo-950/80 text-indigo-200 border border-indigo-500/50'
             }`}
           >
             {s7Status === 'recovered'
@@ -272,17 +272,17 @@ export const CaseRecoveryJourney: React.FC<CaseRecoveryJourneyProps> = ({
         {stages.map((stage) => {
           const Icon = stage.icon;
 
-          let statusBadgeClass = 'bg-slate-800 text-slate-400 border-slate-700';
-          let statusIcon = <Clock className="w-3.5 h-3.5 text-slate-500" />;
+          let statusBadgeClass = 'bg-slate-800 text-slate-300 border-slate-700';
+          let statusIcon = <Clock className="w-3.5 h-3.5 text-slate-400" />;
 
           if (stage.status === 'completed' || stage.status === 'recovered') {
-            statusBadgeClass = 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30';
+            statusBadgeClass = 'bg-emerald-950/80 text-emerald-200 border-emerald-500/50';
             statusIcon = <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />;
           } else if (stage.status === 'in_progress') {
-            statusBadgeClass = 'bg-amber-500/10 text-amber-300 border-amber-500/30';
+            statusBadgeClass = 'bg-amber-950/80 text-amber-200 border-amber-500/50';
             statusIcon = <Clock className="w-3.5 h-3.5 text-amber-400 animate-pulse" />;
           } else if (stage.status === 'stopped' || stage.status === 'failed') {
-            statusBadgeClass = 'bg-rose-500/10 text-rose-300 border-rose-500/30';
+            statusBadgeClass = 'bg-rose-950/80 text-rose-200 border-rose-500/50';
             statusIcon = <AlertOctagon className="w-3.5 h-3.5 text-rose-400" />;
           } else if (stage.status === 'skipped') {
             statusBadgeClass = 'bg-slate-800/60 text-slate-400 border-slate-700/60';
