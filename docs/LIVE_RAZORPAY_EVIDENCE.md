@@ -2,7 +2,7 @@
 
 > **Evidence Source**: Programmatically captured by `scripts/capture-live-evidence.ts`  
 > **Target Host**: `https://recoverflow-ai-kohl.vercel.app`  
-> **Capture Timestamp**: `2026-09-03T23:54:08.675Z`  
+> **Capture Timestamp**: `2026-09-03T23:57:59.899Z`  
 > **Evidence JSON**: [`docs/evidence/live-razorpay.json`](./evidence/live-razorpay.json)
 
 ---
@@ -11,8 +11,8 @@
 
 - **Integration Mode**: **Razorpay Test Mode / Sandbox Integration**
 - **Test Key Verification**: Verified active key (`rzp_test_TXdqauFT2yJAXL`) configured in Vercel production settings.
-- **Subscription Creation Status**: **FALLBACK ACTIVATED (dataSource: "local_fallback")**
-- **Dashboard-Verified Subscription ID**: `sub_jcderqd3` (Plan: `plan_1ynoq9`, Amount: ₹9,999.00).
+- **Subscription Creation Status**: **CONFIRMED LIVE (dataSource: "razorpay_live")**
+- **Dashboard-Verified Subscription ID**: `sub_TXkmQbw36PIlQb` (Plan: `plan_TXkmPsWzrJjUO6`, Amount: ₹9,999.00).
 - **HMAC-SHA256 Webhook Verification**: Verified live with HTTP 200 on event `subscription.halted`.
 - **Live Recovery Accounting Guarantee**: ₹0.00 recovered revenue recorded upon mandate creation or failure notification until settlement is cryptographically proven in the hash-chain ledger.
 
@@ -35,26 +35,25 @@
   "httpStatus": 200,
   "responseBody": {
     "success": true,
-    "dataSource": "local_fallback",
-    "fallbackReason": "Razorpay Plan Creation API failed with HTTP 401: {\"error\":{\"code\":\"BAD_REQUEST_ERROR\",\"description\":\"Authentication failed\"}}",
-    "message": "Local mock subscription created via deterministic fallback.",
+    "dataSource": "razorpay_live",
+    "message": "Genuine Razorpay sandbox subscription created successfully!",
     "subscription": {
-      "subscription_id": "sub_jcderqd3",
-      "plan_id": "plan_1ynoq9",
+      "subscription_id": "sub_TXkmQbw36PIlQb",
+      "plan_id": "plan_TXkmPsWzrJjUO6",
       "plan_name": "Enterprise AI Autopay Tier",
-      "subscription_link": "https://rzp.io/i/sub_jcderqd3",
-      "customer_id": "cust_jcderqd3",
+      "subscription_link": "https://rzp.io/rzp/LCKuiHtQ",
+      "customer_id": "cust_TXkmQbw36PIlQb",
       "customer_email": "audit.judge@buildathon.in",
       "amount_paise": 999900,
-      "next_due_on": "2026-10-03T23:54:08.363Z",
-      "created_at": "2026-09-03T23:54:08.363Z",
+      "next_due_on": "2026-10-03T23:57:59.641Z",
+      "created_at": "2026-09-03T23:57:59.641Z",
       "status": "created",
-      "dataSource": "local_fallback"
+      "dataSource": "razorpay_live"
     },
     "totalSubscriptions": 10
   },
-  "timestamp": "2026-09-03T23:54:07.189Z",
-  "latencyMs": 913
+  "timestamp": "2026-09-03T23:57:56.360Z",
+  "latencyMs": 2961
 }
 ```
 
@@ -71,20 +70,20 @@
   "responseBody": {
     "success": true,
     "count": 10,
-    "dataSource": "mixed",
+    "dataSource": "razorpay_live",
     "subscriptions": [
       {
-        "subscription_id": "sub_jcderqd3",
-        "plan_id": "plan_1ynoq9",
+        "subscription_id": "sub_TXkmQbw36PIlQb",
+        "plan_id": "plan_TXkmPsWzrJjUO6",
         "plan_name": "Enterprise AI Autopay Tier",
-        "subscription_link": "https://rzp.io/i/sub_jcderqd3",
-        "customer_id": "cust_jcderqd3",
+        "subscription_link": "https://rzp.io/rzp/LCKuiHtQ",
+        "customer_id": "cust_TXkmQbw36PIlQb",
         "customer_email": "audit.judge@buildathon.in",
         "amount_paise": 999900,
-        "next_due_on": "2026-10-03T23:54:08.363Z",
-        "created_at": "2026-09-03T23:54:08.363Z",
+        "next_due_on": "2026-10-03T23:57:59.641Z",
+        "created_at": "2026-09-03T23:57:59.641Z",
         "status": "created",
-        "dataSource": "local_fallback"
+        "dataSource": "razorpay_live"
       },
       {
         "subscription_id": "sub_TXdwpRFnHIme90",
@@ -213,9 +212,9 @@
       "Created At",
       "Status"
     ],
-    "timestamp": "2026-09-03T23:54:08.698Z"
+    "timestamp": "2026-09-03T23:57:59.944Z"
   },
-  "timestamp": "2026-09-03T23:54:08.102Z",
+  "timestamp": "2026-09-03T23:57:59.321Z",
   "latencyMs": 307
 }
 ```
@@ -229,18 +228,18 @@
   "endpoint": "/api/webhooks/razorpay",
   "method": "POST",
   "requestHeaders": {
-    "x-razorpay-signature": "b4cefb570bdb3d64207f6772fb31fb8dca3b877f4b4145b874b4c295a1a800ca"
+    "x-razorpay-signature": "da4c48ccc7fbbed25b3611966802c9723247d5167bba8a9a3f08bd654f94a19a"
   },
   "requestBody": {
     "entity": "event",
     "account_id": "acc_rzp_live_buildathon",
     "event": "subscription.halted",
-    "created_at": 1788479648,
+    "created_at": 1788479879,
     "payload": {
       "subscription": {
         "entity": {
-          "id": "sub_jcderqd3",
-          "plan_id": "plan_1ynoq9",
+          "id": "sub_TXkmQbw36PIlQb",
+          "plan_id": "plan_TXkmPsWzrJjUO6",
           "customer_id": "cust_audit_judge_001",
           "status": "halted",
           "paid_count": 2,
@@ -261,14 +260,14 @@
   "responseBody": {
     "success": true,
     "event": "subscription.halted",
-    "paymentId": "sub_jcderqd3",
+    "paymentId": "sub_TXkmQbw36PIlQb",
     "amountPaise": 999900,
     "failureCategory": "invalid_mandate",
     "invoiceTier": "standard",
-    "totalLiveEvents": 2,
-    "timestamp": "2026-09-03T23:54:09.010Z"
+    "totalLiveEvents": 1,
+    "timestamp": "2026-09-03T23:58:00.240Z"
   },
-  "timestamp": "2026-09-03T23:54:08.411Z",
-  "latencyMs": 264
+  "timestamp": "2026-09-03T23:57:59.629Z",
+  "latencyMs": 270
 }
 ```
