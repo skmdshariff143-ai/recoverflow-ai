@@ -22,7 +22,15 @@ import {
   Activity,
 } from 'lucide-react';
 
+const DEMO_SUBSCRIPTIONS = [
+  { id: 'sub_TXW1raR9Uus3ch', plan: 'SaaS Pro Monthly', amount: 1499, category: 'invalid_mandate', badge: 'Mandate Halted' },
+  { id: 'sub_Hk72Lp0Qrst89v', plan: 'Enterprise Annual', amount: 52000, category: 'bank_downtime', badge: 'Dual-Custody ₹52k' },
+  { id: 'sub_Bld99Replay01a', plan: 'Growth Autopay', amount: 4999, category: 'expired_card', badge: 'Card Expired' },
+  { id: 'sub_Ent88SaaS999', plan: 'Developer API Plan', amount: 12500, category: 'insufficient_funds', badge: 'Low Balance' },
+];
+
 const FAILURE_OPTIONS = [
+  { id: 'invalid_mandate', label: 'Mandate Halted / Invalid Token', desc: 'Recurring subscription debit declined by issuing bank' },
   { id: 'bank_downtime', label: 'Bank Downtime (HDFC Outage)', desc: 'Temporary network failure at issuing bank' },
   { id: 'insufficient_funds', label: 'Insufficient Funds', desc: 'Customer account balance unavailable' },
   { id: 'auth_failure', label: 'Auth / 3D-Secure Timeout', desc: 'OTP expired or incorrect pin' },
@@ -38,8 +46,10 @@ const PRESET_AMOUNTS = [
 ];
 
 export default function JudgeTriggerPage() {
-  const [selectedCategory, setSelectedCategory] = useState<string>('bank_downtime');
-  const [selectedAmountRupees, setSelectedAmountRupees] = useState<number>(4999);
+  const [selectedSubscriptionId, setSelectedSubscriptionId] = useState<string>('sub_TXW1raR9Uus3ch');
+  const [customSubscriptionId, setCustomSubscriptionId] = useState<string>('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('invalid_mandate');
+  const [selectedAmountRupees, setSelectedAmountRupees] = useState<number>(1499);
   const [customAmount, setCustomAmount] = useState<string>('');
   const [judgeName, setJudgeName] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -52,6 +62,14 @@ export default function JudgeTriggerPage() {
     rateLimitRemaining?: number;
   } | null>(null);
 
+  const handleSelectDemoSub = (sub: typeof DEMO_SUBSCRIPTIONS[0]) => {
+    setSelectedSubscriptionId(sub.id);
+    setCustomSubscriptionId('');
+    setSelectedCategory(sub.category);
+    setSelectedAmountRupees(sub.amount);
+    setCustomAmount('');
+  };
+
   const handleTrigger = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -61,11 +79,17 @@ export default function JudgeTriggerPage() {
       ? Number(customAmount)
       : selectedAmountRupees;
 
+    const effectiveSubId = customSubscriptionId.trim()
+      ? customSubscriptionId.trim()
+      : selectedSubscriptionId;
+
     try {
       const res = await fetch('/api/live-trigger', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          subscriptionId: effectiveSubId,
+          paymentId: effectiveSubId,
           category: selectedCategory,
           amountRupees: effectiveRupees,
           judgeNote: judgeName.trim() ? `Injected by Judge ${judgeName.trim()}` : 'Live Demo Judge Injection',
@@ -163,10 +187,60 @@ export default function JudgeTriggerPage() {
 
         {/* Trigger Form */}
         <form onSubmit={handleTrigger} className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl">
+          {/* Demo Subscriptions Picker */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-bold text-slate-300">
+                1. Select Test Demo Subscription
+              </label>
+              <span className="text-[10px] text-indigo-400 font-mono">Test Mode</span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {DEMO_SUBSCRIPTIONS.map((sub) => {
+                const isSelected = selectedSubscriptionId === sub.id && !customSubscriptionId;
+                return (
+                  <button
+                    type="button"
+                    key={sub.id}
+                    onClick={() => handleSelectDemoSub(sub)}
+                    className={`p-2.5 rounded-xl border text-left transition cursor-pointer flex flex-col justify-between ${
+                      isSelected
+                        ? 'bg-indigo-600/20 border-indigo-500 shadow-xs'
+                        : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-mono text-[11px] font-bold text-indigo-300">{sub.id}</span>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded font-semibold bg-indigo-950 text-indigo-300 border border-indigo-800">
+                        {sub.badge}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="text-slate-300 font-medium">{sub.plan}</span>
+                      <span className="font-bold text-white">₹{sub.amount.toLocaleString('en-IN')}</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Custom Subscription / Payment ID Input */}
+            <div className="pt-1">
+              <input
+                type="text"
+                value={customSubscriptionId}
+                onChange={(e) => setCustomSubscriptionId(e.target.value)}
+                placeholder="Or type custom ID (e.g. sub_TXW1raR9Uus3ch)"
+                className="w-full px-3 py-1.5 text-xs font-mono bg-slate-950 border border-slate-800 rounded-lg text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+          </div>
+
           {/* Failure Category */}
           <div className="space-y-1.5">
             <label className="block text-xs font-bold text-slate-300">
-              1. Failure Reason (Razorpay Error Code)
+              2. Failure Reason (Razorpay Error Code)
             </label>
             <div className="space-y-1.5">
               {FAILURE_OPTIONS.map((opt) => (
@@ -198,7 +272,7 @@ export default function JudgeTriggerPage() {
           {/* Amount Selection */}
           <div className="space-y-1.5">
             <label className="block text-xs font-bold text-slate-300">
-              2. Transaction Amount
+              3. Transaction Amount
             </label>
             <div className="grid grid-cols-2 gap-2">
               {PRESET_AMOUNTS.map((amt) => (
@@ -224,7 +298,7 @@ export default function JudgeTriggerPage() {
           {/* Optional Judge Name */}
           <div className="space-y-1">
             <label className="block text-[11px] font-semibold text-slate-400">
-              3. Your Name / Judge Identifier (Optional)
+              4. Your Name / Judge Identifier (Optional)
             </label>
             <input
               type="text"

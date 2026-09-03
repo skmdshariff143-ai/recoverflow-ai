@@ -72,48 +72,82 @@ export async function POST(req: NextRequest) {
       ? body.judgeNote.trim()
       : 'Judge Live Demo Injection';
 
-    const customId = typeof body.paymentId === 'string' && body.paymentId.trim()
+    const rawId = typeof body.subscriptionId === 'string' && body.subscriptionId.trim()
+      ? body.subscriptionId.trim()
+      : typeof body.paymentId === 'string' && body.paymentId.trim()
       ? body.paymentId.trim()
-      : `pay_judge_${Math.random().toString(36).slice(2, 8)}`;
+      : `sub_TXW1raR9Uus3ch_${Math.random().toString(36).slice(2, 6)}`;
+
+    const isSubscription = rawId.startsWith('sub_');
 
     const method = typeof body.method === 'string' && body.method
       ? body.method
       : 'upi';
 
-    // 3. Construct Canonical Razorpay payment.failed Webhook Payload
+    // 3. Construct Canonical Razorpay Webhook Payload
     const nowSec = Math.floor(Date.now() / 1000);
-    const webhookPayload: RazorpayWebhookPayload = {
-      entity: 'event',
-      account_id: 'acc_rzp_live_buildathon',
-      event: 'payment.failed',
-      created_at: nowSec,
-      payload: {
-        payment: {
-          entity: {
-            id: customId,
-            amount: amountPaise,
-            currency: 'INR',
-            status: 'failed',
-            method: method,
-            customer_id: `cust_judge_${Math.floor(Math.random() * 9000 + 1000)}`,
-            email: 'judge.review@buildathon.razorpay.com',
-            contact: '+919876500000',
-            error_code: 'BAD_REQUEST_ERROR',
-            error_description: `Live test failure: ${category.replace(/_/g, ' ')} during processing.`,
-            error_source: category === 'bank_downtime' ? 'issuing_bank' : 'gateway',
-            error_step: 'payment_authorization',
-            error_reason: category,
-            created_at: nowSec,
-            notes: {
-              judge_demo: 'true',
-              judge_note: judgeNote,
-              opt_out: 'false',
-              on_time_rate: 0.85,
+    const eventName = isSubscription
+      ? (category === 'invalid_mandate' ? 'subscription.halted' : category === 'customer_cancellation' ? 'subscription.cancelled' : 'subscription.halted')
+      : 'payment.failed';
+
+    const webhookPayload: RazorpayWebhookPayload = isSubscription
+      ? {
+          entity: 'event',
+          account_id: 'acc_rzp_live_buildathon',
+          event: eventName,
+          created_at: nowSec,
+          payload: {
+            subscription: {
+              entity: {
+                id: rawId,
+                plan_id: 'plan_live_saas_pro',
+                customer_id: `cust_${rawId.replace(/^sub_/, '')}`,
+                status: category === 'customer_cancellation' ? 'cancelled' : 'halted',
+                paid_count: 3,
+                remaining_count: 9,
+                notes: {
+                  amount: amountPaise,
+                  judge_demo: 'true',
+                  judge_note: judgeNote,
+                  opt_out: 'false',
+                  on_time_rate: 0.85,
+                },
+              },
             },
           },
-        },
-      },
-    };
+        }
+      : {
+          entity: 'event',
+          account_id: 'acc_rzp_live_buildathon',
+          event: 'payment.failed',
+          created_at: nowSec,
+          payload: {
+            payment: {
+              entity: {
+                id: rawId,
+                amount: amountPaise,
+                currency: 'INR',
+                status: 'failed',
+                method: method,
+                customer_id: `cust_judge_${Math.floor(Math.random() * 9000 + 1000)}`,
+                email: 'judge.review@buildathon.razorpay.com',
+                contact: '+919876500000',
+                error_code: 'BAD_REQUEST_ERROR',
+                error_description: `Live test failure: ${category.replace(/_/g, ' ')} during processing.`,
+                error_source: category === 'bank_downtime' ? 'issuing_bank' : 'gateway',
+                error_step: 'payment_authorization',
+                error_reason: category,
+                created_at: nowSec,
+                notes: {
+                  judge_demo: 'true',
+                  judge_note: judgeNote,
+                  opt_out: 'false',
+                  on_time_rate: 0.85,
+                },
+              },
+            },
+          },
+        };
 
     // 4. Map & Ingest into Live Webhook Store
     const failedPayment = mapRazorpayWebhookToFailedPayment(webhookPayload);
