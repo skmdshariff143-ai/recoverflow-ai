@@ -42,6 +42,7 @@ export async function POST(req: NextRequest) {
     if (secret) {
       const verification = verifyRazorpayWebhookSignature(rawBody, signature, secret);
       if (!verification.valid) {
+        console.warn(`[Razorpay Webhook] Signature verification rejected: ${verification.reason}`);
         return NextResponse.json(
           {
             error: 'Webhook verification failed: Invalid cryptographic signature.',
@@ -50,6 +51,9 @@ export async function POST(req: NextRequest) {
           { status: 400 },
         );
       }
+      console.log(`[Razorpay Webhook] Signature verified: VALID (HMAC-SHA256).`);
+    } else {
+      console.log(`[Razorpay Webhook] Signature check: PASSTHROUGH (No secret configured in dev).`);
     }
 
     // 2. Parse JSON Payload
@@ -57,26 +61,48 @@ export async function POST(req: NextRequest) {
     try {
       payload = JSON.parse(rawBody);
     } catch {
+      console.error(`[Razorpay Webhook] Failed to parse JSON payload.`);
       return NextResponse.json(
         { error: 'Invalid JSON payload structure' },
         { status: 400 },
       );
     }
 
-    // 3. Filter for payment.failed events
-    if (payload.event !== 'payment.failed') {
+    console.log(`[Razorpay Webhook] Processing event: '${payload.event}'`);
+
+    // 3. Filter for actionable recovery events
+    const supportedEvents = [
+      'payment.failed',
+      'payment.authorized',
+      'subscription.halted',
+      'subscription.cancelled',
+      'subscription.paused',
+      'subscription.pending',
+      'subscription.charged',
+      'invoice.payment_failed',
+    ];
+
+    if (!supportedEvents.includes(payload.event) && !payload.event.startsWith('subscription.') && !payload.event.startsWith('payment.')) {
+      console.log(`[Razorpay Webhook] Ignored non-recovery event '${payload.event}'.`);
       return NextResponse.json({
         received: true,
         event: payload.event,
-        message: `Ignored event '${payload.event}'. PayBack AI strictly processes 'payment.failed' recovery events.`,
+        message: `Ignored event '${payload.event}'. PayBack AI processes recovery and subscription lifecycle events.`,
       });
     }
+
+    const countBefore = liveWebhookStore.getCount();
 
     // 4. Map to Canonical FailedPayment Schema
     const failedPayment = mapRazorpayWebhookToFailedPayment(payload);
 
     // 5. Save to In-Memory Live Cohort Store
     liveWebhookStore.addEvent(failedPayment);
+    const countAfter = liveWebhookStore.getCount();
+
+    console.log(
+      `[Razorpay Webhook] Appended event to store. ID: ${failedPayment.payment_id}, Event: ${payload.event}, Category: ${failedPayment.failure_category}, Events table count before: ${countBefore}, Events table count after: ${countAfter}`,
+    );
 
     return NextResponse.json({
       success: true,
