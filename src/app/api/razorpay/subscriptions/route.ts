@@ -3,9 +3,13 @@ import { subscriptionStore, type TestSubscription } from '@/lib/server/subscript
 
 export async function GET() {
   const subs = subscriptionStore.getSubscriptions();
+  const allLive = subs.length > 0 && subs.every((s) => s.dataSource === 'razorpay_live');
+  const someLive = subs.some((s) => s.dataSource === 'razorpay_live');
+
   return NextResponse.json({
     success: true,
     count: subs.length,
+    dataSource: allLive ? 'razorpay_live' : someLive ? 'mixed' : 'local_fallback',
     subscriptions: subs,
     dashboardColumns: [
       'Subscription Id',
@@ -29,18 +33,28 @@ export async function POST(req: NextRequest) {
     const planName = typeof body.planName === 'string' && body.planName ? body.planName : 'Custom SaaS Plan';
     const amountRupees = typeof body.amountRupees === 'number' && body.amountRupees > 0 ? body.amountRupees : 2499;
     const amountPaise = amountRupees * 100;
-    const customerEmail = typeof body.customerEmail === 'string' && body.customerEmail ? body.customerEmail : 'demo.subscriber@buildathon.in';
+    const customerEmail =
+      typeof body.customerEmail === 'string' && body.customerEmail
+        ? body.customerEmail
+        : 'demo.subscriber@buildathon.in';
 
     let generatedSubId = `sub_${Math.random().toString(36).slice(2, 10)}`;
     let generatedPlanId = `plan_${Math.random().toString(36).slice(2, 8)}`;
     let shortUrl = `https://rzp.io/i/${generatedSubId}`;
+    let dataSource: 'razorpay_live' | 'local_fallback' = 'local_fallback';
+    let fallbackReason: string | undefined;
 
-    // If real Razorpay test API keys are available, call Razorpay test API
-    if (keyId && keySecret && keyId.startsWith('rzp_test_')) {
+    // Check if test-mode credentials exist
+    if (!keyId || !keySecret || !keyId.startsWith('rzp_test_')) {
+      fallbackReason = 'RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET missing or not starting with rzp_test_ in environment';
+      console.warn(
+        `⚠️ [Razorpay Subscriptions - LOCAL FALLBACK ACTIVATED] ${fallbackReason}. Generating deterministic mock subscription.`,
+      );
+    } else {
       const auth = Buffer.from(`${keyId}:${keySecret}`).toString('base64');
 
       try {
-        // 1. Create Plan
+        // 1. Create Plan via official Razorpay Sandbox API
         const planRes = await fetch('https://api.razorpay.com/v1/plans', {
           method: 'POST',
           headers: {
@@ -59,11 +73,15 @@ export async function POST(req: NextRequest) {
           }),
         });
 
-        if (planRes.ok) {
+        if (!planRes.ok) {
+          const planErrorText = await planRes.text();
+          fallbackReason = `Razorpay Plan Creation API failed with HTTP ${planRes.status}: ${planErrorText}`;
+          console.error(`🚨 [Razorpay API Failure - Plan Creation] ${fallbackReason}`);
+        } else {
           const planData = await planRes.json();
           generatedPlanId = planData.id;
 
-          // 2. Create Subscription
+          // 2. Create Subscription via official Razorpay Sandbox API
           const subRes = await fetch('https://api.razorpay.com/v1/subscriptions', {
             method: 'POST',
             headers: {
@@ -76,19 +94,30 @@ export async function POST(req: NextRequest) {
               quantity: 1,
               customer_notify: 1,
               notes: {
+                customer_email: customerEmail,
                 project: 'PayBack AI Buildathon',
               },
             }),
           });
 
-          if (subRes.ok) {
+          if (!subRes.ok) {
+            const subErrorText = await subRes.text();
+            fallbackReason = `Razorpay Subscription Creation API failed with HTTP ${subRes.status}: ${subErrorText}`;
+            console.error(`🚨 [Razorpay API Failure - Subscription Creation] ${fallbackReason}`);
+          } else {
             const subData = await subRes.json();
             generatedSubId = subData.id;
             shortUrl = subData.short_url || shortUrl;
+            dataSource = 'razorpay_live';
+            console.log(
+              `✅ [Razorpay Live API Success] Genuine subscription created: ${generatedSubId} (Plan: ${generatedPlanId}, Link: ${shortUrl})`,
+            );
           }
         }
-      } catch (err) {
-        console.warn('[Razorpay API] Using deterministic sandbox fallback:', err);
+      } catch (err: unknown) {
+        const errorDetail = err instanceof Error ? err.stack ?? err.message : String(err);
+        fallbackReason = `Network/Runtime exception calling Razorpay API: ${errorDetail}`;
+        console.error(`🚨 [Razorpay API Network Error] ${fallbackReason}`);
       }
     }
 
@@ -102,19 +131,28 @@ export async function POST(req: NextRequest) {
       amount_paise: amountPaise,
       next_due_on: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       created_at: new Date().toISOString(),
-      status: 'active',
+      status: 'created',
+      dataSource,
     };
 
     subscriptionStore.addSubscription(newSub);
 
     return NextResponse.json({
       success: true,
-      message: 'Test mode subscription created successfully!',
+      dataSource,
+      ...(fallbackReason ? { fallbackReason } : {}),
+      message:
+        dataSource === 'razorpay_live'
+          ? 'Genuine Razorpay sandbox subscription created successfully!'
+          : 'Local mock subscription created via deterministic fallback.',
       subscription: newSub,
       totalSubscriptions: subscriptionStore.getSubscriptions().length,
     });
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : String(err);
-    return NextResponse.json({ error: 'Failed to create subscription', details: errorMsg }, { status: 500 });
+    return NextResponse.json(
+      { success: false, dataSource: 'local_fallback', error: 'Failed to create subscription', details: errorMsg },
+      { status: 500 },
+    );
   }
 }

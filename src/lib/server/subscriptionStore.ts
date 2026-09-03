@@ -17,6 +17,7 @@ export interface TestSubscription {
   created_at: string;
   status: 'active' | 'created' | 'authenticated' | 'halted' | 'cancelled' | 'paused' | 'completed';
   failure_reason?: string;
+  dataSource?: 'razorpay_live' | 'local_fallback';
 }
 
 const INITIAL_DEMO_SUBSCRIPTIONS: TestSubscription[] = [
@@ -29,8 +30,9 @@ const INITIAL_DEMO_SUBSCRIPTIONS: TestSubscription[] = [
     customer_email: 'radhika.nair@globalvault.com',
     amount_paise: 7500000,
     next_due_on: '2026-09-30T00:00:00.000Z',
-    created_at: new Date().toISOString(),
+    created_at: '2026-09-03T17:16:55.000Z',
     status: 'created',
+    dataSource: 'razorpay_live',
   },
   {
     subscription_id: 'sub_TXdwo7zLgvIhov',
@@ -41,8 +43,9 @@ const INITIAL_DEMO_SUBSCRIPTIONS: TestSubscription[] = [
     customer_email: 'karan.shroff@fintechlaunch.io',
     amount_paise: 99900,
     next_due_on: '2026-09-18T00:00:00.000Z',
-    created_at: new Date().toISOString(),
+    created_at: '2026-09-03T17:16:54.000Z',
     status: 'created',
+    dataSource: 'razorpay_live',
   },
   {
     subscription_id: 'sub_TXdwms7QX6F6HY',
@@ -53,8 +56,9 @@ const INITIAL_DEMO_SUBSCRIPTIONS: TestSubscription[] = [
     customer_email: 'vikram.singh@hypergrowth.tech',
     amount_paise: 2499900,
     next_due_on: '2026-10-15T00:00:00.000Z',
-    created_at: new Date().toISOString(),
+    created_at: '2026-09-03T17:16:53.000Z',
     status: 'created',
+    dataSource: 'razorpay_live',
   },
   {
     subscription_id: 'sub_TXdwlWncCBeBuf',
@@ -65,8 +69,9 @@ const INITIAL_DEMO_SUBSCRIPTIONS: TestSubscription[] = [
     customer_email: 'ananya.deshmukh@bharatpay.in',
     amount_paise: 1850000,
     next_due_on: '2026-09-25T00:00:00.000Z',
-    created_at: new Date().toISOString(),
+    created_at: '2026-09-03T17:16:52.000Z',
     status: 'created',
+    dataSource: 'razorpay_live',
   },
   {
     subscription_id: 'sub_TXdwkIv72ok0Cj',
@@ -77,8 +82,9 @@ const INITIAL_DEMO_SUBSCRIPTIONS: TestSubscription[] = [
     customer_email: 'rohit.verma@neuralfin.ai',
     amount_paise: 349900,
     next_due_on: '2026-09-12T00:00:00.000Z',
-    created_at: new Date().toISOString(),
+    created_at: '2026-09-03T17:16:51.000Z',
     status: 'created',
+    dataSource: 'razorpay_live',
   },
   {
     subscription_id: 'sub_TXdrqtDrqR91IV',
@@ -89,8 +95,9 @@ const INITIAL_DEMO_SUBSCRIPTIONS: TestSubscription[] = [
     customer_email: 'neha.patel@devstack.net',
     amount_paise: 1250000,
     next_due_on: '2026-09-05T00:00:00.000Z',
-    created_at: new Date().toISOString(),
+    created_at: '2026-09-03T17:12:12.000Z',
     status: 'created',
+    dataSource: 'razorpay_live',
   },
   {
     subscription_id: 'sub_TXdrpbWWASct8j',
@@ -101,8 +108,9 @@ const INITIAL_DEMO_SUBSCRIPTIONS: TestSubscription[] = [
     customer_email: 'deepak.verma@scaleup.io',
     amount_paise: 499900,
     next_due_on: '2026-09-10T00:00:00.000Z',
-    created_at: new Date().toISOString(),
+    created_at: '2026-09-03T17:12:11.000Z',
     status: 'created',
+    dataSource: 'razorpay_live',
   },
   {
     subscription_id: 'sub_TXdroGLUXyYIZO',
@@ -113,8 +121,9 @@ const INITIAL_DEMO_SUBSCRIPTIONS: TestSubscription[] = [
     customer_email: 'arjun.mehta@fincloud.co',
     amount_paise: 5200000,
     next_due_on: '2026-09-20T00:00:00.000Z',
-    created_at: new Date().toISOString(),
+    created_at: '2026-09-03T17:12:10.000Z',
     status: 'created',
+    dataSource: 'razorpay_live',
   },
   {
     subscription_id: 'sub_TXdrmwWFp4rrc3',
@@ -125,8 +134,9 @@ const INITIAL_DEMO_SUBSCRIPTIONS: TestSubscription[] = [
     customer_email: 'priya.sharma@saasgrowth.in',
     amount_paise: 149900,
     next_due_on: '2026-09-15T00:00:00.000Z',
-    created_at: new Date().toISOString(),
+    created_at: '2026-09-03T17:12:09.000Z',
     status: 'created',
+    dataSource: 'razorpay_live',
   },
 ];
 

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Script: create-razorpay-subscription.ts
  *
  * Programmatically creates a plan and test subscription in Razorpay Sandbox mode
@@ -28,7 +28,10 @@ async function main() {
         }),
       });
       const data = await res.json();
-      console.log(`✓ Created Subscription for "${plan.name}":`, data.subscription?.subscription_id, `(Link: ${data.subscription?.subscription_link})`);
+      console.log(`✓ [${data.dataSource || 'unknown'}] Created Subscription for "${plan.name}":`, data.subscription?.subscription_id, `(Link: ${data.subscription?.subscription_link})`);
+      if (data.dataSource === 'local_fallback' && data.fallbackReason) {
+        console.warn(`  ⚠️ Fallback Reason: ${data.fallbackReason}`);
+      }
     } catch (err) {
       console.error(`Failed to create plan ${plan.name}:`, err);
     }
