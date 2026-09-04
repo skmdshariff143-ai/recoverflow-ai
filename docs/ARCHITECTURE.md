@@ -53,7 +53,42 @@ flowchart TD
 
 ---
 
-## 2. Decoupled Architectural Layering
+## 2. AI Boundary — What Gemini Can and Cannot Touch
+
+Google Gemini 3.6 Flash is strictly architected as a read-only advisory copilot with **zero execution authority**, **zero state mutation capability**, and **zero access to financial funds**. All payment state transitions, safety rule enforcements, Expected Value ranking calculations, and cryptographic ledger hashing reside exclusively in deterministic, framework-agnostic TypeScript modules under [`src/lib/engine/`](../src/lib/engine/), isolated from [`src/lib/ai/`](../src/lib/ai/).
+
+```mermaid
+flowchart TD
+    classDef advisoryNode fill:#1e1b4b,stroke:#818cf8,stroke-width:2px,color:#fff;
+    classDef barrierNode fill:#450a0a,stroke:#ef4444,stroke-width:3px,color:#fff;
+    classDef deterministicNode fill:#064e3b,stroke:#10b981,stroke-width:2px,color:#fff;
+
+    subgraph AI_LAYER["🤖 AI ADVISORY LAYER · GEMINI 3.6"]
+        direction LR
+        A1["Error normalization<br/>Log text → category"]:::advisoryNode
+        A2["Reminder drafting<br/>SMS / email proposal"]:::advisoryNode
+        A3["Case summarization<br/>Timeline for reviewer"]:::advisoryNode
+    end
+
+    BARRIER["🔒 CODE-ENFORCED ISOLATION BARRIER — src/lib/ai/<br/><b>Zero execution &nbsp;•&nbsp; Zero state mutation &nbsp;•&nbsp; Zero money movement</b>"]:::barrierNode
+
+    subgraph CORE_LAYER["⚖️ DETERMINISTIC GOVERNANCE & FINANCIAL ENGINE"]
+        direction TB
+        C1["EV ranking engine<br/>Integer-paise arithmetic"]:::deterministicNode
+        C2["Safety rule filter<br/>Opt-out hard-stop invariants"]:::deterministicNode
+        C3["Budget allocation<br/>Top-N slots, rest deferred"]:::deterministicNode
+        C4["State machine<br/>Detected → diagnosed → executed"]:::deterministicNode
+        C5["Audit ledger<br/>SHA-256 tamper-evident chain"]:::deterministicNode
+        C1 --> C2 --> C3 --> C4 --> C5
+    end
+
+    A1 & A2 & A3 -. "advisory proposals only" .-> BARRIER
+    BARRIER --> |"enforced boundary"| C1
+```
+
+---
+
+## 3. Decoupled Architectural Layering
 
 ```
 e:\recoverflow-ai/
@@ -76,7 +111,7 @@ e:\recoverflow-ai/
 
 ---
 
-## 3. Core Architectural Invariants
+## 4. Core Architectural Invariants
 
 | # | Invariant | Enforcement Mechanism | Failure Mode Prevented |
 |---|---|---|---|
@@ -88,9 +123,10 @@ e:\recoverflow-ai/
 
 ---
 
-## 4. Cross-Reference Documentation Map
+## 5. Cross-Reference Documentation Map
 
 - **Model Mathematics & Calibration**: [`MODEL.md`](../MODEL.md)
+- **AI Boundary & Isolation Matrix**: [`docs/AI_BOUNDARY.md`](./AI_BOUNDARY.md)
 - **Live Razorpay API Evidence**: [`docs/LIVE_RAZORPAY_EVIDENCE.md`](./LIVE_RAZORPAY_EVIDENCE.md)
 - **Data Provenance & Frozen Outcomes**: [`docs/DATA_PROVENANCE.md`](./DATA_PROVENANCE.md)
 - **Claim Reconciliation & Benchmark Proof**: [`docs/CLAIM_RECONCILIATION.md`](./CLAIM_RECONCILIATION.md)

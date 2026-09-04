@@ -136,34 +136,40 @@ flowchart TD
 
 ---
 
-## 🛡️ Strict AI vs Non-AI Responsibility Boundary
+### AI Boundary — What Gemini Can and Cannot Touch
+
+The diagram below illustrates our strict, code-enforced isolation architecture: Google Gemini 3.6 Flash operates exclusively as a read-only advisory copilot with zero execution rights, zero state mutation authority, and zero access to financial balances. All money movement, EV scoring, safety gates, state transitions, and cryptographic ledgers are executed by deterministic, pure TypeScript engines in [`src/lib/engine/`](./src/lib/engine/), strictly isolated from LLM code in [`src/lib/ai/`](./src/lib/ai/).
 
 ```mermaid
-graph TD
-    subgraph AI_ADVISORY["🤖 Bounded AI Advisory Layer (Gemini 3.6 Flash)"]
-        A1["Gateway Error Normalization<br/>(cryptic log -> standard category)"]
-        A2["Empathetic Reminder Drafting<br/>(SMS/Email notification proposal)"]
-        A3["Reviewer Case Summarization<br/>(natural language timeline)"]
-    end
+flowchart TD
+    classDef advisoryNode fill:#1e1b4b,stroke:#818cf8,stroke-width:2px,color:#fff;
+    classDef barrierNode fill:#450a0a,stroke:#ef4444,stroke-width:3px,color:#fff;
+    classDef deterministicNode fill:#064e3b,stroke:#10b981,stroke-width:2px,color:#fff;
 
-    subgraph ISOLATION_BARRIER["🔒 Code-Enforced Architectural Barrier (src/lib/ai/)"]
+    subgraph AI_LAYER["🤖 AI ADVISORY LAYER · GEMINI 3.6"]
         direction LR
-        B1["ZERO Execution Privileges"] --- B2["ZERO State Mutation"] --- B3["ZERO Money Movement"]
+        A1["Error normalization<br/>Log text → category"]:::advisoryNode
+        A2["Reminder drafting<br/>SMS / email proposal"]:::advisoryNode
+        A3["Case summarization<br/>Timeline for reviewer"]:::advisoryNode
     end
 
-    subgraph DETERMINISTIC_CORE["⚖️ Deterministic Governance & Financial Engine (src/lib/engine/)"]
-        C1["Integer-Paise Arithmetic & EV Ranking<br/>(Math.round(amountPaise * bps / 10000))"]
-        C2["Safety Rule Filter & Opt-Out Halts<br/>(immediate hard-stop invariants)"]
-        C3["Budget Capacity Allocation<br/>(top N slots prioritized, rest deferred)"]
-        C4["Multi-Cycle State Transitions<br/>(DETECTED -> DIAGNOSED -> EXECUTED)"]
-        C5["SHA-256 Tamper-Evident Ledger<br/>(immutable append-only hash chain)"]
+    BARRIER["🔒 CODE-ENFORCED ISOLATION BARRIER — src/lib/ai/<br/><b>Zero execution &nbsp;•&nbsp; Zero state mutation &nbsp;•&nbsp; Zero money movement</b>"]:::barrierNode
+
+    subgraph CORE_LAYER["⚖️ DETERMINISTIC GOVERNANCE & FINANCIAL ENGINE"]
+        direction TB
+        C1["EV ranking engine<br/>Integer-paise arithmetic"]:::deterministicNode
+        C2["Safety rule filter<br/>Opt-out hard-stop invariants"]:::deterministicNode
+        C3["Budget allocation<br/>Top-N slots, rest deferred"]:::deterministicNode
+        C4["State machine<br/>Detected → diagnosed → executed"]:::deterministicNode
+        C5["Audit ledger<br/>SHA-256 tamper-evident chain"]:::deterministicNode
+        C1 --> C2 --> C3 --> C4 --> C5
     end
 
-    AI_ADVISORY -. "Advisory Proposals Only" .-> ISOLATION_BARRIER
-    ISOLATION_BARRIER ===> DETERMINISTIC_CORE
+    A1 & A2 & A3 -. "advisory proposals only" .-> BARRIER
+    BARRIER --> |"enforced boundary"| C1
 ```
 
-> **Enforced in Code**: The AI boundary is not a prompt convention—it is enforced by module decoupling. `src/lib/ai/geminiClient.ts` has **zero write access** to payment state, ledger hashes, or payment adapters. All money calculations, safety halts, and state transitions reside exclusively in `src/lib/engine/` and `src/lib/adapters/`.
+> **Enforced in Code**: The AI boundary is not a prompt convention—it is enforced by module decoupling. [`src/lib/ai/geminiClient.ts`](./src/lib/ai/geminiClient.ts) has **zero write access** to payment state, ledger hashes, or payment adapters. All money calculations, safety halts, and state transitions reside exclusively in [`src/lib/engine/`](./src/lib/engine/) and [`src/lib/adapters/`](./src/lib/adapters/).
 
 | Domain | Mechanism | Responsible Layer | Code Location |
 | :--- | :--- | :--- | :--- |
