@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { subscriptionStore, type TestSubscription } from '@/lib/server/subscriptionStore';
+import { fetchRazorpaySubscriptionsLive } from '@/lib/adapters/razorpaySubscriptionSync';
 
 export async function GET() {
+  const syncResult = await fetchRazorpaySubscriptionsLive();
+  if (syncResult.success && syncResult.subscriptions.length > 0) {
+    subscriptionStore.syncLiveSubscriptions(syncResult.subscriptions);
+  }
+
   const subs = subscriptionStore.getSubscriptions();
   const allLive = subs.length > 0 && subs.every((s) => s.dataSource === 'razorpay_live');
   const someLive = subs.some((s) => s.dataSource === 'razorpay_live');
@@ -9,8 +15,13 @@ export async function GET() {
   return NextResponse.json({
     success: true,
     count: subs.length,
-    dataSource: allLive ? 'razorpay_live' : someLive ? 'mixed' : 'local_fallback',
+    dataSource: syncResult.success && allLive ? 'razorpay_live' : someLive ? 'mixed' : 'local_fallback',
     subscriptions: subs,
+    liveSync: {
+      synced: syncResult.success,
+      totalReported: syncResult.totalCount,
+      error: syncResult.error,
+    },
     dashboardColumns: [
       'Subscription Id',
       'Plan Id',

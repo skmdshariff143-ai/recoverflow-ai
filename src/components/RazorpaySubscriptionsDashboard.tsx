@@ -33,6 +33,8 @@ interface SubscriptionsDashboardProps {
 
 export function RazorpaySubscriptionsDashboard({ onNavigateToQueue }: SubscriptionsDashboardProps) {
   const [subscriptions, setSubscriptions] = useState<TestSubscription[]>([]);
+  const [dataSource, setDataSource] = useState<'razorpay_live' | 'mixed' | 'local_fallback'>('local_fallback');
+  const [liveSyncInfo, setLiveSyncInfo] = useState<{ synced: boolean; totalReported?: number; error?: string } | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -53,6 +55,8 @@ export function RazorpaySubscriptionsDashboard({ onNavigateToQueue }: Subscripti
       if (res.ok) {
         const data = await res.json();
         setSubscriptions(data.subscriptions || []);
+        if (data.dataSource) setDataSource(data.dataSource);
+        if (data.liveSync) setLiveSyncInfo(data.liveSync);
       }
     } catch (err) {
       console.error('Failed to fetch subscriptions:', err);
@@ -69,6 +73,8 @@ export function RazorpaySubscriptionsDashboard({ onNavigateToQueue }: Subscripti
         if (res.ok && !ignore) {
           const data = await res.json();
           setSubscriptions(data.subscriptions || []);
+          if (data.dataSource) setDataSource(data.dataSource);
+          if (data.liveSync) setLiveSyncInfo(data.liveSync);
         }
       } catch (err) {
         console.error('Failed to load subscriptions:', err);
@@ -199,14 +205,29 @@ export function RazorpaySubscriptionsDashboard({ onNavigateToQueue }: Subscripti
                 <CreditCard className="w-5 h-5" />
               </div>
               <div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <h2 className="text-lg font-bold text-white tracking-tight">Subscriptions</h2>
                   <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/40">
                     Razorpay Test Mode
                   </span>
+                  {dataSource === 'razorpay_live' ? (
+                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      Live Synced ({subscriptions.length})
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">
+                      Local Cache ({subscriptions.length})
+                    </span>
+                  )}
                 </div>
                 <p className="text-xs text-slate-400">
                   Manage recurring subscription plans, mandate tokens, and live recovery triggers.
+                  {liveSyncInfo?.synced && liveSyncInfo.totalReported ? (
+                    <span className="ml-1 text-[11px] text-emerald-400 font-mono">
+                      (Fetched {subscriptions.length} of {liveSyncInfo.totalReported} from Razorpay sandbox)
+                    </span>
+                  ) : null}
                 </p>
               </div>
             </div>
@@ -331,8 +352,13 @@ export function RazorpaySubscriptionsDashboard({ onNavigateToQueue }: Subscripti
                   <tr key={sub.subscription_id} className="hover:bg-slate-800/40 transition">
                     {/* Subscription ID */}
                     <td className="py-3.5 px-4 font-mono font-bold text-indigo-300">
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1.5 flex-wrap">
                         <span>{sub.subscription_id}</span>
+                        {sub.dataSource === 'razorpay_live' && (
+                          <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-500/40">
+                            LIVE
+                          </span>
+                        )}
                         <button
                           onClick={() => handleCopy(sub.subscription_id, `sub-${sub.subscription_id}`)}
                           className="text-slate-500 hover:text-slate-300 cursor-pointer"

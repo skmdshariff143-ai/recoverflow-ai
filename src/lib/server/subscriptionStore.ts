@@ -1,4 +1,4 @@
-﻿/**
+/**
  * PayBack AI — Test-Mode Subscription Store & Razorpay Adapter.
  *
  * Models Razorpay Subscriptions corresponding directly to the Razorpay Dashboard schema:
@@ -168,6 +168,32 @@ class SubscriptionStore {
       return sub;
     }
     return null;
+  }
+
+  syncLiveSubscriptions(liveSubs: TestSubscription[]): void {
+    const existingMap = new Map(this.subscriptions.map((s) => [s.subscription_id, s]));
+    // For each live sub from Razorpay, preserve local status overrides if any exist, but refresh metadata
+    const updated = liveSubs.map((live) => {
+      const existing = existingMap.get(live.subscription_id);
+      if (existing) {
+        return {
+          ...live,
+          status: existing.status || live.status,
+          failure_reason: existing.failure_reason || live.failure_reason,
+        };
+      }
+      return live;
+    });
+
+    // Also include any locally added test subscriptions that haven't synced yet
+    const liveIds = new Set(liveSubs.map((s) => s.subscription_id));
+    for (const sub of this.subscriptions) {
+      if (!liveIds.has(sub.subscription_id)) {
+        updated.push(sub);
+      }
+    }
+
+    this.subscriptions = updated;
   }
 
   reset(): void {
