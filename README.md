@@ -79,42 +79,51 @@ Most recovery tools claim high recovery rates by scoring payments with optimisti
 
 ---
 
-## 🏗️ Exhaustive System Architecture & Pipeline Stages
+## 🏗️ Architecture & Pipeline Flowchart
 
-```
-                       ┌─────────────────────────┐
-                       │  Payment Failure Events │ (10 failure categories, history)
-                       └───────────┬─────────────┘
-                                   │
-                                   ▼
-                       ┌─────────────────────────┐
-                       │ 1. Feature Extraction   │ 6 deterministic features (base rate, on-time rate,
-                       │    & Scoring Engine     │ broken promises, tenure, past recoveries, attempt decay)
-                       └───────────┬─────────────┘
-                                   │
-                                   ▼
-                       ┌─────────────────────────┐
-                       │ 2. Safety Rules Filter  │ Hard-stops customer opt-outs, permanent closures,
-                       │    & Approval Gate      │ attempt caps (≤ 3), & quiet-hours scheduling
-                       └───────────┬─────────────┘
-                                   │
-                                   ▼
-                       ┌─────────────────────────┐
-                       │ 3. EV Ranking & Budget  │ Sorts by Expected Value = Prob × Amount;
-                       │    Allocation Engine    │ allocates top N slots (default: 40); defers rest
-                       └───────────┬─────────────┘
-                                   │
-                                   ▼
-                       ┌─────────────────────────┐
-                       │ 4. Closed-Loop Machine  │ Multi-cycle state machine with backoff, alternate
-                       │    & Execution Adapter  │ channel retry, & offline / Razorpay Test-Mode adapter
-                       └───────────┬─────────────┘
-                                   │
-                                   ▼
-                       ┌─────────────────────────┐
-                       │ 5. SHA-256 Audit Ledger │ Cryptographic hash chain verification, Brier calibration,
-                       │    & Evaluation Lab     │ Error Inspector, & 5-minute judge demonstration
-                       └─────────────────────────┘
+The diagram below traces each failed payment event from initial ingestion through deterministic EV scoring, safety filtering, human approval gating, quiet-hours compliant state machine progression, and dual-path execution (in-memory simulator or live Razorpay test adapter) into the append-only cryptographic SHA-256 audit ledger. *(See [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) for the complete architectural writeup, module boundaries, and invariant enforcement tables).*
+
+```mermaid
+flowchart TD
+    classDef startNode fill:#1e1b4b,stroke:#6366f1,stroke-width:2px,color:#fff;
+    classDef engineNode fill:#0f172a,stroke:#3b82f6,stroke-width:2px,color:#fff;
+    classDef safetyNode fill:#450a0a,stroke:#ef4444,stroke-width:2px,color:#fff;
+    classDef gateNode fill:#3b0764,stroke:#a855f7,stroke-width:2px,color:#fff;
+    classDef stateNode fill:#064e3b,stroke:#10b981,stroke-width:2px,color:#fff;
+    classDef branch fill:#172554,stroke:#38bdf8,stroke-width:2px,color:#fff;
+    classDef ledgerNode fill:#14532d,stroke:#22c55e,stroke-width:2px,color:#fff;
+
+    A["📥 Ingestion Layer<br/>• Real Razorpay Webhook (payment.failed)<br/>• Razorpay Subscription Portfolio Sync<br/>• Mobile Judge Trigger (/trigger)"]:::startNode
+    
+    B["🧠 Deterministic Scoring Engine<br/>• 6-Factor Feature Extraction Vector<br/>• Calibrated Logistic Model (v1.1, Brier 0.1637)<br/>• Integer-Paise EV Calculation (Amount × Prob)"]:::engineNode
+
+    C{"🛡️ Safety Filter<br/>• Customer Opt-Out Hard Stop?<br/>• Permanent Account Closure?<br/>• Max Attempts Cap (≤ 3)?"}:::safetyNode
+
+    D["⛔ Immediate Halt<br/>(STOPPED, Zero Retries)"]:::safetyNode
+
+    E{"⚖️ Human Approval Gate<br/>• High-Value Invoice (> ₹10,000)?<br/>• Merchant Custom Policy Rule?"}:::gateNode
+
+    F["👤 Operator Review<br/>(APPROVAL_REQUIRED)"]:::gateNode
+
+    G["🔄 Closed-Loop State Machine<br/>• Quiet-Hours Policy (22:00-08:00)<br/>• Multi-Cycle Exponential Backoff<br/>• Promise-to-Pay Lifecycle Tracker"]:::stateNode
+
+    H1["🧪 In-Memory Deterministic Simulator<br/>• Independent Frozen Potential Outcomes<br/>• Multi-Seed Counterfactual Benchmarking"]:::branch
+
+    H2["⚡ Razorpay Live Test Adapter<br/>• Payment Links & Subscription Sync API<br/>• HMAC SHA-256 Signature Verification<br/>• Proactive Status Polling"]:::branch
+
+    I["🔐 Append-Only SHA-256 Audit Ledger<br/>• Cryptographic Hash Chain from Genesis<br/>• Interactive Step & Auto-Walk Verifier<br/>• Tamper & Mutation Detection"]:::ledgerNode
+
+    A --> B
+    B --> C
+    C -- "Violates Safety" --> D
+    C -- "Passes Safety" --> E
+    E -- "Approval Required" --> F
+    E -- "Auto-Approved" --> G
+    F -- "Operator Confirms" --> G
+    G --> H1
+    G --> H2
+    H1 --> I
+    H2 --> I
 ```
 
 ### Deep-Dive Feature Specifications
