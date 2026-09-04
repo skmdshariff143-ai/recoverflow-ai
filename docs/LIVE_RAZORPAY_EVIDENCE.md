@@ -2,7 +2,7 @@
 
 > **Evidence Source**: Programmatically captured by `scripts/capture-live-evidence.ts`  
 > **Target Host**: `https://recoverflow-ai-kohl.vercel.app`  
-> **Capture Timestamp**: `2026-09-03T23:57:59.899Z`  
+> **Capture Timestamp**: `2026-09-04T00:02:28.628Z`  
 > **Evidence JSON**: [`docs/evidence/live-razorpay.json`](./evidence/live-razorpay.json)
 
 ---
@@ -12,7 +12,7 @@
 - **Integration Mode**: **Razorpay Test Mode / Sandbox Integration**
 - **Test Key Verification**: Verified active key (`rzp_test_TXdqauFT2yJAXL`) configured in Vercel production settings.
 - **Subscription Creation Status**: **CONFIRMED LIVE (dataSource: "razorpay_live")**
-- **Dashboard-Verified Subscription ID**: `sub_TXkmQbw36PIlQb` (Plan: `plan_TXkmPsWzrJjUO6`, Amount: ₹9,999.00).
+- **Dashboard-Verified Subscription ID**: `sub_TXkrA0xvZj71c3` (Plan: `plan_TXkr9GwKhPcnpP`, Amount: ₹9,999.00).
 - **HMAC-SHA256 Webhook Verification**: Verified live with HTTP 200 on event `subscription.halted`.
 - **Live Recovery Accounting Guarantee**: ₹0.00 recovered revenue recorded upon mandate creation or failure notification until settlement is cryptographically proven in the hash-chain ledger.
 
@@ -38,22 +38,22 @@
     "dataSource": "razorpay_live",
     "message": "Genuine Razorpay sandbox subscription created successfully!",
     "subscription": {
-      "subscription_id": "sub_TXkmQbw36PIlQb",
-      "plan_id": "plan_TXkmPsWzrJjUO6",
+      "subscription_id": "sub_TXkrA0xvZj71c3",
+      "plan_id": "plan_TXkr9GwKhPcnpP",
       "plan_name": "Enterprise AI Autopay Tier",
-      "subscription_link": "https://rzp.io/rzp/LCKuiHtQ",
-      "customer_id": "cust_TXkmQbw36PIlQb",
+      "subscription_link": "https://rzp.io/rzp/UlGL8gC",
+      "customer_id": "cust_TXkrA0xvZj71c3",
       "customer_email": "audit.judge@buildathon.in",
       "amount_paise": 999900,
-      "next_due_on": "2026-10-03T23:57:59.641Z",
-      "created_at": "2026-09-03T23:57:59.641Z",
+      "next_due_on": "2026-10-04T00:02:28.033Z",
+      "created_at": "2026-09-04T00:02:28.033Z",
       "status": "created",
       "dataSource": "razorpay_live"
     },
     "totalSubscriptions": 10
   },
-  "timestamp": "2026-09-03T23:57:56.360Z",
-  "latencyMs": 2961
+  "timestamp": "2026-09-04T00:02:25.361Z",
+  "latencyMs": 2449
 }
 ```
 
@@ -73,15 +73,15 @@
     "dataSource": "razorpay_live",
     "subscriptions": [
       {
-        "subscription_id": "sub_TXkmQbw36PIlQb",
-        "plan_id": "plan_TXkmPsWzrJjUO6",
+        "subscription_id": "sub_TXkrA0xvZj71c3",
+        "plan_id": "plan_TXkr9GwKhPcnpP",
         "plan_name": "Enterprise AI Autopay Tier",
-        "subscription_link": "https://rzp.io/rzp/LCKuiHtQ",
-        "customer_id": "cust_TXkmQbw36PIlQb",
+        "subscription_link": "https://rzp.io/rzp/UlGL8gC",
+        "customer_id": "cust_TXkrA0xvZj71c3",
         "customer_email": "audit.judge@buildathon.in",
         "amount_paise": 999900,
-        "next_due_on": "2026-10-03T23:57:59.641Z",
-        "created_at": "2026-09-03T23:57:59.641Z",
+        "next_due_on": "2026-10-04T00:02:28.033Z",
+        "created_at": "2026-09-04T00:02:28.033Z",
         "status": "created",
         "dataSource": "razorpay_live"
       },
@@ -212,10 +212,10 @@
       "Created At",
       "Status"
     ],
-    "timestamp": "2026-09-03T23:57:59.944Z"
+    "timestamp": "2026-09-04T00:02:28.426Z"
   },
-  "timestamp": "2026-09-03T23:57:59.321Z",
-  "latencyMs": 307
+  "timestamp": "2026-09-04T00:02:27.810Z",
+  "latencyMs": 308
 }
 ```
 
@@ -228,18 +228,18 @@
   "endpoint": "/api/webhooks/razorpay",
   "method": "POST",
   "requestHeaders": {
-    "x-razorpay-signature": "da4c48ccc7fbbed25b3611966802c9723247d5167bba8a9a3f08bd654f94a19a"
+    "x-razorpay-signature": "26c8131137064b1199adbac0b5e05a2611dc839c961eb1fcd4d293d1dd534178"
   },
   "requestBody": {
     "entity": "event",
     "account_id": "acc_rzp_live_buildathon",
     "event": "subscription.halted",
-    "created_at": 1788479879,
+    "created_at": 1788480148,
     "payload": {
       "subscription": {
         "entity": {
-          "id": "sub_TXkmQbw36PIlQb",
-          "plan_id": "plan_TXkmPsWzrJjUO6",
+          "id": "sub_TXkrA0xvZj71c3",
+          "plan_id": "plan_TXkr9GwKhPcnpP",
           "customer_id": "cust_audit_judge_001",
           "status": "halted",
           "paid_count": 2,
@@ -260,14 +260,14 @@
   "responseBody": {
     "success": true,
     "event": "subscription.halted",
-    "paymentId": "sub_TXkmQbw36PIlQb",
+    "paymentId": "sub_TXkrA0xvZj71c3",
     "amountPaise": 999900,
     "failureCategory": "invalid_mandate",
     "invoiceTier": "standard",
     "totalLiveEvents": 1,
-    "timestamp": "2026-09-03T23:58:00.240Z"
+    "timestamp": "2026-09-04T00:02:28.959Z"
   },
-  "timestamp": "2026-09-03T23:57:59.629Z",
-  "latencyMs": 270
+  "timestamp": "2026-09-04T00:02:28.121Z",
+  "latencyMs": 507
 }
 ```

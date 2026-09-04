@@ -2,7 +2,7 @@
 
 > **Evidence Source**: Programmatically captured by `scripts/capture-live-evidence.ts`  
 > **Target Host**: `https://recoverflow-ai-kohl.vercel.app`  
-> **Capture Timestamp**: `2026-09-03T23:57:56.351Z`  
+> **Capture Timestamp**: `2026-09-04T00:02:25.353Z`  
 > **Evidence JSON**: [`docs/evidence/live-gemini.json`](./evidence/live-gemini.json)
 
 ---
@@ -32,13 +32,13 @@
   "responseBody": {
     "normalizedCategory": "bank_downtime",
     "confidenceScore": 0.95,
-    "plainExplanation": "HDFC core banking system returned a temporary 503 gateway timeout error.",
+    "plainExplanation": "HDFC core banking system is temporarily unavailable due to a gateway timeout.",
     "isRecoverable": true,
     "suggestedAction": "retry",
     "provider": "gemini_gemini_3_6_flash"
   },
-  "timestamp": "2026-09-03T23:57:42.758Z",
-  "latencyMs": 3558
+  "timestamp": "2026-09-04T00:02:07.964Z",
+  "latencyMs": 8379
 }
 ```
 
@@ -60,14 +60,14 @@
   "httpStatus": 200,
   "responseBody": {
     "channel": "email",
-    "subject": "Action Required: Payment Update for Your PayBack AI Account",
-    "messageBody": "Dear Rajesh Sharma,\n\nWe were unable to complete your recent payment of ₹14,500.00 due to an authentication failure with your financial institution.\n\nPlease log in to your secure PayBack AI portal to review your billing information and retry the transaction.\n\nIf you believe this was an error or need help resolving this issue, our support team is available to assist you.\n\nBest regards,\nPayBack AI Customer Care",
-    "tone": "empathetic",
-    "complianceNotice": "PayBack AI will never request your full card details, PINs, or passwords via email. Please manage your account securely through our official portal.",
+    "subject": "Payment Action Required: Transaction of ₹14,500.00 unsuccessful",
+    "messageBody": "Dear Rajesh Sharma,\n\nWe were unable to complete your recent payment of ₹14,500.00 due to an authentication failure with your financial institution.\n\nTo resolve this and ensure your service remains uninterrupted, please log in to your official PayBack AI account portal to review your payment details and retry the transaction.\n\nIf you believe this is an error or need assistance, please contact our customer support.\n\nSincerely,\nPayBack AI Team",
+    "tone": "direct",
+    "complianceNotice": "PayBack AI will never ask for your confidential passwords, OTPs, or full credit card numbers via email. Please perform all financial actions through your secure account portal.",
     "provider": "gemini_gemini_3_6_flash"
   },
-  "timestamp": "2026-09-03T23:57:46.317Z",
-  "latencyMs": 5326
+  "timestamp": "2026-09-04T00:02:16.343Z",
+  "latencyMs": 5835
 }
 ```
 
@@ -86,13 +86,13 @@
   "httpStatus": 200,
   "responseBody": {
     "normalizedCategory": "auth_failure",
-    "confidenceScore": 0.1,
-    "plainExplanation": "Unrecognized error string containing invalid instructions rather than a standard gateway failure code.",
+    "confidenceScore": 0.95,
+    "plainExplanation": "The payment gateway error message is invalid or unparseable.",
     "isRecoverable": false,
     "suggestedAction": "none",
     "provider": "gemini_gemini_3_6_flash"
   },
-  "timestamp": "2026-09-03T23:57:51.643Z",
-  "latencyMs": 4708
+  "timestamp": "2026-09-04T00:02:22.178Z",
+  "latencyMs": 3175
 }
 ```
