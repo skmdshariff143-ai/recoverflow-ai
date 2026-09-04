@@ -168,14 +168,47 @@ graph TD
 
 ---
 
-## 🔧 Environment Variables
+## 📚 Canonical Documentation Map
 
-| Variable Name | Required / Optional | Purpose |
-|---|---|---|
-| `GEMINI_API_KEY` | Optional | Google AI Studio key for live Gemini 3.6 Flash inference (falls back to deterministic classifier if absent) |
-| `GEMINI_MODEL` | Optional | Defaults to `gemini-3.6-flash` |
-| `RAZORPAY_KEY_ID` | Optional | Razorpay Test-Mode Key (must start with `rzp_test_`; live keys strictly rejected) |
-| `RAZORPAY_KEY_SECRET` | Optional | Razorpay Test-Mode Secret |
+Every technical claim made in this project is backed by comprehensive, cross-linked documentation:
+
+| Document | Primary Focus | Judge / Evaluator Relevance |
+| :--- | :--- | :--- |
+| [`MODEL.md`](./MODEL.md) | **Model Math & Calibration** | Integer-paise math, 6-factor feature vectors, logistic regression weights, Brier scores ($0.1637$), and calibration plots ($2.98\%$). |
+| [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) | **System Architecture** | GitHub-native Mermaid pipeline flowchart, decoupled module boundaries, and invariant enforcement tables. |
+| [`docs/WHAT_BROKE.md`](./docs/WHAT_BROKE.md) | **Forensic Post-Mortems** | Transparent engineering incident log detailing real defects identified and resolved during development. |
+| [`docs/LIVE_RAZORPAY_EVIDENCE.md`](./docs/LIVE_RAZORPAY_EVIDENCE.md) | **Live API Evidence** | Real Razorpay test-mode API receipts, live subscription links, and cryptographic webhook signatures. |
+| [`docs/DATA_PROVENANCE.md`](./docs/DATA_PROVENANCE.md) | **Data Lineage** | Complete provenance of the 200-payment development and 80-payment held-out adversarial datasets. |
+| [`docs/CLAIM_RECONCILIATION.md`](./docs/CLAIM_RECONCILIATION.md) | **Forensic Proof Audit** | Exact numerical alignment across all benchmark cohorts, baseline lifts, and cost accounting. |
+| [`docs/FINAL_TRACK3_PROOF_AUDIT.md`](./docs/FINAL_TRACK3_PROOF_AUDIT.md) | **Track 3 Proof Audit** | Direct verification checklist against official Razorpay AI Buildathon Track 3 scoring criteria. |
+| [`docs/RAZORPAY_TEST_MODE.md`](./docs/RAZORPAY_TEST_MODE.md) | **Razorpay Setup Guide** | Instructions for configuring test API keys, webhook signing secrets, and live subscriptions. |
+| [`docs/PANEL_QA.md`](./docs/PANEL_QA.md) / [`QA_PREP.md`](./QA_PREP.md) | **Judge Panel Defense** | 20+ anticipated technical questions, edge case stress-tests, and architectural justifications. |
+| [`docs/DEMO_SCRIPT.md`](./docs/DEMO_SCRIPT.md) | **5-Minute Live Script** | Minute-by-minute evaluator walkthrough for live presentation and video demonstration. |
+
+---
+
+## 📁 Repository Structure & Architectural Layering
+
+```
+recoverflow-ai/
+├── src/
+│   ├── lib/
+│   │   ├── engine/       # Framework-Agnostic Core: Scoring, safety filtering, EV ranking, state machine, and ledger
+│   │   ├── adapters/     # External Integrations: Razorpay API, live subscription sync, webhook HMAC verification
+│   │   ├── ai/           # Bounded Gemini 3.6 Diagnostic Copilot (Advisory-only; zero write or state-mutation rights)
+│   │   ├── server/       # Server-Side In-Memory Stores: Subscriptions, idempotency, rate limiting, and live webhooks
+│   │   └── utils/        # Pure Math Utilities: Audio synthesis cues, fuzzy matching, and financial formatters
+│   ├── components/       # Presentation UI: Command Center, Subscriptions Dashboard, Evaluation Lab, Audit Ledger
+│   ├── hooks/            # Typed React Hooks: useRecoveryBatch decoupling UI state from deterministic engine logic
+│   ├── types/            # TypeScript Interfaces & Zod Validation Schemas
+│   └── app/              # Next.js App Router: Static frontend views & serverless API route handlers
+├── docs/                 # Architectural blueprints, forensic audits, live API evidence, and mathematical proofs
+├── tests/
+│   └── e2e/              # 60 Playwright Browser Tests covering 5 viewports, accessibility, and live workflows
+├── scripts/              # Verification gates, benchmark generation, and live evidence capture scripts
+├── data/                 # Immutable frozen ground-truth outcome matrices and benchmark datasets
+└── .env.example          # Canonical environment variable template with zero real secrets
+```
 
 ---
 
@@ -189,7 +222,7 @@ cd recoverflow-ai
 # 2. Install dependencies
 npm ci
 
-# 3. Run complete verification gate (lint, types, 175 unit tests, benchmarks, build, 12 E2E tests across 5 viewports)
+# 3. Run complete verification gate (lint, types, 246 unit tests, build, 60 E2E tests across 5 viewports)
 npm run verify
 
 # 4. Start local development server
@@ -203,7 +236,7 @@ Open [http://localhost:3000](http://localhost:3000) to view the PayBack AI Contr
 ## 🧪 Comprehensive Verification Suite
 
 ```bash
-# Run unit tests (175 tests across 22 suites)
+# Run unit tests (246 tests across 34 suites)
 npm test
 
 # Run TypeScript typecheck (0 errors)
@@ -212,7 +245,7 @@ npm run type-check
 # Run ESLint (0 errors, 0 warnings)
 npm run lint
 
-# Run Playwright E2E browser tests (12 tests across 5 viewports)
+# Run Playwright E2E browser tests (60 tests across 5 viewports)
 npm run test:e2e
 
 # Verify all submission artifacts
