@@ -11,8 +11,10 @@ import {
   AdapterTypeSchema,
   RazorpayTestModeAdapter,
   globalSimulatorAdapter,
+  RecoveryExecutionResult,
 } from '@/lib/adapters/recoveryAdapter';
-import { idempotencyStore } from '@/lib/server/idempotencyStore';
+import { globalTransactionalIdempotencyStore } from '@/lib/server/storage/atomicIdempotencyStore';
+import { formatErrorResponse } from '@/types/errors';
 
 export async function POST(req: NextRequest) {
   try {
@@ -44,23 +46,36 @@ export async function POST(req: NextRequest) {
 
     const payload = parseResult.data;
 
-    // ── Idempotency Check ──────────────────────────────────────────
-    const idempCheck = idempotencyStore.check(payload.idempotencyKey, payload);
-    if (idempCheck.status === 'replay') {
+    // ── Atomic Idempotency Intent Reservation ───────────────────────
+    const reservation = await globalTransactionalIdempotencyStore.reserve(payload.idempotencyKey, payload);
+
+    if (reservation.status === 'REPLAY') {
+      const receipt = reservation.result as RecoveryExecutionResult;
       return NextResponse.json({
-        success: idempCheck.receipt.success,
-        receipt: idempCheck.receipt,
+        success: receipt.success,
+        receipt,
         serverTimestamp: new Date().toISOString(),
         idempotencyStatus: 'replayed_existing_execution',
         securityDisclaimer: 'Executed in Test Mode. Zero real financial debit triggered.',
       });
-    } else if (idempCheck.status === 'conflict') {
+    }
+
+    if (reservation.status === 'CONFLICT') {
       return NextResponse.json(
         {
-          error:
-            'Idempotency Conflict: The provided idempotency key has already been used with a different request payload.',
+          error: reservation.message,
         },
         { status: 409 },
+      );
+    }
+
+    if (reservation.status === 'IN_PROGRESS') {
+      return NextResponse.json(
+        {
+          error: 'Execution in progress for this idempotency key. Please retry shortly.',
+          retryAfterMs: reservation.retryAfterMs,
+        },
+        { status: 429 },
       );
     }
 
@@ -72,20 +87,25 @@ export async function POST(req: NextRequest) {
       adapter = globalSimulatorAdapter;
     }
 
-    const receipt = await adapter.execute(payload);
+    try {
+      const receipt = await adapter.execute(payload);
+      // Atomic commit of completed execution
+      await globalTransactionalIdempotencyStore.commit(payload.idempotencyKey, payload, receipt, reservation.version);
 
-    // Save in idempotency store
-    idempotencyStore.save(payload.idempotencyKey, payload, receipt);
-
-    return NextResponse.json({
-      success: receipt.success,
-      receipt,
-      serverTimestamp: new Date().toISOString(),
-      idempotencyStatus: 'new_execution_recorded',
-      securityDisclaimer: 'Executed in Test Mode. Zero real financial debit triggered.',
-    });
+      return NextResponse.json({
+        success: receipt.success,
+        receipt,
+        serverTimestamp: new Date().toISOString(),
+        idempotencyStatus: 'new_execution_recorded',
+        securityDisclaimer: 'Executed in Test Mode. Zero real financial debit triggered.',
+      });
+    } catch (execErr: unknown) {
+      const errMsg = execErr instanceof Error ? execErr.message : 'Execution failed';
+      await globalTransactionalIdempotencyStore.fail(payload.idempotencyKey, payload, errMsg, reservation.version);
+      throw execErr;
+    }
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Internal execution error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    const formatted = formatErrorResponse(err);
+    return NextResponse.json(formatted.body, { status: formatted.status });
   }
 }

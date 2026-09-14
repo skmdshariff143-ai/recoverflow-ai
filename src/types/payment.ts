@@ -29,6 +29,24 @@ export type InvoiceValueTier = (typeof INVOICE_VALUE_TIERS)[number];
 export const CURRENCIES = ['INR', 'USD', 'EUR', 'GBP'] as const;
 export type Currency = (typeof CURRENCIES)[number];
 
+// ─── Branded Nominal Financial Types ─────────────────────────────────
+
+export type Paise = number & {
+  readonly __brand: 'Paise';
+};
+
+export type BasisPoints = number & {
+  readonly __brand: 'BasisPoints';
+};
+
+export function asPaise(amount: number): Paise {
+  return amount as Paise;
+}
+
+export function asBasisPoints(bps: number): BasisPoints {
+  return bps as BasisPoints;
+}
+
 // ─── Quiet-Hours Window ──────────────────────────────────────────────
 
 /** Customer's preferred no-contact window. */

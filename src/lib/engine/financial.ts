@@ -12,15 +12,22 @@
  *  - Cross-currency mixing is strictly prevented (all canonical amounts are INR).
  */
 
+import { asPaise, asBasisPoints } from '@/types/payment';
+import type { Paise, BasisPoints } from '@/types/payment';
+import { FinancialIntegrityError } from '@/types/errors';
+
 export const BPS_SCALE = 10_000;
 export const MAX_SAFE_PAISE = 1_000_000_000_000; // ₹100 Crore in Paise
 
+export { asPaise, asBasisPoints };
+export type { Paise, BasisPoints };
+
 /**
- * Currency validation error.
+ * Currency validation error (inherits from FinancialIntegrityError).
  */
-export class FinancialValidationError extends Error {
-  constructor(message: string) {
-    super(message);
+export class FinancialValidationError extends FinancialIntegrityError {
+  constructor(message: string, details?: Record<string, unknown>) {
+    super(message, details);
     this.name = 'FinancialValidationError';
   }
 }

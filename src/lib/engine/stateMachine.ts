@@ -36,6 +36,8 @@
  */
 
 import type { FailedPayment, InterventionType } from '@/types';
+import { InvalidTransitionError } from '@/types/errors';
+import { Clock, defaultClock } from '@/lib/utils/clock';
 import { checkSafetyRules } from './safetyFilter';
 import { calculateNextContactTime } from './quietHours';
 import { evaluateApprovalStatus } from './approvalGate';
@@ -58,11 +60,20 @@ export type RecoveryState =
   | 'STOPPED';
 
 export type StateActor =
+  | 'system'
+  | 'customer'
+  | 'operator'
+  | 'payment_provider'
   | 'system_engine'
   | 'reviewer'
   | 'outcome_observer'
-  | 'gateway_webhook'
-  | 'customer';
+  | 'gateway_webhook';
+
+export type EventSource =
+  | 'polling'
+  | 'webhook'
+  | 'manual'
+  | 'simulation';
 
 export interface StateTransitionEvent {
   eventId: string;
@@ -70,6 +81,7 @@ export interface StateTransitionEvent {
   previousState: RecoveryState;
   nextState: RecoveryState;
   actor: StateActor;
+  source?: EventSource;
   timestamp: string;
   reasonCode: string;
   evidence: Record<string, unknown>;
@@ -135,16 +147,19 @@ export function transitionWorkflowState(
   actor: StateActor,
   reasonCode: string,
   evidence: Record<string, unknown> = {},
+  options: { clock?: Clock; source?: EventSource } = {},
 ): StateTransitionEvent {
   const allowed = VALID_TRANSITIONS[workflow.currentState];
   if (!allowed.includes(nextState)) {
-    throw new Error(
+    throw new InvalidTransitionError(
       `Illegal state transition violation: Cannot transition workflow ${workflow.workflowId} from ${workflow.currentState} to ${nextState}`,
+      { workflowId: workflow.workflowId, currentState: workflow.currentState, targetState: nextState },
     );
   }
 
-  const timestamp = new Date().toISOString();
-  const eventId = `evt_${workflow.workflowId}_${workflow.history.length + 1}_${Date.now()}`;
+  const clock = options.clock ?? defaultClock;
+  const timestamp = clock.toISOString();
+  const eventId = `evt_${workflow.workflowId}_${workflow.history.length + 1}_${clock.nowMs()}`;
   const idempotencyKey = `idemp_${workflow.payment.payment_id}_${workflow.currentState}_${nextState}_${workflow.cycleCount}`;
 
   const event: StateTransitionEvent = {
@@ -153,6 +168,7 @@ export function transitionWorkflowState(
     previousState: workflow.currentState,
     nextState,
     actor,
+    source: options.source ?? 'simulation',
     timestamp,
     reasonCode,
     evidence,
@@ -168,15 +184,20 @@ export function transitionWorkflowState(
 /**
  * Initialize a closed-loop workflow for a failed payment.
  */
-export function initRecoveryWorkflow(payment: FailedPayment): RecoveryWorkflowInstance {
+export function initRecoveryWorkflow(
+  payment: FailedPayment,
+  options: { clock?: Clock; source?: EventSource } = {},
+): RecoveryWorkflowInstance {
+  const clock = options.clock ?? defaultClock;
   const workflowId = `wf_${payment.payment_id}`;
-  const timestamp = new Date().toISOString();
+  const timestamp = clock.toISOString();
   const initialEvent: StateTransitionEvent = {
-    eventId: `evt_${workflowId}_1_${Date.now()}`,
+    eventId: `evt_${workflowId}_1_${clock.nowMs()}`,
     recordId: payment.payment_id,
     previousState: 'DETECTED',
     nextState: 'DETECTED',
-    actor: 'gateway_webhook',
+    actor: 'system',
+    source: options.source ?? 'simulation',
     timestamp,
     reasonCode: 'PAYMENT_FAILURE_DETECTED',
     evidence: { amount: payment.amount, failure_category: payment.failure_category },

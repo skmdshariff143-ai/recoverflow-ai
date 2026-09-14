@@ -261,6 +261,142 @@ export function compareModelCalibration(
   };
 }
 
+/**
+ * Expected Calibration Error (ECE) across B equal-width probability bins.
+ * ECE = sum_{b=1}^B (|B_b| / N) * |acc(B_b) - conf(B_b)|
+ */
+export function computeECE(
+  predictions: number[],
+  outcomes: number[],
+  numBins: number = 10,
+): { ece: number; mce: number; bins: Array<{ bin: string; count: number; avgPred: number; avgActual: number; gap: number }> } {
+  if (predictions.length === 0 || predictions.length !== outcomes.length) {
+    return { ece: 0, mce: 0, bins: [] };
+  }
+
+  const N = predictions.length;
+  const binWidth = 1.0 / numBins;
+  const binData: Array<{ count: number; predSum: number; actualSum: number; min: number; max: number; label: string }> = [];
+
+  for (let b = 0; b < numBins; b++) {
+    const min = b * binWidth;
+    const max = (b + 1) * binWidth;
+    binData.push({
+      count: 0,
+      predSum: 0,
+      actualSum: 0,
+      min,
+      max,
+      label: `${min.toFixed(2)}–${max.toFixed(2)}`,
+    });
+  }
+
+  for (let i = 0; i < N; i++) {
+    const p = Math.max(0, Math.min(1, predictions[i]));
+    const y = outcomes[i] ? 1 : 0;
+    const bIdx = Math.min(numBins - 1, Math.floor(p / binWidth));
+    binData[bIdx].count += 1;
+    binData[bIdx].predSum += p;
+    binData[bIdx].actualSum += y;
+  }
+
+  let weightedGapSum = 0;
+  let mce = 0;
+  const outputBins: Array<{ bin: string; count: number; avgPred: number; avgActual: number; gap: number }> = [];
+
+  for (const b of binData) {
+    if (b.count === 0) {
+      outputBins.push({
+        bin: b.label,
+        count: 0,
+        avgPred: round4((b.min + b.max) / 2),
+        avgActual: 0,
+        gap: 0,
+      });
+      continue;
+    }
+    const avgPred = b.predSum / b.count;
+    const avgActual = b.actualSum / b.count;
+    const gap = Math.abs(avgPred - avgActual);
+    weightedGapSum += (b.count / N) * gap;
+    if (gap > mce) mce = gap;
+
+    outputBins.push({
+      bin: b.label,
+      count: b.count,
+      avgPred: round4(avgPred),
+      avgActual: round4(avgActual),
+      gap: round4(gap),
+    });
+  }
+
+  return {
+    ece: round4(weightedGapSum),
+    mce: round4(mce),
+    bins: outputBins,
+  };
+}
+
+/**
+ * Binary Cross-Entropy / Log Loss calculation with numerical stability clamping.
+ */
+export function computeLogLoss(predictions: number[], outcomes: number[], eps = 1e-15): number {
+  if (predictions.length === 0 || predictions.length !== outcomes.length) return 0;
+  const N = predictions.length;
+  let lossSum = 0;
+
+  for (let i = 0; i < N; i++) {
+    const p = Math.max(eps, Math.min(1 - eps, predictions[i]));
+    const y = outcomes[i] ? 1 : 0;
+    lossSum += -(y * Math.log(p) + (1 - y) * Math.log(1 - p));
+  }
+
+  return round4(lossSum / N);
+}
+
+/**
+ * Computes calibration slope and intercept via linear regression over predicted vs observed.
+ */
+export function computeCalibrationSlopeAndIntercept(
+  predictions: number[],
+  outcomes: number[],
+): { slope: number; intercept: number } {
+  if (predictions.length === 0 || predictions.length !== outcomes.length) {
+    return { slope: 1, intercept: 0 };
+  }
+
+  const N = predictions.length;
+  let sumX = 0;
+  let sumY = 0;
+  let sumXY = 0;
+  let sumXX = 0;
+
+  for (let i = 0; i < N; i++) {
+    const x = predictions[i];
+    const y = outcomes[i] ? 1 : 0;
+    sumX += x;
+    sumY += y;
+    sumXY += x * y;
+    sumXX += x * x;
+  }
+
+  const meanX = sumX / N;
+  const meanY = sumY / N;
+  const denominator = sumXX - N * meanX * meanX;
+
+  if (Math.abs(denominator) < 1e-10) {
+    return { slope: 1, intercept: round4(meanY - meanX) };
+  }
+
+  const slope = (sumXY - N * meanX * meanY) / denominator;
+  const intercept = meanY - slope * meanX;
+
+  return {
+    slope: round4(slope),
+    intercept: round4(intercept),
+  };
+}
+
 function round4(n: number): number {
   return Number(n.toFixed(4));
 }

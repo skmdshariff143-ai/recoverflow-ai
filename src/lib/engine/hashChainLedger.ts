@@ -165,3 +165,62 @@ export function tamperWorkingLedgerCopy(
   return { tamperedLedger: cloned, targetIndex };
 }
 
+// ─── Signed Checkpoints (Phase 19 Hardening) ─────────────────────────
+
+export interface LedgerCheckpoint {
+  checkpointIndex: number;
+  blockHash: string;
+  recordCount: number;
+  timestamp: string;
+  signature: string;
+}
+
+/**
+ * Creates a cryptographically signed periodic checkpoint of the audit ledger state.
+ */
+export function createLedgerCheckpoint(
+  ledger: ChainedAuditRecord[],
+  secretKey: string = 'payback_audit_checkpoint_salt',
+): LedgerCheckpoint {
+  const count = ledger.length;
+  const latestHash = count > 0 ? ledger[count - 1].currentHash : GENESIS_HASH;
+  const timestamp = new Date().toISOString();
+  const rawPayload = `${count}:${latestHash}:${timestamp}`;
+  const signature = createHash('sha256').update(`${rawPayload}:${secretKey}`).digest('hex');
+
+  return {
+    checkpointIndex: count > 0 ? count - 1 : 0,
+    blockHash: latestHash,
+    recordCount: count,
+    timestamp,
+    signature,
+  };
+}
+
+/**
+ * Validates that a ledger snapshot matches a signed checkpoint.
+ */
+export function verifyLedgerCheckpoint(
+  ledger: ChainedAuditRecord[],
+  checkpoint: LedgerCheckpoint,
+  secretKey: string = 'payback_audit_checkpoint_salt',
+): { valid: boolean; reason?: string } {
+  const rawPayload = `${checkpoint.recordCount}:${checkpoint.blockHash}:${checkpoint.timestamp}`;
+  const expectedSignature = createHash('sha256').update(`${rawPayload}:${secretKey}`).digest('hex');
+
+  if (checkpoint.signature !== expectedSignature) {
+    return { valid: false, reason: 'Checkpoint signature verification failed (forged checkpoint metadata)' };
+  }
+
+  if (ledger.length !== checkpoint.recordCount) {
+    return { valid: false, reason: `Record count mismatch: ledger has ${ledger.length}, checkpoint specifies ${checkpoint.recordCount}` };
+  }
+
+  const latestHash = ledger.length > 0 ? ledger[ledger.length - 1].currentHash : GENESIS_HASH;
+  if (latestHash !== checkpoint.blockHash) {
+    return { valid: false, reason: `Head block hash mismatch against signed checkpoint` };
+  }
+
+  return { valid: true };
+}
+
