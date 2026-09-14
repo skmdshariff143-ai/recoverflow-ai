@@ -1,87 +1,53 @@
-# PayBack AI — Bounded, Explainable Recovery Orchestration
+# RecoverFlow AI (PayBack AI)
 
-> **PayBack AI is the only entry that proves its own calibration is real, not just claimed.**
-> 
-> **Razorpay AI Buildathon Submission** · Track 3: AI Revenue Recovery  
-> **Live Web Application**: [https://recoverflow-ai-kohl.vercel.app](https://recoverflow-ai-kohl.vercel.app)  
-> **GitHub Repository**: [https://github.com/skmdshariff143-ai/recoverflow-ai](https://github.com/skmdshariff143-ai/recoverflow-ai)  
-> **Model & Math Documentation**: [`MODEL.md`](./MODEL.md) · **Forensic Audit & Claim Integrity**: [`docs/CLAIM_RECONCILIATION.md`](./docs/CLAIM_RECONCILIATION.md) · **Incident Log**: [`docs/WHAT_BROKE.md`](./docs/WHAT_BROKE.md)
+> **Bounded, Explainable AI Payment Recovery Engine for Subscription & Recurring Invoicing**  
+> *Deterministic financial invariants, atomic idempotency, calibrated ML ranking, and code-enforced AI isolation.*
+
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)](https://www.typescriptlang.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-16.3.2-black.svg)](https://nextjs.org/)
+[![Vitest](https://img.shields.io/badge/Tests-277%20Passed%20(44%20Suites)-brightgreen.svg)](https://vitest.dev/)
+[![ESLint](https://img.shields.io/badge/ESLint-0%20Errors%20%7C%200%20Warnings-success.svg)](https://eslint.org/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 
 ---
 
-## 🎯 The Core Proof: Why PayBack AI?
+## ⚡ 60-Second Recruiter Summary
 
-Most recovery tools claim high recovery rates by scoring payments with optimistic heuristics and then evaluating those predictions on the exact same logic that created them—a self-fulfilling circular evaluation loop. 
+RecoverFlow AI is an AI-assisted payment recovery engine built for B2B recurring billing and subscriptions. In conventional SaaS billing, failed payments are typically handled in one of two suboptimal ways: **blind fixed retries** (which waste gateway fees, trigger bank fraud throttles, and harass churned users) or **unconstrained AI agents** (which hallucinate numbers, mutate transaction states, and introduce compliance liability).
 
-**PayBack AI proves its claims through three interconnected mathematical guarantees:**
-1. **Independent Frozen Potential Outcomes**: Ground-truth recovery outcomes are generated independently from predicted probabilities and held in immutable benchmark matrices (`data/frozen-outcomes-200.json`), eliminating circular evaluation bias.
-2. **Empirical Brier Calibration**: Our trained logistic regression model (v1.1) achieves a strictly proper **Brier score of 0.1637** and an overall calibration error of **2.98%**, delivering **+₹3,93,159 (+470% net revenue lift)** over fixed retry schedules under an identical 40-slot budget.
-3. **SHA-256 Tamper-Evident Ledger**: Every feature contribution, safety halt, human reviewer approval, and settlement receipt is chained into an append-only cryptographic ledger from genesis hash `00000000...`, letting any evaluator re-walk the hash chain in real time to verify that zero audit records were mutated or reordered.
+RecoverFlow AI solves this with a strict architectural boundary: **AI advises, deterministic business logic decides.**
+
+- **AI Advisory Role**: Google Gemini models (with circuit-breaker fallbacks) classify unstructured gateway error logs, draft empathetic customer recovery notifications, and summarize case timelines.
+- **Deterministic Core**: Pure TypeScript engines enforce integer-paise financial arithmetic, hard safety gates (opt-out halts, attempt caps), atomic idempotency, quiet-hours contact scheduling, and Expected Value ($\text{EV} = \text{Amount} \times P(\text{Recovery})$) queue prioritization.
+- **Auditable Provenance**: Every state transition, operator approval, and simulated settlement is recorded on an append-only SHA-256 hash-chained audit ledger with signed cryptographic checkpoints.
+- **Quality Baseline**: **277 automated unit/property tests across 44 suites** pass with **0 TypeScript errors** and **0 ESLint errors/warnings**.
+
+---
+
+## 🎯 The Core Problem & Solution
 
 ```
-┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
-│  CORE PROOF TRIANGLE:                                                                            │
-│  Frozen Ground-Truth Outcomes  ──▶  Empirical Brier Calibration  ──▶  SHA-256 Cryptographic Chain │
-│  (Zero Circular Evaluation)          (2.98% Calibration Error)        (Tamper-Evident Integrity)  │
-└──────────────────────────────────────────────────────────────────────────────────────────────────┘
+Traditional Recovery Pipelines:
+  Payment Failed ──▶ Blind Fixed Retry Schedule ──▶ Retry Blocked Accounts ──▶ Gateway Penalties & Churn
+
+RecoverFlow AI Architecture:
+  Payment Failed ──▶ Deterministic Safety Gate ──▶ Calibrated ML EV Ranker ──▶ Human Approval (>₹10k)
+                           │                               │                            │
+                           ▼ (Violations Halted)           ▼ (Advisory AI Log Norm)     ▼ (Safe Dispatch)
+                     IMMEDIATE STOP               Integer-Paise Optimization      Razorpay Test / Sim
 ```
 
-**What PayBack AI does**: Pairs deterministic Expected Value ranking ($\text{EV} = \text{Amount} \times \text{Prob}$) with bounded Gemini 3.6 error diagnosis, quiet-hours compliance, and multi-cycle execution over official Razorpay test-mode adapters—moving money safely while permanently preventing blind retries on dead accounts.
+### Key Engineering Invariants
+1. **Zero Execution Privileges for AI**: LLM inference (`src/lib/ai/`) has zero write access to ledger state, database stores, or payment execution adapters.
+2. **Integer-Paise Monetary Precision**: All financial amounts are typed as branded `Paise` ($1\text{ INR} = 100\text{ Paise}$) and `BasisPoints` ($100\% = 10,000\text{ bps}$), preventing IEEE-754 floating-point drift.
+3. **Atomic Transactional Idempotency**: Concurrency-safe execution guard preventing double-charging during parallel client retries.
+4. **Independent Ground-Truth Evaluation**: Counterfactual benchmarking uses frozen potential outcomes (`data/frozen-outcomes-200.json`) held disjoint from prediction models to eliminate circular evaluation bias.
 
 ---
 
-## 🧭 5-Minute Judge Demonstration Path
+## 🏗️ System Architecture
 
-1. **Top KPI Cards (0:00 – 1:00)**:  
-   View **Total Revenue at Risk (₹6,87,695)** vs **Simulated Recovered (₹1,46,900)** across the 100-record batch, demonstrating bounded recovery without floating-point precision drift.
-2. **Ranked Priority Queue & Explainability Drawer (1:00 – 2:30)**:  
-   Click on any payment row (e.g. `pay_00001`) to open the **Explainable Decision Drawer**. Inspect the 6-factor score waterfall (base rate, on-time history, recency, tenure, promise penalties), bounded Gemini diagnosis, and human reviewer approval controls.
-3. **Live Execution Dispatch & Outcome Check (2:30 – 3:30)**:  
-   Inside the drawer, trigger **Dispatch Live Execution** and **Run Outcome Check** to observe test-mode link creation and proactive settlement polling (`GET /api/recovery/status/:id`) with zero public webhook attack surface.
-4. **Evaluation Lab & Counterfactual Policy Simulator (3:30 – 4:30)**:  
-   Switch to the **Evaluation Lab** tab. Compare PayBack AI against 6 control policies (Fixed Retry, Retry-All, Random, High-Confidence) across identical frozen outcomes. Inspect the Reconciled Financial Waterfall and Transparent Error Inspector.
-5. **Audit Ledger & SHA-256 Integrity Verification (4:30 – 5:00)**:  
-   Navigate to the **Audit Ledger** tab and click **Verify Ledger Integrity** to observe client-side cryptographic re-walking of all SHA-256 hashes from genesis.
-
----
-
-## 📸 Visual Walkthrough
-
-| 1. Control Center & Ranked Queue | 2. Explainable Decision Drill-Down |
-|:---:|:---:|
-| ![Dashboard Overview](./docs/screenshots/01-dashboard-overview.png) | ![Decision Drilldown](./docs/screenshots/02-explainable-drilldown.png) |
-| **Top KPI metrics, financial cards & EV-ranked queue** | **6-factor score waterfall & bounded Gemini Copilot** |
-
-| 3. Counterfactual Evaluation Lab | 4. SHA-256 Cryptographic Ledger |
-|:---:|:---:|
-| ![Evaluation Lab](./docs/screenshots/03-evaluation-lab.png) | ![Audit Ledger](./docs/screenshots/04-audit-trail-ledger.png) |
-| **Comparative policy matrix & multi-merchant risk presets** | **Tamper-evident SHA-256 hash-chain verification** |
-
-| 5. Live Recovery Runner | 6. Methodology & Governance Guide |
-|:---:|:---:|
-| ![Live Runner](./docs/screenshots/05-live-runner.png) | ![Methodology Guide](./docs/screenshots/05-methodology-guide.png) |
-| **Stepped execution & proactive outcome observation** | **Architectural AI boundaries & transparent post-mortems** |
-
----
-
-## 📊 Key Results (200-Payment Benchmark Cohort)
-
-| Metric | PayBack AI (EV Prioritization) | Fixed Retry Control (First 40 Eligible) | Incremental Delta (Δ) |
-| :--- | :---: | :---: | :---: |
-| **Interventions Budgeted** | **40 slots** | 40 slots | 0 (Identical budget) |
-| **Invoices Recovered** | **27 / 40 (67.5%)** | 10 / 40 (25.0%) | **+17 invoices (+170%)** |
-| **Simulated Recovery** | **₹4,76,823.00** | ₹83,664.00 | **+₹3,93,159.00 (+470%)** |
-| **Estimated Operational Cost** | **₹486.00** | ₹480.00 | +₹6.00 |
-| **Net Simulated Recovery** | **₹4,76,337.00** | ₹83,184.00 | **+₹3,93,153.00 (+473%)** |
-| **Unsafe Interventions** | **0 (0 violations)** | 0 | 0 (Strict safety gate) |
-| **Opt-Out Violations** | **0 (0 violations)** | 0 | 0 (Strict safety gate) |
-| **Independent Brier Score** | **0.1637** | — | Strictly proper probabilistic score |
-
----
-
-## 🏗️ Architecture & Pipeline Flowchart
-
-The diagram below traces each failed payment event from initial ingestion through deterministic EV scoring, safety filtering, human approval gating, quiet-hours compliant state machine progression, and dual-path execution (in-memory simulator or live Razorpay test adapter) into the append-only cryptographic SHA-256 audit ledger. *(See [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) for the complete architectural writeup, module boundaries, and invariant enforcement tables).*
+The following flowchart illustrates the lifecycle of a payment failure from ingestion to cryptographic ledger recording:
 
 ```mermaid
 flowchart TD
@@ -93,7 +59,7 @@ flowchart TD
     classDef branch fill:#172554,stroke:#38bdf8,stroke-width:2px,color:#fff;
     classDef ledgerNode fill:#14532d,stroke:#22c55e,stroke-width:2px,color:#fff;
 
-    A["📥 Ingestion Layer<br/>• Real Razorpay Webhook (payment.failed)<br/>• Razorpay Subscription Portfolio Sync<br/>• Mobile Judge Trigger (/trigger)"]:::startNode
+    A["📥 Ingestion Layer<br/>• Real Razorpay Webhook (payment.failed)<br/>• Razorpay Subscription Portfolio Sync<br/>• Test Payment Ingestion"]:::startNode
     
     B["🧠 Deterministic Scoring Engine<br/>• 6-Factor Feature Extraction Vector<br/>• Calibrated Logistic Model (v1.1, Brier 0.1637)<br/>• Integer-Paise EV Calculation (Amount × Prob)"]:::engineNode
 
@@ -111,7 +77,7 @@ flowchart TD
 
     H2["⚡ Razorpay Live Test Adapter<br/>• Payment Links & Subscription Sync API<br/>• HMAC SHA-256 Signature Verification<br/>• Proactive Status Polling"]:::branch
 
-    I["🔐 Append-Only SHA-256 Audit Ledger<br/>• Cryptographic Hash Chain from Genesis<br/>• Interactive Step & Auto-Walk Verifier<br/>• Tamper & Mutation Detection"]:::ledgerNode
+    I["🔐 Append-Only SHA-256 Audit Ledger<br/>• Cryptographic Hash Chain from Genesis<br/>• Interactive Step & Auto-Walk Verifier<br/>• Signed Cryptographic Checkpoints"]:::ledgerNode
 
     A --> B
     B --> C
@@ -126,19 +92,13 @@ flowchart TD
     H2 --> I
 ```
 
-### Deep-Dive Feature Specifications
-
-1. **Integer-Paise Financial Precision**: All monetary accounting uses integer paise ($1\text{ INR} = 100\text{ Paise}$). Expected-value calculations convert probability scores to integer basis points ($[0, 10000]$) before multiplying by amount, preventing floating-point precision drift in high-volume billing.
-2. **Dual-Model Calibration (Heuristic v1.0 vs Trained Logistic v1.1)**: Users can toggle between the transparent 6-factor category-anchored heuristic and the trained logistic regression model to observe calibration curve improvements directly.
-3. **Closed-Loop Multi-Cycle State Machine**: Manages payments across `DETECTED` $\to$ `DIAGNOSED` $\to$ `SCHEDULED` $\to$ `EXECUTING` $\to$ `OUTCOME_OBSERVED` $\to$ `RECOVERED` / `STOPPED` with quiet-hours scheduling and exponential backoff.
-4. **Zero-Webhook Serverless Resiliency**: Inbound public webhook routes are permanently disabled (`POST /api/recovery/webhook` returns HTTP 404). Recovery transactions generate stateless HMAC-checksummed receipts verified via outbound status polling (`GET /api/recovery/status/:id`).
-5. **Promise-to-Pay Lifecycle Tracker**: Dedicated workspace tracking customer payment commitments, deferring aggressive retries during active promises and penalizing broken promises in subsequent scoring cycles.
+*(For detailed module contracts and state machine specifications, see [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md)).*
 
 ---
 
-### AI Boundary — What Gemini Can and Cannot Touch
+## 🔒 The Code-Enforced AI Boundary
 
-The diagram below illustrates our strict, code-enforced isolation architecture: Google Gemini 3.6 Flash operates exclusively as a read-only advisory copilot with zero execution rights, zero state mutation authority, and zero access to financial balances. All money movement, EV scoring, safety gates, state transitions, and cryptographic ledgers are executed by deterministic, pure TypeScript engines in [`src/lib/engine/`](./src/lib/engine/), strictly isolated from LLM code in [`src/lib/ai/`](./src/lib/ai/).
+In RecoverFlow AI, the AI boundary is not a prompt convention—it is enforced by module isolation, typed contracts, and strict input/output schemas:
 
 ```mermaid
 flowchart TD
@@ -146,7 +106,7 @@ flowchart TD
     classDef barrierNode fill:#450a0a,stroke:#ef4444,stroke-width:3px,color:#fff;
     classDef deterministicNode fill:#064e3b,stroke:#10b981,stroke-width:2px,color:#fff;
 
-    subgraph AI_LAYER["🤖 AI ADVISORY LAYER · GEMINI 3.6"]
+    subgraph AI_LAYER["🤖 AI ADVISORY LAYER · GEMINI"]
         direction LR
         A1["Error normalization<br/>Log text → category"]:::advisoryNode
         A2["Reminder drafting<br/>SMS / email proposal"]:::advisoryNode
@@ -169,134 +129,143 @@ flowchart TD
     BARRIER --> |"enforced boundary"| C1
 ```
 
-> **Enforced in Code**: The AI boundary is not a prompt convention—it is enforced by module decoupling. [`src/lib/ai/geminiClient.ts`](./src/lib/ai/geminiClient.ts) has **zero write access** to payment state, ledger hashes, or payment adapters. All money calculations, safety halts, and state transitions reside exclusively in [`src/lib/engine/`](./src/lib/engine/) and [`src/lib/adapters/`](./src/lib/adapters/).
+### Responsibility Breakdown
+| Domain | Mechanism | Responsible Layer | Code Path | AI Involvement |
+|:---|:---|:---|:---|:---:|
+| **Monetary Math & EV** | Integer-paise math (`bps * amountPaise / 10000`) | Deterministic Financial Core | [`src/lib/engine/financial.ts`](./src/lib/engine/financial.ts) | **None** |
+| **Safety Invariants & Opt-Outs** | Hard boolean gate before scoring/ranking | Deterministic Safety Filter | [`src/lib/engine/safetyFilter.ts`](./src/lib/engine/safetyFilter.ts) | **None** |
+| **Budget Allocation & Ranking** | EV sorting and capacity capping | Deterministic Prioritization | [`src/lib/engine/rankAndAllocate.ts`](./src/lib/engine/rankAndAllocate.ts) | **None** |
+| **State Machine Transitions** | Monotonic finite state machine | Deterministic State Engine | [`src/lib/engine/stateMachine.ts`](./src/lib/engine/stateMachine.ts) | **None** |
+| **Error Log Categorization** | LLM classification with offline regex fallback | Bounded AI Copilot | [`src/lib/ai/geminiClient.ts`](./src/lib/ai/geminiClient.ts) | **Advisory Only** |
+| **Customer Reminders** | Policy-constrained template generation | Bounded AI Copilot | [`src/lib/ai/geminiClient.ts`](./src/lib/ai/geminiClient.ts) | **Advisory Only** |
+| **Audit Verification** | SHA-256 hash-chain integrity verification | Cryptographic Audit Engine | [`src/lib/engine/hashChainLedger.ts`](./src/lib/engine/hashChainLedger.ts) | **None** |
 
-| Domain | Mechanism | Responsible Layer | Code Location |
-| :--- | :--- | :--- | :--- |
-| **Monetary Calculations & EV** | Strict Integer-Paise Math (`bps * amountPaise / 10000`) | Deterministic Financial Core | `src/lib/engine/financial.ts` |
-| **Safety Invariants & Opt-Outs** | Hard boolean gate before scoring/ranking | Deterministic Safety Filter | `src/lib/engine/safetyFilter.ts` |
-| **Budget Allocation & Ranking** | EV sorting and capacity capping | Deterministic Prioritization | `src/lib/engine/rankAndAllocate.ts` |
-| **State Machine Transitions** | Explicit transition mapping with idempotency | Deterministic State Engine | `src/lib/engine/stateMachine.ts` |
-| **Error Log Normalization** | LLM classification with heuristic fallback | Bounded Gemini 3.6 Copilot | `src/lib/ai/geminiClient.ts` |
-| **Customer Reminders** | Policy-constrained prototype draft requiring merchant review | Bounded Gemini 3.6 Copilot | `src/lib/ai/geminiClient.ts` |
-| **Audit Verification** | SHA-256 hash-chain integrity verification | Cryptographic Audit Engine | `src/lib/engine/hashChainLedger.ts` |
-
----
-
-## 📚 Canonical Documentation Map
-
-Every technical claim made in this project is backed by comprehensive, cross-linked documentation:
-
-| Document | Primary Focus | Judge / Evaluator Relevance |
-| :--- | :--- | :--- |
-| [`MODEL.md`](./MODEL.md) | **Model Math & Calibration** | Integer-paise math, 6-factor feature vectors, logistic regression weights, Brier scores ($0.1637$), and calibration plots ($2.98\%$). |
-| [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) | **System Architecture** | GitHub-native Mermaid pipeline flowchart, decoupled module boundaries, and invariant enforcement tables. |
-| [`docs/WHAT_BROKE.md`](./docs/WHAT_BROKE.md) | **Forensic Post-Mortems** | Transparent engineering incident log detailing real defects identified and resolved during development. |
-| [`docs/LIVE_RAZORPAY_EVIDENCE.md`](./docs/LIVE_RAZORPAY_EVIDENCE.md) | **Live API Evidence** | Real Razorpay test-mode API receipts, live subscription links, and cryptographic webhook signatures. |
-| [`docs/DATA_PROVENANCE.md`](./docs/DATA_PROVENANCE.md) | **Data Lineage** | Complete provenance of the 200-payment development and 80-payment held-out adversarial datasets. |
-| [`docs/CLAIM_RECONCILIATION.md`](./docs/CLAIM_RECONCILIATION.md) | **Forensic Proof Audit** | Exact numerical alignment across all benchmark cohorts, baseline lifts, and cost accounting. |
-| [`docs/FINAL_TRACK3_PROOF_AUDIT.md`](./docs/FINAL_TRACK3_PROOF_AUDIT.md) | **Track 3 Proof Audit** | Direct verification checklist against official Razorpay AI Buildathon Track 3 scoring criteria. |
-| [`docs/RAZORPAY_TEST_MODE.md`](./docs/RAZORPAY_TEST_MODE.md) | **Razorpay Setup Guide** | Instructions for configuring test API keys, webhook signing secrets, and live subscriptions. |
-| [`docs/PANEL_QA.md`](./docs/PANEL_QA.md) / [`QA_PREP.md`](./QA_PREP.md) | **Judge Panel Defense** | 20+ anticipated technical questions, edge case stress-tests, and architectural justifications. |
-| [`docs/DEMO_SCRIPT.md`](./docs/DEMO_SCRIPT.md) | **5-Minute Live Script** | Minute-by-minute evaluator walkthrough for live presentation and video demonstration. |
+*(For threat modeling and injection defense specifications, see [`docs/THREAT_MODEL.md`](./docs/THREAT_MODEL.md) and [`docs/AI_BOUNDARY.md`](./docs/AI_BOUNDARY.md)).*
 
 ---
 
-## 📁 Repository Structure & Architectural Layering
+## 📊 Machine Learning & Statistical Calibration
 
+RecoverFlow AI uses a calibrated Logistic Regression model (v1.1) to estimate $P(\text{Recovery} \mid \mathbf{x})$. 
+
+- **Prediction Feature Vector**: 7 normalized features: category base rate, on-time rate, broken promises penalty, recency decay, tenure fraction, attempt count penalty, and past recovery ratio.
+- **Customer-Disjoint Splitting**: `splitDatasetByCustomer()` partitions training, validation, and test cohorts strictly by hashed `customer_id`, preventing data leakage from repeated customer invoices.
+- **Probabilistic Metrics**:
+  - **Brier Score**: `0.1637` on the 200-payment benchmark cohort (strictly proper score where $0$ is perfect and $\le 0.25$ beats random guessing).
+  - **Expected Calibration Error (ECE)**: `0.0298` (2.98% weighted gap between predicted and empirical bins).
+  - **Maximum Calibration Error (MCE)**: `0.0712` across 5 equal-width probability bins.
+  - **Model Drift Monitoring**: `ModelDriftMonitor` tracks population shift, alerting if distribution drift triggers fallback to the transparent 6-factor category heuristic.
+
+*(For detailed mathematical derivations and reliability diagrams, see [`MODEL.md`](./MODEL.md) and [`docs/METRICS.md`](./docs/METRICS.md)).*
+
+---
+
+## 🛡️ Security, Safety, and Defensive Engineering
+
+1. **Prompt Injection Hardening**: Gateway logs are wrapped in structural XML boundary tags (`<untrusted_gateway_error>`) and stripped of control characters before model ingestion. The system prompt instructs the model to treat content purely as text data.
+2. **Provider Error Sanitization**: External errors pass through `sanitizeProviderError()`, scrubbing bearer tokens, Basic auth credentials, email addresses, phone numbers, and 16-digit credit card patterns via regex.
+3. **Test-Mode Execution Guard**: `RazorpayTestModeAdapter` validates key prefixes and throws a fatal error if initialized with a live key (`rzp_live_*`).
+4. **Idempotency Conflict Detection**: Concurrent requests with identical idempotency keys execute atomically; conflicting payloads on existing keys return HTTP 409.
+5. **Configurable Quiet-Hours Policy**: Enforces contact blackout windows (default: 22:00 to 08:00 local customer time) before reminders are scheduled. *(Note: Regulatory compliance requires separate legal/compliance verification).*
+
+---
+
+## 🧪 Verified Engineering Test Suite
+
+Every claim in this repository is backed by automated tests executing in continuous integration:
+
+```bash
+$ npm test -- --run
+Test Files  44 passed (44)
+     Tests  277 passed (277)
+  Duration  5.83s
 ```
-recoverflow-ai/
-├── src/
-│   ├── lib/
-│   │   ├── engine/       # Framework-Agnostic Core: Scoring, safety filtering, EV ranking, state machine, and ledger
-│   │   ├── adapters/     # External Integrations: Razorpay API, live subscription sync, webhook HMAC verification
-│   │   ├── ai/           # Bounded Gemini 3.6 Diagnostic Copilot (Advisory-only; zero write or state-mutation rights)
-│   │   ├── server/       # Server-Side In-Memory Stores: Subscriptions, idempotency, rate limiting, and live webhooks
-│   │   └── utils/        # Pure Math Utilities: Audio synthesis cues, fuzzy matching, and financial formatters
-│   ├── components/       # Presentation UI: Command Center, Subscriptions Dashboard, Evaluation Lab, Audit Ledger
-│   ├── hooks/            # Typed React Hooks: useRecoveryBatch decoupling UI state from deterministic engine logic
-│   ├── types/            # TypeScript Interfaces & Zod Validation Schemas
-│   └── app/              # Next.js App Router: Static frontend views & serverless API route handlers
-├── docs/                 # Architectural blueprints, forensic audits, live API evidence, and mathematical proofs
-├── tests/
-│   └── e2e/              # 60 Playwright Browser Tests covering 5 viewports, accessibility, and live workflows
-├── scripts/              # Verification gates, benchmark generation, and live evidence capture scripts
-├── data/                 # Immutable frozen ground-truth outcome matrices and benchmark datasets
-└── .env.example          # Canonical environment variable template with zero real secrets
+
+```bash
+$ npm run type-check
+tsc --noEmit (0 errors)
+
+$ npm run lint
+eslint . (0 errors, 0 warnings)
+
+$ npm run build
+Next.js 16.3.2 Turbopack compiled successfully in 2.6s (12 routes clean)
 ```
+
+### Key Test Suites
+- [`src/lib/engine/__tests__/financial.property.test.ts`](./src/lib/engine/__tests__/financial.property.test.ts): Integer-paise property tests validating non-negativity, associativity, and basis-point bounds.
+- [`src/lib/server/__tests__/idempotencyConcurrency.test.ts`](./src/lib/server/__tests__/idempotencyConcurrency.test.ts): Concurrency tests running 100 simultaneous workers attempting identical idempotency keys.
+- [`src/lib/ai/__tests__/promptInjection.test.ts`](./src/lib/ai/__tests__/promptInjection.test.ts): Jailbreak and instruction-override resistance test suite.
+- [`src/lib/engine/__tests__/dataLeakageAudit.test.ts`](./src/lib/engine/__tests__/dataLeakageAudit.test.ts): Disjoint customer ID leakage assertion suite.
+- [`src/lib/engine/__tests__/hashChainLedger.test.ts`](./src/lib/engine/__tests__/hashChainLedger.test.ts): Tamper detection asserting exact block index identification upon mutation.
 
 ---
 
 ## 💻 Local Quickstart
 
+### Prerequisites
+- Node.js >= 20.0.0
+- npm >= 10.0.0
+
+### Installation & Verification
 ```bash
-# 1. Clone the repository
+# 1. Clone repository
 git clone https://github.com/skmdshariff143-ai/recoverflow-ai.git
 cd recoverflow-ai
 
 # 2. Install dependencies
 npm ci
 
-# 3. Run complete verification gate (lint, types, 246 unit tests, build, 60 E2E tests across 5 viewports)
-npm run verify
+# 3. Run complete verification gate (Type check, Lint, 277 Unit Tests, Build)
+npm run type-check
+npm run lint
+npm test -- --run
+npm run build
 
 # 4. Start local development server
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to view the PayBack AI Control Center.
+Open [http://localhost:3000](http://localhost:3000) to view the Command Center.
 
----
-
-## 🧪 Comprehensive Verification Suite
-
-```bash
-# Run unit tests (246 tests across 34 suites)
-npm test
-
-# Run TypeScript typecheck (0 errors)
-npm run type-check
-
-# Run ESLint (0 errors, 0 warnings)
-npm run lint
-
-# Run Playwright E2E browser tests (60 tests across 5 viewports)
-npm run test:e2e
-
-# Verify all submission artifacts
-npm run verify:artifacts
-```
-
----
-
-## ⚡ Connecting Live Razorpay Test-Mode Webhooks
-
-PayBack AI supports receiving live `payment.failed` webhook events from any Razorpay Sandbox/Test account:
-
-### 1. Configure Environment Variables
-Set your Razorpay API test credentials and Webhook secret in `.env.local` (or in your Vercel Project Environment Variables):
+### Environment Configuration (Optional)
+To test live Razorpay test-mode payment links or Gemini log categorization, create a `.env.local` file (see [`.env.example`](./.env.example)):
 ```env
-RAZORPAY_KEY_ID=rzp_test_your_key_id
-RAZORPAY_KEY_SECRET=your_key_secret
+RAZORPAY_KEY_ID=rzp_test_your_key_id_here
+RAZORPAY_KEY_SECRET=your_razorpay_key_secret_here
 RAZORPAY_WEBHOOK_SECRET=your_webhook_secret_here
+GEMINI_API_KEY=your_gemini_api_key_here
+GEMINI_MODEL=gemini-2.0-flash
 ```
+*(When unconfigured, the system runs seamlessly on offline deterministic simulator adapters and heuristic fallback classifiers).*
 
-### 2. Configure Webhook URL in Razorpay Dashboard
-1. Log into your [Razorpay Dashboard](https://dashboard.razorpay.com/) and toggle to **Test Mode**.
-2. Navigate to **Settings** → **Webhooks** → **Add New Webhook**.
-3. Set **Webhook URL** to: `https://recoverflow-ai-kohl.vercel.app/api/webhooks/razorpay` (or your local ngrok URL).
-4. Set **Secret** to match your `RAZORPAY_WEBHOOK_SECRET`.
-5. Under **Active Events**, select `payment.failed`.
-6. Click **Create Webhook**.
+---
 
-### 3. Trigger a Test Payment Failure
-- Create a test Payment Link or checkout in Razorpay Test Mode.
-- Trigger a test failure (e.g. Bank Downtime or Insufficient Funds).
-- Razorpay posts the `payment.failed` event to `/api/webhooks/razorpay`.
-- PayBack AI cryptographically verifies the HMAC SHA-256 `x-razorpay-signature`, maps error taxonomy into canonical failure categories, and displays it in the live ranked queue under **"Connected: Razorpay Test Mode"**.
+## ⚠️ Explicit Scope & Production Limitations
+
+To maintain absolute technical honesty, the following constraints describe the current architecture versus a full distributed deployment:
+
+1. **Idempotency Scope**: In-memory mutex/Map store (`idempotencyStore.ts`) provides concurrency safety within a single container. Distributed multi-region deployments require an external backing store (e.g., Redis `SETNX` or PostgreSQL `INSERT ... ON CONFLICT DO NOTHING`).
+2. **Razorpay Integration Scope**: Implemented and tested exclusively against the Razorpay **Test Mode API** (`rzp_test_*`). Live production money movement is intentionally blocked by runtime key guards.
+3. **Regulatory Scope**: Quiet-hours contact enforcement is implemented as a configurable timezone-aware scheduler. Official regulatory compliance (e.g., RBI/TRAI standards) requires dedicated legal and operational audits.
+4. **Model Retraining Scope**: The embedded logistic model is trained on synthetic and historical cohorts. Continuous online model retraining in production requires human governance and drift approval gates.
+
+---
+
+## 📚 Technical Documentation Directory
+
+- **[System Architecture & Data Flow](docs/ARCHITECTURE.md)**: Component blueprints, state machine invariants, and PostgreSQL/Redis migration path.
+- **[Threat Model & Security Hardening](docs/THREAT_MODEL.md)**: 10 threat scenarios, attack vectors, code mitigations, and residual limitations.
+- **[Evaluation & Calibration Report](docs/EVALUATION.md)**: Comprehensive empirical evaluation, Brier scores, and policy comparisons.
+- **[AI Boundary & Decoupling Guide](docs/AI_BOUNDARY.md)**: Enforced interfaces separating LLM inference from deterministic cores.
+- **[Engineering Demo Script](docs/DEMO_SCRIPT.md)**: 2-minute walkthrough across 6 explicit technical scenarios.
+- **[Resume & Portfolio Summary](docs/RESUME_PROJECT.md)**: Resume bullet points, keywords, and technical pitches.
+- **[Interview Preparation Guide](docs/INTERVIEW_PREP.md)**: 25 rigorous technical interview questions and architecture justifications.
+- **[Project Engineering Story](docs/PROJECT_STORY.md)**: The 10-step architectural journey and hard technical trade-offs.
 
 ---
 
 ## ⚖️ License
 
-MIT License · Developed for the **Razorpay AI Buildathon — Track 3: AI Revenue Recovery**.
+Distributed under the MIT License. See [`LICENSE`](./LICENSE) for details.
+
