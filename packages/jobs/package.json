@@ -1,0 +1,16 @@
+{
+  "name": "@recoverflow/jobs",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "dependencies": {
+    "@recoverflow/agents": "*",
+    "@recoverflow/core": "*",
+    "bullmq": "^5.41.0",
+    "ioredis": "^5.4.1"
+  },
+  "devDependencies": {
+    "typescript": "^5"
+  }
+}

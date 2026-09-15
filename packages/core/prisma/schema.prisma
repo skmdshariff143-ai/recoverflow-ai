@@ -1,0 +1,168 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum CartStatus {
+  ABANDONED
+  CONTACTED
+  RECOVERED
+  EXPIRED
+  OUT_OF_STOCK_ABORTED
+}
+
+enum AbandonmentType {
+  CHECKOUT_STEP
+  PAYMENT_FAILED
+  CART_PAGE
+}
+
+enum RecoveryStage {
+  QUEUED
+  WHATSAPP_SENT
+  EMAIL_FALLBACK
+  CONCIERGE_ACTIVE
+  RECOVERED
+  EXPIRED
+  OUT_OF_STOCK_ABORTED
+}
+
+enum MessageChannel {
+  WHATSAPP
+  EMAIL
+}
+
+enum MessageDirection {
+  OUTBOUND
+  INBOUND
+}
+
+enum DeliveryStatus {
+  QUEUED
+  SENT
+  DELIVERED
+  READ
+  REPLIED
+  FAILED
+}
+
+enum SuppressionType {
+  PHONE
+  EMAIL
+}
+
+model Merchant {
+  id                            String            @id @default(cuid())
+  storeUrl                      String            @unique
+  shopDomain                    String?           @unique
+  storeName                     String
+  webhookSecret                 String
+  shopifyScopes                 String[]          @default(["read_checkouts", "read_orders", "write_discounts", "read_products", "read_inventory"])
+  encryptedShopifyAccessToken   String?
+  encryptedWhatsappToken        String?
+  whatsappPhoneId               String?
+  whatsappTemplateName          String?           @default("recoverflow_cart_recovery")
+  encryptedResendApiKey         String?
+  fromEmail                     String?           @default("recovery@recoverflow.ai")
+  brandToneGuidelines           String            @default("Helpful, conversational, and direct. Focus on product value.")
+  brandVoiceCasualVsFormal      Float             @default(0.3) // 0.0=Casual, 1.0=Formal
+  brandVoiceUrgencyVsGentle     Float             @default(0.4) // 0.0=Gentle, 1.0=Urgent
+  discountCeilingPercentage     Float             @default(15.0)
+  minMarginPercentage           Float             @default(20.0)
+  cartEvents                    CartEvent[]
+  messageLogs                   MessageLog[]
+  suppressions                  SuppressionList[]
+  createdAt                     DateTime          @default(now())
+  updatedAt                     DateTime          @updatedAt
+}
+
+model CartEvent {
+  id                    String          @id @default(cuid())
+  cartToken             String          @unique
+  merchantId            String
+  merchant              Merchant        @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  customerPhone         String?
+  customerEmail         String?
+  customerName          String?
+  currency              String          @default("USD")
+  totalPrice            Float
+  items                 Json            // JSON array of CartItem
+  status                CartStatus      @default(ABANDONED)
+  abandonmentType       AbandonmentType @default(CHECKOUT_STEP)
+  recoveryStage         RecoveryStage   @default(QUEUED)
+  checkoutUrl           String
+  suggestedDiscountCode String?
+  recoveredAt           DateTime?
+  messageLogs           MessageLog[]
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+
+  @@index([merchantId, status])
+  @@index([customerPhone])
+  @@index([customerEmail])
+}
+
+model MessageLog {
+  id                String           @id @default(cuid())
+  cartEventId       String?
+  cartEvent         CartEvent?       @relation(fields: [cartEventId], references: [id], onDelete: SetNull)
+  merchantId        String
+  merchant          Merchant         @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  channel           MessageChannel
+  direction         MessageDirection @default(OUTBOUND)
+  content           String
+  tokensUsed        Int?
+  latencyMs         Int?
+  deliveryStatus    DeliveryStatus   @default(QUEUED)
+  externalMessageId String?
+  createdAt         DateTime         @default(now())
+
+  @@index([cartEventId])
+  @@index([merchantId, channel])
+}
+
+model SuppressionList {
+  id         String          @id @default(cuid())
+  merchantId String
+  merchant   Merchant        @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  identifier String          // Normalized phone or email
+  type       SuppressionType
+  reason     String          @default("USER_UNSUBSCRIBE")
+  optedOutAt DateTime        @default(now())
+
+  @@unique([merchantId, identifier])
+  @@index([identifier])
+}
+
+model OutboxEvent {
+  id             String    @id @default(cuid())
+  aggregateType  String    // 'CartEvent', 'MessageLog'
+  aggregateId    String
+  eventType      String    // 'CART_ABANDONED', 'PAYMENT_FAILED', 'DISCOUNT_APPLIED'
+  payload        Json
+  idempotencyKey String    @unique // sha256(shopDomain + cartToken + eventTimestamp)
+  status         String    @default("PENDING") // PENDING, PROCESSING, PUBLISHED, FAILED
+  retryCount     Int       @default(0)
+  createdAt      DateTime  @default(now())
+  processedAt    DateTime?
+
+  @@index([status, createdAt])
+}
+
+model SecurityIncident {
+  id             String    @id @default(cuid())
+  cartToken      String?
+  merchantId     String?
+  attackType     String
+  flaggedPatterns String[]
+  rawInput       String
+  normalizedInput String
+  riskScore      Float
+  createdAt      DateTime  @default(now())
+
+  @@index([attackType, createdAt])
+}

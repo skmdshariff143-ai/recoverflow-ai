@@ -17,7 +17,8 @@
     "verify:artifacts": "tsx scripts/verify-artifacts.ts",
     "capture:evidence": "tsx scripts/capture-live-evidence.ts",
     "seed:subscriptions": "tsx scripts/create-razorpay-subscription.ts",
-    "verify:outcome-consistency": "tsx scripts/verify-outcome-consistency.ts",
+    "simulate:abandonment": "tsx scripts/simulate-abandonment.ts",
+    "eval:agents": "tsx scripts/eval-agents.ts",
     "verify": "npm run lint && npm run type-check && npm run test && npm run generate:benchmark && npm run verify:artifacts && git diff --exit-code -- data src/data && npm run build && npm run test:e2e"
   },
   "engines": {
@@ -25,9 +26,13 @@
   },
   "dependencies": {
     "@google/genai": "^2.19.0",
+    "@prisma/client": "^7.10.0",
+    "bullmq": "^6.3.6",
     "clsx": "^2.1.1",
+    "ioredis": "^6.0.0",
     "lucide-react": "^1.33.0",
     "next": "16.3.2",
+    "prisma": "^8.0.0-rc.15",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "recharts": "^3.10.1",

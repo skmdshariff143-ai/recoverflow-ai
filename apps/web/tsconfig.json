@@ -13,22 +13,13 @@
     "isolatedModules": true,
     "jsx": "react-jsx",
     "incremental": true,
-    "plugins": [{ "name": "next" }],
     "paths": {
       "@/*": ["./src/*"],
-      "@recoverflow/core": ["./packages/core/src/index.ts"],
-      "@recoverflow/agents": ["./packages/agents/src/index.ts"],
-      "@recoverflow/jobs": ["./packages/jobs/src/index.ts"],
-      "@recoverflow/pixel": ["./packages/pixel/src/index.ts"]
+      "@recoverflow/core": ["../../packages/core/src/index.ts"],
+      "@recoverflow/agents": ["../../packages/agents/src/index.ts"],
+      "@recoverflow/jobs": ["../../packages/jobs/src/index.ts"]
     }
   },
-  "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts",
-    "**/*.mts"
-  ],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
   "exclude": ["node_modules"]
 }
