@@ -1,3 +1,4 @@
+import { db } from '@recoverflow/core';
 
 export interface VIPVoiceContext {
   cartId: string;
@@ -22,6 +23,31 @@ export interface TwilioVoiceCallResult {
   smsMessageId?: string;
   simulated: boolean;
   error?: string;
+}
+
+export interface SentimentAnalysisResult {
+  sentimentScore: number; // 0.0 (Extremely negative/frustrated) to 1.0 (Positive/calm)
+  requiresHandoff: boolean;
+  reason?: string;
+  detectedKeywords: string[];
+  recentUtteranceCount: number;
+}
+
+export interface LiveTranscriptEventParams {
+  sessionId: string;
+  cartId: string;
+  merchantId: string;
+  utterance: string;
+  previousUtterances?: string[];
+  supportPhone?: string;
+  storeName?: string;
+}
+
+export interface LiveTranscriptEventResult {
+  handoffTriggered: boolean;
+  twiml?: string;
+  sentiment: SentimentAnalysisResult;
+  messageLogged?: boolean;
 }
 
 /**
@@ -95,6 +121,171 @@ export function generate1TapSmsRescue(context: VIPVoiceContext, discountCode?: s
   const name = context.customerName ? context.customerName.split(' ')[0] : 'there';
   const discountText = discountCode ? ` Use code ${discountCode} at checkout.` : '';
   return `Hi ${name}, this is ${context.storeName} VIP Concierge. Your cart (${context.currency} ${context.totalPrice.toFixed(2)}) is reserved. Complete your secure checkout in 1-tap: ${context.checkoutUrl}${discountText}`;
+}
+
+// Explicit escalation keywords requiring instant human bridge
+const ESCALATION_KEYWORDS = [
+  'human',
+  'operator',
+  'manager',
+  'agent',
+  'representative',
+  'supervisor',
+  'real person',
+  'talk to someone',
+  'speak to a person',
+  'customer service',
+];
+
+// Frustration indicators
+const FRUSTRATION_INDICATORS = [
+  'terrible',
+  'horrible',
+  'ridiculous',
+  'awful',
+  'scam',
+  'pissed',
+  'angry',
+  'furious',
+  'waste of time',
+  'broken',
+  'stole',
+  'charged me twice',
+  'lawyer',
+  'unacceptable',
+  'stupid',
+  'shut up',
+  'sucks',
+];
+
+/**
+ * Evaluates rolling sentiment across the last up to 3 customer utterances.
+ */
+export function evaluateTranscriptSentiment(utterances: string[]): SentimentAnalysisResult {
+  const window = utterances.slice(-3);
+  if (window.length === 0) {
+    return {
+      sentimentScore: 0.8,
+      requiresHandoff: false,
+      detectedKeywords: [],
+      recentUtteranceCount: 0,
+    };
+  }
+
+  const combined = window.join(' ').toLowerCase();
+  const detectedKeywords: string[] = [];
+
+  // Check explicit escalation keywords
+  for (const kw of ESCALATION_KEYWORDS) {
+    if (combined.includes(kw)) {
+      detectedKeywords.push(kw);
+    }
+  }
+
+  // Check frustration indicators
+  let frustrationScoreDeduction = 0;
+  for (const neg of FRUSTRATION_INDICATORS) {
+    if (combined.includes(neg)) {
+      detectedKeywords.push(neg);
+      frustrationScoreDeduction += 0.35;
+    }
+  }
+
+  // Base sentiment calculation
+  let score = 0.85 - frustrationScoreDeduction;
+  score = Math.max(0.0, Math.min(1.0, parseFloat(score.toFixed(2))));
+
+  const isKeywordEscalation = detectedKeywords.some((k) => ESCALATION_KEYWORDS.includes(k));
+  const isFrustrationTrigger = score < 0.25;
+  const requiresHandoff = isKeywordEscalation || isFrustrationTrigger;
+
+  let reason: string | undefined;
+  if (isKeywordEscalation) {
+    reason = `Customer explicitly requested human escalation (keyword: "${detectedKeywords[0]}")`;
+  } else if (isFrustrationTrigger) {
+    reason = `Customer frustration detected (sentiment score: ${score} < 0.25)`;
+  }
+
+  return {
+    sentimentScore: score,
+    requiresHandoff,
+    reason,
+    detectedKeywords,
+    recentUtteranceCount: window.length,
+  };
+}
+
+/**
+ * Constructs dynamic TwiML <Dial> XML to instantly bridge voice call to live merchant agent.
+ */
+export function generateHumanHandoffTwiml(params: {
+  supportPhone: string;
+  storeName?: string;
+  callerId?: string;
+}): string {
+  const { supportPhone, storeName = 'our store', callerId } = params;
+  const callerIdAttr = callerId ? ` callerId="${escapeXml(callerId)}"` : '';
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Say voice="Polly.Joanna-Neural" language="en-US">
+    I completely understand. Connecting you directly with a senior support concierge from ${escapeXml(storeName)} right now. Please stay on the line.
+  </Say>
+  <Dial timeout="25"${callerIdAttr}>${escapeXml(supportPhone)}</Dial>
+</Response>`.trim();
+}
+
+/**
+ * Handles live incoming transcript from Twilio WebRTC stream and orchestrates real-time human handoff.
+ */
+export async function handleLiveTranscriptEvent(params: LiveTranscriptEventParams): Promise<LiveTranscriptEventResult> {
+  const {
+    sessionId,
+    cartId,
+    merchantId,
+    utterance,
+    previousUtterances = [],
+    supportPhone = '+18005550199',
+    storeName = 'RecoverFlow Store',
+  } = params;
+
+  const allUtterances = [...previousUtterances, utterance];
+  const sentiment = evaluateTranscriptSentiment(allUtterances);
+
+  if (sentiment.requiresHandoff) {
+    // 1. Generate TwiML <Dial> handoff command
+    const twiml = generateHumanHandoffTwiml({
+      supportPhone,
+      storeName,
+    });
+
+    // 2. Lock cart under admin takeover
+    db.setAdminTakeover(cartId, 3600000); // 60 minutes takeover lock
+
+    // 3. Log urgent escalation message
+    await db.logMessage({
+      id: `msg_escalate_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      cartEventId: cartId,
+      merchantId,
+      channel: 'VOICE',
+      direction: 'INBOUND',
+      content: `[URGENT HUMAN HANDOFF] ${sentiment.reason}. Bridged call to ${supportPhone}. Session: ${sessionId}`,
+      deliveryStatus: 'READ',
+      createdAt: new Date(),
+    });
+
+    return {
+      handoffTriggered: true,
+      twiml,
+      sentiment,
+      messageLogged: true,
+    };
+  }
+
+  return {
+    handoffTriggered: false,
+    sentiment,
+  };
 }
 
 /**

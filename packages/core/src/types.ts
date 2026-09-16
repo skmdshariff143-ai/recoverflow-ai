@@ -34,11 +34,13 @@ export interface Merchant {
   resendApiKey?: string;
   encryptedResendApiKey?: string;
   fromEmail?: string;
+  supportPhone?: string;
   brandToneGuidelines: string;
   brandVoiceCasualVsFormal: number; // 0.0 (Very Casual) to 1.0 (Very Formal)
   brandVoiceUrgencyVsGentle: number; // 0.0 (Gentle/Supportive) to 1.0 (High Urgency)
   discountCeilingPercentage: number; // e.g. 15 for 15%
   minMarginPercentage: number; // e.g. 20 for 20%
+  brandProfile?: Record<string, unknown>;
   createdAt: string | Date;
   updatedAt: string | Date;
 }

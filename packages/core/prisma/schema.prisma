@@ -68,11 +68,13 @@ model Merchant {
   whatsappTemplateName          String?           @default("recoverflow_cart_recovery")
   encryptedResendApiKey         String?
   fromEmail                     String?           @default("recovery@recoverflow.ai")
+  supportPhone                  String?
   brandToneGuidelines           String            @default("Helpful, conversational, and direct. Focus on product value.")
   brandVoiceCasualVsFormal      Float             @default(0.3) // 0.0=Casual, 1.0=Formal
   brandVoiceUrgencyVsGentle     Float             @default(0.4) // 0.0=Gentle, 1.0=Urgent
   discountCeilingPercentage     Float             @default(15.0)
   minMarginPercentage           Float             @default(20.0)
+  brandProfile                  Json?
   cartEvents                    CartEvent[]
   messageLogs                   MessageLog[]
   suppressions                  SuppressionList[]

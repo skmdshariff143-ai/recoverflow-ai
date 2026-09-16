@@ -4,7 +4,8 @@ import {
   globalSuppressionService, 
   checkShopifyInventoryAvailability,
   createShopifySingleUseDiscount,
-  type AbandonmentType 
+  routeCartByLtv,
+  type AbandonmentType,
 } from '@recoverflow/core';
 import { runRecoveryAgent, isVipVoiceEligible, dispatchVipVoiceRescue } from '@recoverflow/agents';
 import { sendWhatsAppMessage } from './channels/whatsapp';
@@ -269,8 +270,12 @@ export class RecoveryQueueService {
 
     const finalDiscountCode = singleUseCoupon || agentOutput.suggestedDiscountCode;
 
-    // Check VIP White-Glove Voice Eligibility ($1,000+ payment failure / high-intent drop)
-    if (isVipVoiceEligible(cart.totalPrice, cart.abandonmentType) && cart.customerPhone) {
+    // Predictive LTV Scoring & Tier Evaluation
+    const ltvDecision = routeCartByLtv(cart);
+    const isVipEligible = ltvDecision.tier === 'VIP_IMMEDIATE' || isVipVoiceEligible(cart.totalPrice, cart.abandonmentType);
+
+    // Check VIP White-Glove Voice Eligibility (Predictive LTV > 0.8 or $1,000+ payment failure)
+    if (isVipEligible && cart.customerPhone) {
       const voiceResult = await dispatchVipVoiceRescue({
         context: {
           cartId: cart.id,
