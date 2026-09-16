@@ -1,0 +1,15 @@
+﻿name = "recoverflow-web-pixel"
+type = "web_pixel_extension"
+
+[settings]
+type = "object"
+
+[settings.fields.accountID]
+name = "Account ID / Merchant ID"
+description = "Your RecoverFlow Merchant Account Identifier"
+type = "single_line_text_field"
+
+[settings.fields.endpointUrl]
+name = "Telemetry Ingestion Endpoint"
+description = "Custom edge telemetry endpoint"
+type = "single_line_text_field"

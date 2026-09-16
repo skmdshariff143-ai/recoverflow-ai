@@ -225,20 +225,26 @@ export class MemoryDatabase {
   }
 
   // Cart methods
-  async getCartByToken(cartToken: string): Promise<CartEvent | null> {
+  async getCartByToken(cartToken: string, merchantId?: string): Promise<CartEvent | null> {
     for (const c of this.cartEvents.values()) {
-      if (c.cartToken === cartToken) return c;
+      if (c.cartToken === cartToken && (!merchantId || c.merchantId === merchantId)) {
+        return c;
+      }
     }
     return null;
   }
 
-  async getCartById(id: string): Promise<CartEvent | null> {
-    return this.cartEvents.get(id) || null;
+  async getCartById(id: string, merchantId?: string): Promise<CartEvent | null> {
+    const cart = this.cartEvents.get(id);
+    if (!cart) return null;
+    if (merchantId && cart.merchantId !== merchantId) return null;
+    return cart;
   }
 
-  async findCartByCustomerOrToken(identifier: string): Promise<CartEvent | null> {
+  async findCartByCustomerOrToken(identifier: string, merchantId?: string): Promise<CartEvent | null> {
     const clean = identifier.toLowerCase().trim();
     for (const c of this.cartEvents.values()) {
+      if (merchantId && c.merchantId !== merchantId) continue;
       if (c.cartToken.toLowerCase() === clean) return c;
       if (c.customerEmail && c.customerEmail.toLowerCase() === clean) return c;
       if (c.customerPhone && c.customerPhone.includes(clean)) return c;
@@ -350,6 +356,7 @@ export class MemoryDatabase {
     const outboxId = `outbox_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
     const outbox: OutboxEvent = {
       id: outboxId,
+      merchantId: cart.merchantId,
       aggregateType: 'CartEvent',
       aggregateId: cart.id,
       eventType: customOutbox?.eventType || 'CART_ABANDONED',
@@ -372,9 +379,12 @@ export class MemoryDatabase {
     return { cart, outbox };
   }
 
-  async getPendingOutboxEvents(limit = 50): Promise<OutboxEvent[]> {
+  async getPendingOutboxEvents(limit = 50, merchantId?: string): Promise<OutboxEvent[]> {
     const list = Array.from(this.outboxEvents.values())
-      .filter((e) => e.status === 'PENDING' && e.retryCount < 5)
+      .filter((e) => {
+        if (merchantId && e.merchantId !== merchantId) return false;
+        return e.status === 'PENDING' && e.retryCount < 5;
+      })
       .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
       .slice(0, limit);
     return list;

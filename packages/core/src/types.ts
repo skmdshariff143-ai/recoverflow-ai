@@ -1,7 +1,7 @@
-export type CartStatus = 'ABANDONED' | 'CONTACTED' | 'RECOVERED' | 'EXPIRED' | 'OUT_OF_STOCK_ABORTED';
+export type CartStatus = 'OPEN' | 'ABANDONED' | 'CONTACTED' | 'RECOVERED' | 'EXPIRED' | 'OUT_OF_STOCK_ABORTED';
 export type AbandonmentType = 'CHECKOUT_STEP' | 'PAYMENT_FAILED' | 'CART_PAGE';
-export type RecoveryStage = 'QUEUED' | 'WHATSAPP_SENT' | 'EMAIL_FALLBACK' | 'CONCIERGE_ACTIVE' | 'RECOVERED' | 'EXPIRED' | 'OUT_OF_STOCK_ABORTED';
-export type MessageChannel = 'WHATSAPP' | 'EMAIL';
+export type RecoveryStage = 'NOT_STARTED' | 'QUEUED' | 'WHATSAPP_SENT' | 'EMAIL_FALLBACK' | 'CONCIERGE_ACTIVE' | 'RECOVERED' | 'EXPIRED' | 'OUT_OF_STOCK_ABORTED';
+export type MessageChannel = 'WHATSAPP' | 'EMAIL' | 'VOICE' | 'SMS';
 export type MessageDirection = 'OUTBOUND' | 'INBOUND';
 export type DeliveryStatus = 'QUEUED' | 'SENT' | 'DELIVERED' | 'READ' | 'REPLIED' | 'FAILED';
 export type SuppressionType = 'PHONE' | 'EMAIL';
@@ -166,6 +166,7 @@ export type OutboxStatus = 'PENDING' | 'PROCESSING' | 'PUBLISHED' | 'FAILED';
 
 export interface OutboxEvent {
   id: string;
+  merchantId?: string;
   aggregateType: string; // e.g. 'CartEvent', 'MessageLog'
   aggregateId: string;
   eventType: string;     // e.g. 'CART_ABANDONED', 'PAYMENT_FAILED', 'DISCOUNT_APPLIED'

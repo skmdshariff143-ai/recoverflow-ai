@@ -18,6 +18,7 @@ export default defineConfig({
       '@recoverflow/agents': path.resolve(import.meta.dirname, './packages/agents/src/index.ts'),
       '@recoverflow/jobs': path.resolve(import.meta.dirname, './packages/jobs/src/index.ts'),
       '@recoverflow/pixel': path.resolve(import.meta.dirname, './packages/pixel/src/index.ts'),
+      '@recoverflow/shopify-app': path.resolve(import.meta.dirname, './packages/shopify-app/src/index.ts'),
     },
   },
 });

@@ -1,0 +1,19 @@
+﻿client_id = "recoverflow-shopify-app-client-id"
+name = "RecoverFlow AI"
+application_url = "https://recoverflow-ai-kohl.vercel.app"
+embedded = true
+
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = "aurora-apparel.myshopify.com"
+
+[access_scopes]
+scopes = "read_checkouts,read_orders,write_discounts,read_products,read_inventory,read_customer_events"
+
+[auth]
+redirect_urls = [
+  "https://recoverflow-ai-kohl.vercel.app/api/auth/shopify/callback"
+]
+
+[webhooks]
+api_version = "2026-01"

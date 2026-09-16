@@ -27,6 +27,15 @@ export interface EmailSendResult {
  */
 export function buildResponsiveCartEmailHtml(payload: EmailRecoveryPayload): string {
   const name = payload.customerName ? payload.customerName.split(' ')[0] : 'there';
+  const primaryItemTitle = payload.items[0]?.title || 'Reserved Cart Items';
+  const encodedTitle = encodeURIComponent(primaryItemTitle);
+  const encodedCustomer = encodeURIComponent(name);
+  const encodedStore = encodeURIComponent(payload.storeName);
+  const encodedTotal = encodeURIComponent(`${payload.currency} ${payload.totalPrice.toFixed(2)}`);
+  const encodedDiscount = payload.discountCode ? `&discount=${encodeURIComponent(payload.discountCode)}` : '';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://recoverflow-ai-kohl.vercel.app';
+  const ogImageUrl = `${baseUrl}/api/og/cart?title=${encodedTitle}&customer=${encodedCustomer}&store=${encodedStore}&total=${encodedTotal}${encodedDiscount}`;
+
   const itemsHtml = payload.items
     .map(
       (item) => `
@@ -63,6 +72,12 @@ export function buildResponsiveCartEmailHtml(payload: EmailRecoveryPayload): str
           <tr>
             <td align="center" style="padding-bottom: 24px;">
               <h1 style="margin: 0; color: #f4f4f5; font-size: 20px; font-weight: 700; letter-spacing: -0.5px;">${payload.storeName}</h1>
+            </td>
+          </tr>
+          <!-- OG Cart Hero Card -->
+          <tr>
+            <td align="center" style="padding-bottom: 20px;">
+              <img src="${ogImageUrl}" alt="Cart Summary" style="width: 100%; max-width: 492px; height: auto; border-radius: 10px; border: 1px solid #27272a; display: block;" />
             </td>
           </tr>
           <!-- Body Text -->

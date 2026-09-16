@@ -1,0 +1,13 @@
+﻿{
+  "name": "@recoverflow/shopify-app",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "dependencies": {
+    "@recoverflow/core": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5"
+  }
+}

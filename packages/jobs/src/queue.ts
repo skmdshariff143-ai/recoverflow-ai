@@ -6,7 +6,7 @@ import {
   createShopifySingleUseDiscount,
   type AbandonmentType 
 } from '@recoverflow/core';
-import { runRecoveryAgent } from '@recoverflow/agents';
+import { runRecoveryAgent, isVipVoiceEligible, dispatchVipVoiceRescue } from '@recoverflow/agents';
 import { sendWhatsAppMessage } from './channels/whatsapp';
 import { sendCartRecoveryEmail } from './channels/resend';
 
@@ -268,6 +268,38 @@ export class RecoveryQueueService {
     const latencyMs = Date.now() - startTime;
 
     const finalDiscountCode = singleUseCoupon || agentOutput.suggestedDiscountCode;
+
+    // Check VIP White-Glove Voice Eligibility ($1,000+ payment failure / high-intent drop)
+    if (isVipVoiceEligible(cart.totalPrice, cart.abandonmentType) && cart.customerPhone) {
+      const voiceResult = await dispatchVipVoiceRescue({
+        context: {
+          cartId: cart.id,
+          cartToken: cart.cartToken,
+          customerName: cart.customerName,
+          customerPhone: cart.customerPhone,
+          customerEmail: cart.customerEmail,
+          totalPrice: cart.totalPrice,
+          currency: cart.currency,
+          items: cart.items,
+          storeName: merchant.storeName,
+          checkoutUrl: cart.checkoutUrl,
+          discountCeilingPercentage: merchant.discountCeilingPercentage,
+        },
+      });
+
+      await db.logMessage({
+        id: `msg_voice_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+        cartEventId: cart.id,
+        merchantId: merchant.id,
+        channel: 'VOICE',
+        direction: 'OUTBOUND',
+        content: `VIP Voice Concierge Call Dispatched (CallSid: ${voiceResult.callSid || 'simulated'})`,
+        latencyMs,
+        deliveryStatus: voiceResult.success ? 'DELIVERED' : 'FAILED',
+        externalMessageId: voiceResult.callSid,
+        createdAt: new Date(),
+      });
+    }
 
     // Dispatch WhatsApp
     if (cart.customerPhone) {

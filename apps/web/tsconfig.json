@@ -29,6 +29,12 @@
       ],
       "@recoverflow/jobs": [
         "../../packages/jobs/src/index.ts"
+      ],
+      "@recoverflow/pixel": [
+        "../../packages/pixel/src/index.ts"
+      ],
+      "@recoverflow/shopify-app": [
+        "../../packages/shopify-app/src/index.ts"
       ]
     },
     "plugins": [

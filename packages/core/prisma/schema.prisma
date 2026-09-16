@@ -102,6 +102,8 @@ model CartEvent {
   updatedAt             DateTime        @updatedAt
 
   @@index([merchantId, status])
+  @@index([merchantId, cartToken])
+  @@index([merchantId, createdAt])
   @@index([customerPhone])
   @@index([customerEmail])
 }
@@ -123,6 +125,7 @@ model MessageLog {
 
   @@index([cartEventId])
   @@index([merchantId, channel])
+  @@index([merchantId, createdAt])
 }
 
 model SuppressionList {
@@ -136,10 +139,12 @@ model SuppressionList {
 
   @@unique([merchantId, identifier])
   @@index([identifier])
+  @@index([merchantId, type])
 }
 
 model OutboxEvent {
   id             String    @id @default(cuid())
+  merchantId     String?
   aggregateType  String    // 'CartEvent', 'MessageLog'
   aggregateId    String
   eventType      String    // 'CART_ABANDONED', 'PAYMENT_FAILED', 'DISCOUNT_APPLIED'
@@ -151,6 +156,7 @@ model OutboxEvent {
   processedAt    DateTime?
 
   @@index([status, createdAt])
+  @@index([merchantId, status])
 }
 
 model SecurityIncident {
@@ -165,4 +171,5 @@ model SecurityIncident {
   createdAt      DateTime  @default(now())
 
   @@index([attackType, createdAt])
+  @@index([merchantId, createdAt])
 }
