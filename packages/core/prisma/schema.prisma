@@ -13,6 +13,7 @@ enum CartStatus {
   RECOVERED
   EXPIRED
   OUT_OF_STOCK_ABORTED
+  REQUIRES_APPROVAL
 }
 
 enum AbandonmentType {
@@ -29,6 +30,7 @@ enum RecoveryStage {
   RECOVERED
   EXPIRED
   OUT_OF_STOCK_ABORTED
+  REQUIRES_APPROVAL
 }
 
 enum MessageChannel {
@@ -76,8 +78,11 @@ model Merchant {
   minMarginPercentage           Float             @default(20.0)
   brandProfile                  Json?
   customVoiceId                 String?
+  encryptedGeminiApiKey         String?
+  dataTier                      String            @default("STANDARD") // STANDARD or EPHEMERAL
   cartEvents                    CartEvent[]
   orders                        Order[]
+  returns                       Return[]
   messageLogs                   MessageLog[]
   suppressions                  SuppressionList[]
   createdAt                     DateTime          @default(now())
@@ -217,6 +222,7 @@ model Order {
   fulfillmentStatus     OrderFulfillmentStatus @default(UNFULFILLED)
   items                 Json                   // JSON array of LineItem
   fulfillments          Fulfillment[]
+  returns               Return[]
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
 
@@ -246,4 +252,42 @@ model Fulfillment {
   @@index([orderId])
   @@index([merchantId, trackingNumber])
   @@index([shopifyFulfillmentId])
+}
+
+enum ReturnStatus {
+  REQUESTED
+  APPROVED
+  IN_TRANSIT
+  INSPECTED
+  REFUNDED
+  REJECTED
+}
+
+enum ReturnReason {
+  SIZE_TOO_SMALL
+  SIZE_TOO_LARGE
+  DEFECTIVE_ITEM
+  ITEM_NOT_AS_DESCRIBED
+  CHANGED_MIND
+  OTHER
+}
+
+model Return {
+  id                    String        @id @default(cuid())
+  orderId               String
+  order                 Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  merchantId            String
+  merchant              Merchant      @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  shopifyReturnId       String?       @unique
+  reason                ReturnReason  @default(SIZE_TOO_SMALL)
+  status                ReturnStatus  @default(REQUESTED)
+  refundAmount          Float?
+  currency              String        @default("USD")
+  notes                 String?
+  returnTrackingNumber  String?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  @@index([orderId])
+  @@index([merchantId, status])
 }

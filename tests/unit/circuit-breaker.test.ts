@@ -149,7 +149,23 @@ describe('Zero-Trust Financial Circuit Breaker (Track 1)', () => {
       expect(result.verifiedResult.isSafe).toBe(true);
     });
 
-    it('intercepts and replaces malicious / hallucinated LLM discount proposals with deterministic safe text', () => {
+    it('intercepts and auto-corrects minor LLM discount violations (Stage 2 Auto-Correct)', () => {
+      const llmReply = 'You can have this entire order for 20% off with code SAVE20!';
+      const result = interceptAndEnforceFinancialSafety(llmReply, {
+        cartSubtotal: 100.0,
+        proposedDiscountPercentage: 20,
+        discountCeilingPercentage: 15,
+        currency: 'USD',
+      });
+
+      expect(result.safeReply).not.toBe(llmReply);
+      expect(result.safeReply).toContain('maximum authorized saving for your basket is 15%');
+      expect(result.safeReply).toContain('USD 85.00');
+      expect(result.verifiedResult.violationDetected).toBe(true);
+      expect(result.verifiedResult.stage).toBe('STAGE_2_AUTOCORRECTED');
+    });
+
+    it('intercepts and halts on massive LLM discount hallucinations (Stage 3 Human-in-the-Loop)', () => {
       const llmReply = 'You can have this entire order for 60% off with code CRAZY60!';
       const result = interceptAndEnforceFinancialSafety(llmReply, {
         cartSubtotal: 100.0,
@@ -159,9 +175,9 @@ describe('Zero-Trust Financial Circuit Breaker (Track 1)', () => {
       });
 
       expect(result.safeReply).not.toBe(llmReply);
-      expect(result.safeReply).toContain('maximum authorized saving for your basket is 15%');
-      expect(result.safeReply).toContain('USD 85.00');
-      expect(result.verifiedResult.violationDetected).toBe(true);
+      expect(result.safeReply).toContain('senior management review');
+      expect(result.verifiedResult.requiresHumanApproval).toBe(true);
+      expect(result.verifiedResult.stage).toBe('STAGE_3_HUMAN_IN_THE_LOOP');
     });
   });
 });

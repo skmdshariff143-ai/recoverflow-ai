@@ -10,8 +10,14 @@ import type {
   SecurityIncident,
   OrderRecord,
   FulfillmentRecord,
+  ReturnRecord,
 } from './types';
 import { encryptCredential } from './crypto';
+
+export function hashPii(value: string | null | undefined): string | undefined {
+  if (!value) return undefined;
+  return crypto.createHash('sha256').update(value.trim().toLowerCase()).digest('hex').slice(0, 16);
+}
 
 export class MemoryDatabase {
   public merchants = new Map<string, Merchant>();
@@ -23,6 +29,7 @@ export class MemoryDatabase {
   public securityIncidents = new Map<string, SecurityIncident>();
   public orders = new Map<string, OrderRecord>();
   public fulfillments = new Map<string, FulfillmentRecord>();
+  public returns = new Map<string, ReturnRecord>();
 
   constructor() {
     this.seedDefaults();
@@ -261,8 +268,21 @@ export class MemoryDatabase {
   }
 
   async upsertCartEvent(cart: CartEvent): Promise<CartEvent> {
-    this.cartEvents.set(cart.id, cart);
-    return cart;
+    const merchant = this.merchants.get(cart.merchantId);
+    let finalCart = { ...cart };
+
+    // Data Sovereignty: If merchant has EPHEMERAL data tier, hash PII before storing
+    if (merchant && merchant.dataTier === 'EPHEMERAL') {
+      finalCart = {
+        ...finalCart,
+        customerEmail: hashPii(finalCart.customerEmail),
+        customerPhone: hashPii(finalCart.customerPhone),
+        customerName: finalCart.customerName ? '[ANONYMIZED_SHOPPER]' : undefined,
+      };
+    }
+
+    this.cartEvents.set(finalCart.id, finalCart);
+    return finalCart;
   }
 
   async updateCartStatus(
@@ -507,6 +527,58 @@ export class MemoryDatabase {
           f.trackingNumber.trim().toLowerCase() === cleanTracking
       ) || null
     );
+  }
+
+  // ==========================================
+  // RETURNS
+  // ==========================================
+
+  async createOrUpdateReturn(ret: ReturnRecord): Promise<ReturnRecord> {
+    this.returns.set(ret.id, ret);
+    return ret;
+  }
+
+  async getReturn(id: string): Promise<ReturnRecord | null> {
+    return this.returns.get(id) || null;
+  }
+
+  async getReturnsByOrderId(orderId: string): Promise<ReturnRecord[]> {
+    const list = Array.from(this.returns.values());
+    return list.filter((r) => r.orderId === orderId);
+  }
+
+  async listReturns(merchantId?: string): Promise<ReturnRecord[]> {
+    const list = Array.from(this.returns.values());
+    if (merchantId) {
+      return list.filter((r) => r.merchantId === merchantId);
+    }
+    return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  // ==========================================
+  // DATA SOVEREIGNTY: RETENTION PRUNING
+  // ==========================================
+
+  async pruneRecordsOlderThan(retentionDays = 30): Promise<{ prunedCarts: number; prunedLogs: number }> {
+    const cutoff = Date.now() - retentionDays * 24 * 60 * 60 * 1000;
+    let prunedCarts = 0;
+    let prunedLogs = 0;
+
+    for (const [id, cart] of this.cartEvents.entries()) {
+      if (new Date(cart.createdAt).getTime() < cutoff) {
+        this.cartEvents.delete(id);
+        prunedCarts++;
+      }
+    }
+
+    for (const [id, log] of this.messageLogs.entries()) {
+      if (new Date(log.createdAt).getTime() < cutoff) {
+        this.messageLogs.delete(id);
+        prunedLogs++;
+      }
+    }
+
+    return { prunedCarts, prunedLogs };
   }
 }
 

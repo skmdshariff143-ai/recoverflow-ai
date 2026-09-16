@@ -8,3 +8,6 @@ export * from './voice-agent';
 export * from './onboarding-agent';
 export * from './swarm-agent';
 export * from './wismo-agent';
+export * from './orchestrator';
+export * from './post-purchase/upsell-agent';
+export * from './post-purchase/wismo-agent';

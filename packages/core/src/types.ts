@@ -1,6 +1,6 @@
-export type CartStatus = 'OPEN' | 'ABANDONED' | 'CONTACTED' | 'RECOVERED' | 'EXPIRED' | 'OUT_OF_STOCK_ABORTED';
+export type CartStatus = 'OPEN' | 'ABANDONED' | 'CONTACTED' | 'RECOVERED' | 'EXPIRED' | 'OUT_OF_STOCK_ABORTED' | 'REQUIRES_APPROVAL';
 export type AbandonmentType = 'CHECKOUT_STEP' | 'PAYMENT_FAILED' | 'CART_PAGE';
-export type RecoveryStage = 'NOT_STARTED' | 'QUEUED' | 'WHATSAPP_SENT' | 'EMAIL_FALLBACK' | 'CONCIERGE_ACTIVE' | 'RECOVERED' | 'EXPIRED' | 'OUT_OF_STOCK_ABORTED';
+export type RecoveryStage = 'NOT_STARTED' | 'QUEUED' | 'WHATSAPP_SENT' | 'EMAIL_FALLBACK' | 'CONCIERGE_ACTIVE' | 'RECOVERED' | 'EXPIRED' | 'OUT_OF_STOCK_ABORTED' | 'REQUIRES_APPROVAL';
 export type MessageChannel = 'WHATSAPP' | 'EMAIL' | 'VOICE' | 'SMS';
 export type MessageDirection = 'OUTBOUND' | 'INBOUND';
 export type DeliveryStatus = 'QUEUED' | 'SENT' | 'DELIVERED' | 'READ' | 'REPLIED' | 'FAILED';
@@ -33,6 +33,9 @@ export interface Merchant {
   whatsappTemplateName?: string;
   resendApiKey?: string;
   encryptedResendApiKey?: string;
+  geminiApiKey?: string;
+  encryptedGeminiApiKey?: string;
+  dataTier?: 'STANDARD' | 'EPHEMERAL';
   fromEmail?: string;
   supportPhone?: string;
   brandToneGuidelines: string;
@@ -228,6 +231,25 @@ export interface OrderRecord {
   fulfillmentStatus: OrderFulfillmentStatus;
   items: CartItem[];
   fulfillments?: FulfillmentRecord[];
+  returns?: ReturnRecord[];
+  createdAt: string | Date;
+  updatedAt: string | Date;
+}
+
+export type ReturnStatus = 'REQUESTED' | 'APPROVED' | 'IN_TRANSIT' | 'INSPECTED' | 'REFUNDED' | 'REJECTED';
+export type ReturnReason = 'SIZE_TOO_SMALL' | 'SIZE_TOO_LARGE' | 'DEFECTIVE_ITEM' | 'ITEM_NOT_AS_DESCRIBED' | 'CHANGED_MIND' | 'OTHER';
+
+export interface ReturnRecord {
+  id: string;
+  orderId: string;
+  merchantId: string;
+  shopifyReturnId?: string;
+  reason: ReturnReason;
+  status: ReturnStatus;
+  refundAmount?: number;
+  currency: string;
+  notes?: string;
+  returnTrackingNumber?: string;
   createdAt: string | Date;
   updatedAt: string | Date;
 }

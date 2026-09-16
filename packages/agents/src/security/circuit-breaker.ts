@@ -1,6 +1,6 @@
 /**
- * RecoverFlow Zero-Trust Financial Circuit Breaker
- * Principles: Strict integer-cents arithmetic, mathematical determinism, and discount ceiling enforcement.
+ * RecoverFlow Zero-Trust Financial Circuit Breaker (Track 3)
+ * Principles: 3-Stage escalating guardrail with Auditor, Auto-Correct, and Human-in-the-Loop approval halts.
  */
 
 export class FinancialGuardrailError extends Error {
@@ -16,6 +16,11 @@ export class FinancialGuardrailError extends Error {
   }
 }
 
+export type CircuitBreakerStage = 
+  | 'STAGE_1_AUDITED' 
+  | 'STAGE_2_AUTOCORRECTED' 
+  | 'STAGE_3_HUMAN_IN_THE_LOOP';
+
 export interface FinancialVerificationInput {
   cartSubtotal: number;
   proposedDiscountPercentage?: number;
@@ -23,12 +28,15 @@ export interface FinancialVerificationInput {
   proposedFinalTotal?: number;
   discountCeilingPercentage: number;
   minMarginPercentage?: number;
+  checkoutUrl?: string;
+  discountCode?: string | null;
   currency?: string;
   strictThrow?: boolean;
 }
 
 export interface FinancialVerificationResult {
   isSafe: boolean;
+  stage: CircuitBreakerStage;
   subtotalCents: bigint;
   sanitizedDiscountPercentage: number;
   sanitizedDiscountAmountCents: bigint;
@@ -38,6 +46,8 @@ export interface FinancialVerificationResult {
   violationDetected: boolean;
   violationReason?: string;
   fallbackRequired: boolean;
+  requiresHumanApproval: boolean;
+  correctedCheckoutUrl?: string;
 }
 
 /**
@@ -58,7 +68,34 @@ export function toDecimal(cents: bigint): number {
 }
 
 /**
- * Deterministically checks and verifies financial parameters before LLM output is dispatched.
+ * STAGE 1 (AUDITOR): Fast zero-shot validator that audits the generated checkout URL and discount code.
+ */
+export function auditCheckoutUrlAndDiscount(
+  checkoutUrl?: string,
+  discountCode?: string | null
+): { isValid: boolean; reason?: string } {
+  if (checkoutUrl) {
+    // Must be valid HTTPS URL without open-redirect or script injections
+    if (!checkoutUrl.startsWith('https://') && !checkoutUrl.startsWith('http://localhost')) {
+      return { isValid: false, reason: 'Insecure non-HTTPS checkout URL' };
+    }
+    if (/<script|javascript:|data:/i.test(checkoutUrl)) {
+      return { isValid: false, reason: 'Malicious URI scheme in checkout URL' };
+    }
+  }
+
+  if (discountCode) {
+    // Must be clean alphanumeric code without malicious syntax
+    if (!/^[A-Za-z0-9_-]{3,30}$/.test(discountCode)) {
+      return { isValid: false, reason: `Invalid discount code format: ${discountCode}` };
+    }
+  }
+
+  return { isValid: true };
+}
+
+/**
+ * Deterministically checks and verifies financial parameters across the 3-Stage Circuit Breaker.
  */
 export function verifyFinancialSafety(input: FinancialVerificationInput): FinancialVerificationResult {
   const {
@@ -68,8 +105,32 @@ export function verifyFinancialSafety(input: FinancialVerificationInput): Financ
     proposedFinalTotal,
     discountCeilingPercentage,
     minMarginPercentage = 20,
+    checkoutUrl,
+    discountCode,
     strictThrow = false,
   } = input;
+
+  // STAGE 1: AUDITOR CHECK
+  const audit = auditCheckoutUrlAndDiscount(checkoutUrl, discountCode);
+  if (!audit.isValid) {
+    if (strictThrow) {
+      throw new FinancialGuardrailError(audit.reason || 'Audit failed', 'AUDITOR_REJECTED', { checkoutUrl, discountCode });
+    }
+    return {
+      isSafe: false,
+      stage: 'STAGE_3_HUMAN_IN_THE_LOOP',
+      subtotalCents: toCents(cartSubtotal),
+      sanitizedDiscountPercentage: 0,
+      sanitizedDiscountAmountCents: BigInt(0),
+      sanitizedFinalTotalCents: toCents(cartSubtotal),
+      sanitizedDiscountAmount: 0,
+      sanitizedFinalTotal: cartSubtotal,
+      violationDetected: true,
+      violationReason: audit.reason,
+      fallbackRequired: true,
+      requiresHumanApproval: true,
+    };
+  }
 
   // 1. Validate subtotal
   if (typeof cartSubtotal !== 'number' || isNaN(cartSubtotal) || cartSubtotal < 0 || !isFinite(cartSubtotal)) {
@@ -79,6 +140,7 @@ export function verifyFinancialSafety(input: FinancialVerificationInput): Financ
     }
     return {
       isSafe: false,
+      stage: 'STAGE_3_HUMAN_IN_THE_LOOP',
       subtotalCents: BigInt(0),
       sanitizedDiscountPercentage: 0,
       sanitizedDiscountAmountCents: BigInt(0),
@@ -88,26 +150,30 @@ export function verifyFinancialSafety(input: FinancialVerificationInput): Financ
       violationDetected: true,
       violationReason: errorMsg,
       fallbackRequired: true,
+      requiresHumanApproval: true,
     };
   }
 
   const subtotalCents = toCents(cartSubtotal);
   const ceilingPct = Math.max(0, Number(discountCeilingPercentage) || 0);
-  const ceilingFactorBp = BigInt(Math.round(ceilingPct * 100)); // basis points (15% = 1500bp)
+  const ceilingFactorBp = BigInt(Math.round(ceilingPct * 100));
   const maxAllowedDiscountCents = (subtotalCents * ceilingFactorBp) / BigInt(10000);
 
   let violationDetected = false;
   let violationReason: string | undefined;
   let effectiveDiscountPercentage = 0;
   let effectiveDiscountCents = BigInt(0);
+  let breachSeverity = 0.0; // discrepancy magnitude in percent
 
   // 2. Validate proposed discount percentage
   if (proposedDiscountPercentage !== undefined) {
     if (typeof proposedDiscountPercentage !== 'number' || isNaN(proposedDiscountPercentage) || proposedDiscountPercentage < 0) {
       violationDetected = true;
       violationReason = `Invalid discount percentage format: ${proposedDiscountPercentage}`;
+      breachSeverity = 20.0;
     } else if (proposedDiscountPercentage > ceilingPct + 1e-9) {
       violationDetected = true;
+      breachSeverity = proposedDiscountPercentage - ceilingPct;
       violationReason = `Proposed discount percentage (${proposedDiscountPercentage}%) exceeds merchant ceiling (${ceilingPct}%)`;
     } else {
       effectiveDiscountPercentage = proposedDiscountPercentage;
@@ -121,10 +187,13 @@ export function verifyFinancialSafety(input: FinancialVerificationInput): Financ
     if (typeof proposedDiscountAmount !== 'number' || isNaN(proposedDiscountAmount) || proposedDiscountAmount < 0) {
       violationDetected = true;
       violationReason = `Invalid discount amount format: ${proposedDiscountAmount}`;
+      breachSeverity = 20.0;
     } else {
       const amountCents = toCents(proposedDiscountAmount);
       if (amountCents > maxAllowedDiscountCents) {
         violationDetected = true;
+        const proposedPct = subtotalCents > BigInt(0) ? Number((amountCents * BigInt(10000)) / subtotalCents) / 100 : 0;
+        breachSeverity = proposedPct - ceilingPct;
         violationReason = `Proposed discount amount ($${toDecimal(amountCents)}) exceeds max allowed discount ($${toDecimal(maxAllowedDiscountCents)}) for ceiling ${ceilingPct}%`;
       } else {
         effectiveDiscountCents = amountCents;
@@ -136,12 +205,12 @@ export function verifyFinancialSafety(input: FinancialVerificationInput): Financ
   // 4. Validate margin floor protection
   if (!violationDetected && minMarginPercentage !== undefined) {
     const minMarginBp = BigInt(Math.round(minMarginPercentage * 100));
-    // Max allowable discount cannot exceed (100% - minMargin%)
     const maxDiscountAllowedByMarginBp = BigInt(10000) - minMarginBp;
     if (maxDiscountAllowedByMarginBp > BigInt(0)) {
       const marginLimitCents = (subtotalCents * maxDiscountAllowedByMarginBp) / BigInt(10000);
       if (effectiveDiscountCents > marginLimitCents) {
         violationDetected = true;
+        breachSeverity = 15.0;
         violationReason = `Discount exceeds minimum profit margin requirement of ${minMarginPercentage}%`;
       }
     }
@@ -154,36 +223,60 @@ export function verifyFinancialSafety(input: FinancialVerificationInput): Financ
   if (!violationDetected && proposedFinalTotal !== undefined) {
     if (typeof proposedFinalTotal !== 'number' || isNaN(proposedFinalTotal) || proposedFinalTotal < 0) {
       violationDetected = true;
+      breachSeverity = 15.0;
       violationReason = `Invalid final total format: ${proposedFinalTotal}`;
     } else {
       const proposedFinalCents = toCents(proposedFinalTotal);
-      // Disallow price hallucinations or rounding discrepancies > 1 cent
       const diff = calculatedFinalCents > proposedFinalCents ? calculatedFinalCents - proposedFinalCents : proposedFinalCents - calculatedFinalCents;
       if (diff > BigInt(1)) {
         violationDetected = true;
+        breachSeverity = 12.0;
         violationReason = `Final total mismatch: proposed $${toDecimal(proposedFinalCents)} != recalculated $${toDecimal(calculatedFinalCents)}`;
       }
     }
   }
 
-  if (violationDetected) {
+  // STAGE 3: MASSIVE BREACH (>10% discrepancy) -> REQUIRES HUMAN IN THE LOOP
+  if (violationDetected && breachSeverity > 10.0) {
     if (strictThrow) {
-      throw new FinancialGuardrailError(violationReason || 'Financial guardrail violation', 'FINANCIAL_GUARDRAIL_VIOLATION', {
+      throw new FinancialGuardrailError(violationReason || 'Critical financial breach', 'MASSIVE_DISCOUNT_BREACH', {
         cartSubtotal,
         proposedDiscountPercentage,
-        proposedDiscountAmount,
-        proposedFinalTotal,
-        discountCeilingPercentage,
+        breachSeverity,
       });
     }
 
-    // Safe fallback: clamp discount to ceiling or 0
+    return {
+      isSafe: false,
+      stage: 'STAGE_3_HUMAN_IN_THE_LOOP',
+      subtotalCents,
+      sanitizedDiscountPercentage: 0,
+      sanitizedDiscountAmountCents: BigInt(0),
+      sanitizedFinalTotalCents: subtotalCents,
+      sanitizedDiscountAmount: 0,
+      sanitizedFinalTotal: toDecimal(subtotalCents),
+      violationDetected: true,
+      violationReason: `${violationReason} (Breach magnitude: ${breachSeverity.toFixed(1)}% > 10% threshold)`,
+      fallbackRequired: true,
+      requiresHumanApproval: true,
+    };
+  }
+
+  // STAGE 2: AUTO-CORRECT (clamp to merchant ceiling using safe integer math)
+  if (violationDetected) {
     const fallbackDiscountPercentage = ceilingPct;
     const fallbackDiscountCents = maxAllowedDiscountCents;
     const fallbackFinalCents = subtotalCents - fallbackDiscountCents;
 
+    let correctedUrl = checkoutUrl;
+    if (checkoutUrl) {
+      const base = checkoutUrl.split('?')[0];
+      correctedUrl = ceilingPct > 0 ? `${base}?discount=EXCLUSIVE${Math.floor(ceilingPct)}` : base;
+    }
+
     return {
       isSafe: false,
+      stage: 'STAGE_2_AUTOCORRECTED',
       subtotalCents,
       sanitizedDiscountPercentage: fallbackDiscountPercentage,
       sanitizedDiscountAmountCents: fallbackDiscountCents,
@@ -193,11 +286,15 @@ export function verifyFinancialSafety(input: FinancialVerificationInput): Financ
       violationDetected: true,
       violationReason,
       fallbackRequired: true,
+      requiresHumanApproval: false,
+      correctedCheckoutUrl: correctedUrl,
     };
   }
 
+  // STAGE 1: AUDITED & APPROVED
   return {
     isSafe: true,
+    stage: 'STAGE_1_AUDITED',
     subtotalCents,
     sanitizedDiscountPercentage: effectiveDiscountPercentage,
     sanitizedDiscountAmountCents: effectiveDiscountCents,
@@ -206,12 +303,14 @@ export function verifyFinancialSafety(input: FinancialVerificationInput): Financ
     sanitizedFinalTotal: toDecimal(calculatedFinalCents),
     violationDetected: false,
     fallbackRequired: false,
+    requiresHumanApproval: false,
+    correctedCheckoutUrl: checkoutUrl,
   };
 }
 
 /**
  * Intercepts LLM generated response text to verify that any mentioned prices or discounts
- * adhere strictly to the merchant's financial ceiling.
+ * adhere strictly to the merchant's financial ceiling across the 3 stages.
  */
 export function interceptAndEnforceFinancialSafety(
   llmReply: string,
@@ -226,7 +325,14 @@ export function interceptAndEnforceFinancialSafety(
     };
   }
 
-  // If financial violation occurred in the LLM output, provide deterministic safe fallback response
+  if (verified.requiresHumanApproval) {
+    return {
+      safeReply: "Thank you for contacting customer support! We have flagged your request for senior management review and will follow up shortly.",
+      verifiedResult: verified,
+    };
+  }
+
+  // STAGE 2: Auto-correct fallback response
   const maxPct = input.discountCeilingPercentage;
   const currency = input.currency || 'USD';
   const finalPriceFormatted = `${currency} ${verified.sanitizedFinalTotal.toFixed(2)}`;

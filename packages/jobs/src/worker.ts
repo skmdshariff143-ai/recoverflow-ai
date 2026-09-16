@@ -1,5 +1,26 @@
 import { Worker, type Job } from 'bullmq';
+import { db } from '@recoverflow/core';
 import { QUEUE_NAMES, globalRecoveryQueue, type CartJobData, type FallbackJobData } from './queue';
+
+/**
+ * Data Sovereignty Compliance: Periodic 30-day retention hard-pruner.
+ */
+export function startDataRetentionPruner(intervalMs = 3600 * 1000): NodeJS.Timeout {
+  const runPrune = async () => {
+    try {
+      const stats = await db.pruneRecordsOlderThan(30);
+      if (stats.prunedCarts > 0 || stats.prunedLogs > 0) {
+        console.log(`[Data Sovereignty] Pruned records older than 30 days: ${stats.prunedCarts} carts, ${stats.prunedLogs} logs`);
+      }
+    } catch (err) {
+      console.error('[Data Sovereignty] Retention pruning error:', err);
+    }
+  };
+
+  // Run initial check
+  runPrune();
+  return setInterval(runPrune, intervalMs);
+}
 
 /**
  * Meta Rate-Limit Pacer: Enforces max 50 messages/sec per phone number ID.

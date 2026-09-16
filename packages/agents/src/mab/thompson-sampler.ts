@@ -37,6 +37,33 @@ export interface RewardCalculationParams {
   convertedStatus: 0 | 1;
 }
 
+export interface CompositeRewardInput {
+  recoveredGmv: number;
+  discountValue: number;
+  whatsappWeight?: number; // default 1.0
+  emailWeight?: number;    // default 0.8
+  convertedStatus?: 0 | 1; // default 1
+}
+
+/**
+ * Unified RL Reward Function:
+ * Reward = (WhatsApp_Weight * Email_Weight) * (Recovered_GMV - Discount_Value)
+ */
+export function computeCompositeReward(input: CompositeRewardInput): number {
+  const {
+    recoveredGmv,
+    discountValue,
+    whatsappWeight = 1.0,
+    emailWeight = 0.8,
+    convertedStatus = 1,
+  } = input;
+
+  if (convertedStatus === 0) return 0;
+  const attributionWeight = whatsappWeight * emailWeight;
+  const netGmv = Math.max(0, recoveredGmv - discountValue);
+  return parseFloat((attributionWeight * netGmv).toFixed(2));
+}
+
 export class ThompsonSamplerMarginGuardian {
   // Key: `${merchantId}:${cartTier}` -> Map<BanditPolicyArm, ArmDistributionState>
   private posteriors = new Map<string, Map<BanditPolicyArm, ArmDistributionState>>();
@@ -260,6 +287,23 @@ export class ThompsonSamplerMarginGuardian {
     }
 
     return result;
+  }
+
+  /**
+   * Decays losing/suboptimal variations iteratively over 24 hours.
+   */
+  public decayBanditDistributions(merchantId: string, decayFactor = 0.9): void {
+    const tiers: CartValueTier[] = ['LOW', 'MID', 'HIGH'];
+    for (const tier of tiers) {
+      const key = this.makeKey(merchantId, tier);
+      const armMap = this.posteriors.get(key);
+      if (armMap) {
+        for (const state of armMap.values()) {
+          state.alpha = Math.max(1.0, 1.0 + (state.alpha - 1.0) * decayFactor);
+          state.beta = Math.max(1.0, 1.0 + (state.beta - 1.0) * decayFactor);
+        }
+      }
+    }
   }
 }
 

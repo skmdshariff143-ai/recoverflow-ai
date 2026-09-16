@@ -25,6 +25,28 @@ export const CADENCES = {
   FINAL_REMINDER_MS: 24 * 60 * 60 * 1000, // 24 hours
 };
 
+let simulatedMemoryPressure: number | null = null;
+
+export function setSimulatedMemoryPressure(ratio: number | null): void {
+  simulatedMemoryPressure = ratio;
+}
+
+export function getSystemMemoryPressure(): number {
+  if (simulatedMemoryPressure !== null) return simulatedMemoryPressure;
+  try {
+    const mem = process.memoryUsage();
+    return mem.heapUsed / (mem.heapTotal || 1);
+  } catch {
+    return 0.1;
+  }
+}
+
+export function calculateJitteredBackoffMs(attempt: number, baseMs = 1000, maxMs = 86400000): number {
+  const exp = Math.min(maxMs, baseMs * Math.pow(2, Math.min(attempt, 20)));
+  const jitter = Math.floor(Math.random() * (exp * 0.2));
+  return Math.min(maxMs, exp + jitter);
+}
+
 export interface CartJobData {
   cartEventId: string;
   abandonmentType: AbandonmentType;
@@ -92,7 +114,20 @@ export class RecoveryQueueService {
     cartEventId: string,
     abandonmentType: AbandonmentType,
     delayMsOverride?: number
-  ): Promise<{ jobId: string; delayMs: number }> {
+  ): Promise<{ jobId: string; delayMs: number; shed?: boolean }> {
+    // DEFCON-1 LOAD SHEDDING: Check system memory pressure (>80%)
+    const memoryPressure = getSystemMemoryPressure();
+    if (memoryPressure > 0.8) {
+      const cart = await db.getCartById(cartEventId);
+      if (cart) {
+        const ltv = routeCartByLtv(cart);
+        if (ltv.predictiveLtvScore < 0.2) {
+          console.warn(`[DEFCON-1 Load Shedding] High memory pressure (${(memoryPressure * 100).toFixed(1)}%). Dropping low-LTV cart ${cartEventId} (score: ${ltv.predictiveLtvScore})`);
+          return { jobId: `shed_${cartEventId}`, delayMs: -1, shed: true };
+        }
+      }
+    }
+
     const delayMs = delayMsOverride !== undefined ? delayMsOverride : this.getInitialDelayMs(abandonmentType);
 
     if (this.redisAvailable) {
@@ -306,8 +341,9 @@ export class RecoveryQueueService {
       });
     }
 
-    // Dispatch WhatsApp
+    // Dispatch WhatsApp with Latency Fallback Circuit Breaker (>2000ms)
     if (cart.customerPhone) {
+      const waStartTime = Date.now();
       const sendResult = await sendWhatsAppMessage({
         to: cart.customerPhone,
         templateName: merchant.whatsappTemplateName,
@@ -317,6 +353,7 @@ export class RecoveryQueueService {
         token: merchant.whatsappToken,
         phoneNumberId: merchant.whatsappPhoneId,
       });
+      const waLatencyMs = Date.now() - waStartTime;
 
       // Update cart status & message log
       await db.updateCartStatus(cart.id, 'CONTACTED', 'WHATSAPP_SENT', finalDiscountCode);
@@ -328,11 +365,24 @@ export class RecoveryQueueService {
         direction: 'OUTBOUND',
         content: agentOutput.messageBody,
         tokensUsed: Math.ceil(agentOutput.messageBody.length / 4),
-        latencyMs,
+        latencyMs: waLatencyMs,
         deliveryStatus: sendResult.success ? 'DELIVERED' : 'FAILED',
         externalMessageId: sendResult.messageId,
         createdAt: new Date(),
       });
+
+      // LATENCY CIRCUIT BREAKER: If WhatsApp API latency > 2000ms or failed, immediately fallback to email
+      if ((waLatencyMs > 2000 || !sendResult.success) && cart.customerEmail) {
+        console.warn(`[Latency Fallback Triggered] WhatsApp latency (${waLatencyMs}ms) exceeded 2000ms threshold or failed. Rerouting to Email Fallback.`);
+        const emailFallback = await this.executeFallbackEmail(cart.id, agentOutput.messageBody, finalDiscountCode);
+        return {
+          aborted: emailFallback.aborted,
+          reason: emailFallback.reason || `WhatsApp latency ${waLatencyMs}ms > 2000ms`,
+          channel: 'EMAIL',
+          messageId: emailFallback.emailId,
+          discountCode: finalDiscountCode,
+        };
+      }
 
       // Automatically queue 3-hour fallback check
       await this.scheduleFallbackCheck(cart.id);
@@ -344,7 +394,14 @@ export class RecoveryQueueService {
         discountCode: finalDiscountCode,
       };
     } else if (cart.customerEmail) {
-      return this.executeFallbackEmail(cart.id, agentOutput.messageBody, finalDiscountCode);
+      const emailFallback = await this.executeFallbackEmail(cart.id, agentOutput.messageBody, finalDiscountCode);
+      return {
+        aborted: emailFallback.aborted,
+        reason: emailFallback.reason,
+        channel: 'EMAIL',
+        messageId: emailFallback.emailId,
+        discountCode: finalDiscountCode,
+      };
     }
 
     return { aborted: true, reason: 'No customer contact found' };
@@ -409,6 +466,22 @@ export class RecoveryQueueService {
       aborted: false,
       emailId: emailResult.emailId,
     };
+  }
+
+  async routeToDeadLetterQueue(cartEventId: string, error: string): Promise<void> {
+    if (this.redisAvailable && this.dlqQueue) {
+      await this.dlqQueue.add('dead-letter-job', { cartEventId, error, failedAt: new Date().toISOString() });
+    }
+    await db.logMessage({
+      id: `msg_dlq_${Date.now()}`,
+      cartEventId,
+      merchantId: 'merchant_default_01',
+      channel: 'WHATSAPP',
+      direction: 'OUTBOUND',
+      content: `[DLQ Entry] Execution aborted after max retries: ${error}`,
+      deliveryStatus: 'FAILED',
+      createdAt: new Date(),
+    });
   }
 }
 
