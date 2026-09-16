@@ -77,6 +77,7 @@ model Merchant {
   brandProfile                  Json?
   customVoiceId                 String?
   cartEvents                    CartEvent[]
+  orders                        Order[]
   messageLogs                   MessageLog[]
   suppressions                  SuppressionList[]
   createdAt                     DateTime          @default(now())
@@ -175,4 +176,74 @@ model SecurityIncident {
 
   @@index([attackType, createdAt])
   @@index([merchantId, createdAt])
+}
+
+enum OrderFinancialStatus {
+  PENDING
+  PAID
+  REFUNDED
+  VOIDED
+}
+
+enum OrderFulfillmentStatus {
+  UNFULFILLED
+  PARTIALLY_FULFILLED
+  FULFILLED
+  RESTOCKED
+}
+
+enum FulfillmentTransitStatus {
+  PENDING
+  INFO_RECEIVED
+  IN_TRANSIT
+  OUT_FOR_DELIVERY
+  DELIVERED
+  FAILED_ATTEMPT
+  EXCEPTION
+}
+
+model Order {
+  id                    String                 @id @default(cuid())
+  merchantId            String
+  merchant              Merchant               @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  shopifyOrderId        String                 @unique
+  orderNumber           String
+  customerEmail         String?
+  customerPhone         String?
+  customerName          String?
+  currency              String                 @default("USD")
+  totalPrice            Float
+  financialStatus       OrderFinancialStatus   @default(PAID)
+  fulfillmentStatus     OrderFulfillmentStatus @default(UNFULFILLED)
+  items                 Json                   // JSON array of LineItem
+  fulfillments          Fulfillment[]
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+
+  @@index([merchantId, orderNumber])
+  @@index([merchantId, customerPhone])
+  @@index([merchantId, customerEmail])
+  @@index([shopifyOrderId])
+}
+
+model Fulfillment {
+  id                    String                   @id @default(cuid())
+  orderId               String
+  order                 Order                    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  merchantId            String
+  shopifyFulfillmentId  String                   @unique
+  trackingCompany       String?                  // e.g. "FedEx", "DHL", "BlueDart", "USPS", "Delhivery"
+  trackingNumber        String?
+  trackingUrl           String?
+  status                FulfillmentTransitStatus @default(IN_TRANSIT)
+  estimatedDeliveryAt   DateTime?
+  shippedAt             DateTime?                @default(now())
+  deliveredAt           DateTime?
+  latestLocation        String?
+  createdAt             DateTime                 @default(now())
+  updatedAt             DateTime                 @updatedAt
+
+  @@index([orderId])
+  @@index([merchantId, trackingNumber])
+  @@index([shopifyFulfillmentId])
 }

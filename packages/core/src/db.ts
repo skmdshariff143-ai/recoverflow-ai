@@ -8,6 +8,8 @@ import type {
   RecoveryStage,
   OutboxEvent,
   SecurityIncident,
+  OrderRecord,
+  FulfillmentRecord,
 } from './types';
 import { encryptCredential } from './crypto';
 
@@ -19,6 +21,8 @@ export class MemoryDatabase {
   public takeoverLocks = new Map<string, number>(); // cartId -> expiration timestamp
   public outboxEvents = new Map<string, OutboxEvent>();
   public securityIncidents = new Map<string, SecurityIncident>();
+  public orders = new Map<string, OrderRecord>();
+  public fulfillments = new Map<string, FulfillmentRecord>();
 
   constructor() {
     this.seedDefaults();
@@ -211,6 +215,10 @@ export class MemoryDatabase {
       updatedAt: new Date(),
     });
     return merchant;
+  }
+
+  async createOrUpdateMerchant(merchant: Merchant): Promise<Merchant> {
+    return this.upsertMerchant(merchant);
   }
 
   async updateMerchantTone(
@@ -426,12 +434,79 @@ export class MemoryDatabase {
     return incident;
   }
 
-  async listSecurityIncidents(merchantId?: string): Promise<SecurityIncident[]> {
-    const list = Array.from(this.securityIncidents.values());
-    if (merchantId) {
-      return list.filter((s) => s.merchantId === merchantId);
-    }
-    return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  // ==========================================
+  // ORDERS & FULFILLMENTS (WISMO)
+  // ==========================================
+
+  async createOrUpdateOrder(order: OrderRecord): Promise<OrderRecord> {
+    this.orders.set(order.id, order);
+    return order;
+  }
+
+  async getOrder(id: string): Promise<OrderRecord | null> {
+    return this.orders.get(id) || null;
+  }
+
+  async getOrderByShopifyId(shopifyOrderId: string): Promise<OrderRecord | null> {
+    const list = Array.from(this.orders.values());
+    return list.find((o) => o.shopifyOrderId === shopifyOrderId) || null;
+  }
+
+  async getOrderByOrderNumber(merchantId: string, orderNumber: string): Promise<OrderRecord | null> {
+    const list = Array.from(this.orders.values());
+    const normalized = orderNumber.replace(/^#/, '').trim().toLowerCase();
+    return (
+      list.find(
+        (o) =>
+          o.merchantId === merchantId &&
+          (o.orderNumber.replace(/^#/, '').trim().toLowerCase() === normalized || o.shopifyOrderId === orderNumber)
+      ) || null
+    );
+  }
+
+  async findOrdersByCustomer(merchantId: string, identifier: string): Promise<OrderRecord[]> {
+    const list = Array.from(this.orders.values());
+    const cleanId = identifier.trim().toLowerCase();
+    return list.filter(
+      (o) =>
+        o.merchantId === merchantId &&
+        ((o.customerPhone && (o.customerPhone === identifier || o.customerPhone.includes(cleanId.slice(-10)))) ||
+          (o.customerEmail && o.customerEmail.toLowerCase() === cleanId) ||
+          o.orderNumber.toLowerCase() === cleanId ||
+          o.shopifyOrderId === identifier)
+    );
+  }
+
+  async createOrUpdateFulfillment(fulfillment: FulfillmentRecord): Promise<FulfillmentRecord> {
+    this.fulfillments.set(fulfillment.id, fulfillment);
+    return fulfillment;
+  }
+
+  async getFulfillment(id: string): Promise<FulfillmentRecord | null> {
+    return this.fulfillments.get(id) || null;
+  }
+
+  async getFulfillmentByShopifyId(shopifyFulfillmentId: string): Promise<FulfillmentRecord | null> {
+    const list = Array.from(this.fulfillments.values());
+    return list.find((f) => f.shopifyFulfillmentId === shopifyFulfillmentId) || null;
+  }
+
+  async getFulfillmentsByOrderId(orderId: string): Promise<FulfillmentRecord[]> {
+    const list = Array.from(this.fulfillments.values());
+    return list.filter((f) => f.orderId === orderId);
+  }
+
+  async findFulfillmentByTracking(merchantId: string, trackingNumber: string): Promise<FulfillmentRecord | null> {
+    const list = Array.from(this.fulfillments.values());
+    const cleanTracking = trackingNumber.trim().toLowerCase();
+    return (
+      list.find(
+        (f) =>
+          f.merchantId === merchantId &&
+          f.trackingNumber &&
+          f.trackingNumber.trim().toLowerCase() === cleanTracking
+      ) || null
+    );
   }
 }
 

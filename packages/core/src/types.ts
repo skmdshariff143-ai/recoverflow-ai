@@ -192,3 +192,42 @@ export interface SecurityIncident {
   riskScore: number;
   createdAt: string | Date;
 }
+
+export type OrderFinancialStatus = 'PENDING' | 'PAID' | 'REFUNDED' | 'VOIDED';
+export type OrderFulfillmentStatus = 'UNFULFILLED' | 'PARTIALLY_FULFILLED' | 'FULFILLED' | 'RESTOCKED';
+export type FulfillmentTransitStatus = 'PENDING' | 'INFO_RECEIVED' | 'IN_TRANSIT' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'FAILED_ATTEMPT' | 'EXCEPTION';
+
+export interface FulfillmentRecord {
+  id: string;
+  orderId: string;
+  merchantId: string;
+  shopifyFulfillmentId: string;
+  trackingCompany?: string;
+  trackingNumber?: string;
+  trackingUrl?: string;
+  status: FulfillmentTransitStatus;
+  estimatedDeliveryAt?: string | Date | null;
+  shippedAt?: string | Date | null;
+  deliveredAt?: string | Date | null;
+  latestLocation?: string | null;
+  createdAt: string | Date;
+  updatedAt: string | Date;
+}
+
+export interface OrderRecord {
+  id: string;
+  merchantId: string;
+  shopifyOrderId: string;
+  orderNumber: string;
+  customerEmail?: string;
+  customerPhone?: string;
+  customerName?: string;
+  currency: string;
+  totalPrice: number;
+  financialStatus: OrderFinancialStatus;
+  fulfillmentStatus: OrderFulfillmentStatus;
+  items: CartItem[];
+  fulfillments?: FulfillmentRecord[];
+  createdAt: string | Date;
+  updatedAt: string | Date;
+}

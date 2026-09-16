@@ -1,5 +1,9 @@
 import crypto from 'node:crypto';
 
+export function generateShopifyHmac(rawBody: string | Buffer, secret: string): string {
+  return crypto.createHmac('sha256', secret).update(rawBody).digest('base64');
+}
+
 /**
  * Verifies the Shopify Webhook HMAC-SHA256 signature.
  * 
