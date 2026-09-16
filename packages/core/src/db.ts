@@ -12,7 +12,6 @@ import type {
   FulfillmentRecord,
   ReturnRecord,
 } from './types';
-import { encryptCredential } from './crypto';
 import { seedDemoDataset } from './seed-data';
 
 export function hashPii(value: string | null | undefined): string | undefined {

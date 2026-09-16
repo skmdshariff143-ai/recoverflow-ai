@@ -7,9 +7,9 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
+    "dev": "npm run dev --workspace=@recoverflow/web",
+    "build": "npm run build --workspace=@recoverflow/web",
+    "start": "npm run start --workspace=@recoverflow/web",
     "lint": "eslint .",
     "type-check": "tsc --noEmit",
     "test": "vitest run",
