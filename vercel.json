@@ -1,4 +1,4 @@
-﻿{
+{
   "framework": "nextjs",
   "installCommand": "npm install",
   "buildCommand": "npx prisma generate --schema=packages/core/prisma/schema.prisma && npm run build --workspace=@recoverflow/web",
