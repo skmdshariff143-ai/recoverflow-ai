@@ -1,5 +1,6 @@
 # dependencies
-/node_modules
+node_modules/
+**/node_modules/
 /.pnp
 .pnp.*
 .yarn/*
@@ -14,7 +15,8 @@
 /test-results/
 
 # next.js
-/.next/
+.next/
+**/.next/
 /out/
 
 # production

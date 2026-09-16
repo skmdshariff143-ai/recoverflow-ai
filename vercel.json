@@ -1,6 +1,6 @@
 ﻿{
-  "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
   "installCommand": "npm install",
-  "buildCommand": "npx prisma generate --schema=packages/core/prisma/schema.prisma && npm run build"
+  "buildCommand": "npx prisma generate --schema=packages/core/prisma/schema.prisma && npm run build --workspace=@recoverflow/web",
+  "outputDirectory": "apps/web/.next"
 }
