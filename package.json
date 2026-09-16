@@ -23,6 +23,7 @@
     "seed:subscriptions": "tsx scripts/create-razorpay-subscription.ts",
     "simulate:abandonment": "tsx scripts/simulate-abandonment.ts",
     "eval:agents": "tsx scripts/eval-agents.ts",
+    "seed:demo": "tsx scripts/seed-demo.ts",
     "verify": "npm run lint && npm run type-check && npm run test && npm run generate:benchmark && npm run verify:artifacts && git diff --exit-code -- data src/data && npm run build && npm run test:e2e"
   },
   "engines": {

@@ -4,8 +4,8 @@
 > *Engineered to the standards of Hinton, Torvalds, Fowler, Kleppmann, Willison, and Rams.*
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0%20Strict-blue.svg)](https://www.typescriptlang.org/)
-[![Next.js](https://img.shields.io/badge/Next.js-15%20App%20Router-black.svg)](https://nextjs.org/)
-[![Vitest](https://img.shields.io/badge/Tests-337%20Passed%20(55%20Suites)-brightgreen.svg)](https://vitest.dev/)
+[![Next.js](https://img.shields.io/badge/Next.js-16%20Turbopack-black.svg)](https://nextjs.org/)
+[![Vitest](https://img.shields.io/badge/Tests-442%20Passed%20(78%20Suites)-brightgreen.svg)](https://vitest.dev/)
 [![Security Guardrail](https://img.shields.io/badge/Security-Pre--LLM%20Sanitizer%20Active-emerald.svg)](#track-1-defensive-prompt-engineering--security-harness)
 [![Outbox Pattern](https://img.shields.io/badge/Architecture-Transactional%20Outbox%20%26%20CQRS-indigo.svg)](#track-2-event-driven-transactional-outbox--cqrs)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](./LICENSE)
@@ -129,9 +129,41 @@ recoverflow-ai/
 
 ---
 
+## 🚀 Try It Locally (Zero Setup & Instant Demo Data)
+
+You can explore RecoverFlow AI immediately without connecting a live Shopify store or configuring external API credentials. The application includes a realistic synthetic dataset spanning luxury apparel checkouts, WhatsApp agent conversations, suppression lists, transactional outboxes, and carrier WISMO tracking.
+
+### 3-Step Quickstart:
+
+```bash
+# 1. Install dependencies
+npm install
+
+# 2. Seed realistic end-to-end demo dataset (idempotent)
+npm run seed:demo
+
+# 3. Start development server
+npm run dev
+```
+
+Open **[http://localhost:3000](http://localhost:3000)** in your browser.
+
+### Where to Explore Seeded Demo Data in the App:
+
+| Dashboard View / URL | What You See | Seeded Dataset Records |
+| :--- | :--- | :--- |
+| **Live Stream (`/`)** | Real-time recovery pipeline feed, instant WhatsApp/Email dispatch events, and interactive 1-click cart abandonment trigger. | Active queued & contacted recovery events with latency metrics |
+| **Conversion Analytics** | Net Recovered Revenue ($3,895+), recovery conversion rates, marginal profit saved, MAB bandit convergence, and CFO CSV Export. | 32 cart events with historical timestamps over 14 days |
+| **Carts & Suppression Explorer** | Searchable table of all 32 carts across all 7 statuses (`OPEN`, `ABANDONED`, `CONTACTED`, `RECOVERED`, `EXPIRED`, `OUT_OF_STOCK_ABORTED`, `REQUIRES_APPROVAL`) + Opt-out manager. | 32 carts + 4 suppression list entries |
+| **Live Chat Monitor** | Two-way WhatsApp concierge logs (outbound recovery copy + customer inquiries on sizing/payment) with 60-min human takeover mode. | 16 WhatsApp/Email message logs |
+| **Brand Tone Studio** | Real-time merchant tone calibration sliders (Formal vs. Casual, Urgent vs. Gentle, Discount Ceiling). | Aurora Luxury Apparel brand profile |
+| **CSV Report Export (`/api/recovery/reports/export?format=csv`)** | CFO-ready causal attribution report with randomized holdouts and incremental ROAS. | Full cart history export |
+
+---
+
 ## 💻 Quickstart (Local & Docker)
 
-### Option A: Quickstart with Docker Compose (Recommended)
+### Option A: Quickstart with Docker Compose
 
 Spin up PostgreSQL 16, Redis 7, Next.js Web App, and the BullMQ Outbox Worker with a single command:
 
@@ -142,7 +174,7 @@ Open [http://localhost:3000](http://localhost:3000) to view the merchant dashboa
 
 ---
 
-### Option B: Local Node.js Development
+### Option B: Local Node.js Development & Quality Gates
 
 #### Prerequisites
 - Node.js $\ge 20.0.0$
@@ -154,19 +186,20 @@ git clone https://github.com/skmdshariff143-ai/recoverflow-ai.git
 cd recoverflow-ai
 
 # 2. Install dependencies
-npm ci
+npm install
 
-# 3. Run verification test suite (55 test files, 337 tests)
+# 3. Run verification test suite (78 test files, 442 tests)
 npx vitest run
 
-# 4. Run offline agent evaluation harness (50 golden cases)
+# 4. Run offline agent evaluation harness (50 golden benchmark cases)
 npm run eval:agents
 
 # 5. Type check & build Next.js production bundle
 npm run type-check
-npm run build
+npm run build --workspace=@recoverflow/web
 
-# 6. Start development server
+# 6. Seed demo data and start development server
+npm run seed:demo
 npm run dev
 ```
 
@@ -174,10 +207,10 @@ npm run dev
 
 ## 🧪 Verification & Engineering Evidence
 
-- **Vitest**: **55 test files, 337 tests passing (100% pass rate)**.
-- **TypeScript**: Strict mode with **0 errors**.
-- **Offline Evaluation**: **100.0% prompt injection block rate**, **0.0% hallucination rate**, **100.0% margin compliance**.
-- **Next.js Production Build**: **26 routes** compiled cleanly with Turbopack.
+- **Vitest**: **78 test files, 442 tests passing (100% pass rate)**.
+- **TypeScript**: Strict mode with **0 compilation errors**.
+- **Offline Evaluation**: **100.0% prompt injection block rate**, **0.00% hallucination rate**, **100.0% margin compliance**.
+- **Next.js Production Build**: **18 static & dynamic routes** compiled cleanly with Turbopack.
 
 ---
 

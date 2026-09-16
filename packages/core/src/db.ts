@@ -13,6 +13,7 @@ import type {
   ReturnRecord,
 } from './types';
 import { encryptCredential } from './crypto';
+import { seedDemoDataset } from './seed-data';
 
 export function hashPii(value: string | null | undefined): string | undefined {
   if (!value) return undefined;
@@ -35,152 +36,21 @@ export class MemoryDatabase {
     this.seedDefaults();
   }
 
-  private seedDefaults() {
-    // Default Merchant with encrypted tokens
-    const defaultMerchant: Merchant = {
-      id: 'merchant_default_01',
-      storeUrl: 'https://aurora-apparel.myshopify.com',
-      shopDomain: 'aurora-apparel.myshopify.com',
-      storeName: 'Aurora Luxury Apparel',
-      webhookSecret: process.env.SHOPIFY_WEBHOOK_SECRET || 'shpss_test_secret_key_99182',
-      shopifyScopes: ['read_checkouts', 'read_orders', 'write_discounts', 'read_products', 'read_inventory'],
-      encryptedShopifyAccessToken: encryptCredential('shpat_live_mock_token_99182'),
-      whatsappToken: process.env.WHATSAPP_API_TOKEN || 'EAAG_test_token_mock',
-      encryptedWhatsappToken: encryptCredential(process.env.WHATSAPP_API_TOKEN || 'EAAG_test_token_mock'),
-      whatsappPhoneId: process.env.WHATSAPP_PHONE_NUMBER_ID || '1088291029102',
-      whatsappTemplateName: 'recoverflow_abandoned_cart_v1',
-      resendApiKey: process.env.RESEND_API_KEY || 're_test_mock_key',
-      encryptedResendApiKey: encryptCredential(process.env.RESEND_API_KEY || 're_test_mock_key'),
-      fromEmail: 'vip@aurora-apparel.com',
-      brandToneGuidelines: 'Sophisticated, warm, concise, highlighting craftsmanship and customer care.',
-      brandVoiceCasualVsFormal: 0.7, // Leaning formal/elegant
-      brandVoiceUrgencyVsGentle: 0.35, // Polite & respectful
-      discountCeilingPercentage: 15.0, // Max 15% discount
-      minMarginPercentage: 25.0, // Never sell below 25% margin
-      createdAt: new Date('2026-01-01T00:00:00Z'),
-      updatedAt: new Date(),
-    };
-    this.merchants.set(defaultMerchant.id, defaultMerchant);
+  public clear(): void {
+    this.merchants.clear();
+    this.cartEvents.clear();
+    this.messageLogs.clear();
+    this.suppressions.clear();
+    this.takeoverLocks.clear();
+    this.outboxEvents.clear();
+    this.securityIncidents.clear();
+    this.orders.clear();
+    this.fulfillments.clear();
+    this.returns.clear();
+  }
 
-    // Sample initial cart events for realistic demonstration
-    const sampleCart1: CartEvent = {
-      id: 'cart_evt_001',
-      cartToken: 'tok_shpfy_99214a',
-      merchantId: defaultMerchant.id,
-      customerName: 'Sarah Jenkins',
-      customerPhone: '+14155552671',
-      customerEmail: 'sarah.jenkins@gmail.com',
-      currency: 'USD',
-      totalPrice: 285.0,
-      items: [
-        {
-          id: 'item_01',
-          variantId: 'gid://shopify/ProductVariant/4412019128',
-          title: 'Cashmere Ribbed Knit Cardigan',
-          variantTitle: 'Ivory / Small',
-          price: 195.0,
-          quantity: 1,
-          imageUrl: 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=400&q=80',
-          productUrl: 'https://aurora-apparel.myshopify.com/products/cashmere-cardigan',
-        },
-        {
-          id: 'item_02',
-          variantId: 'gid://shopify/ProductVariant/4412019129',
-          title: 'Silk Minimalist Scarf',
-          variantTitle: 'Champagne Gold',
-          price: 90.0,
-          quantity: 1,
-          imageUrl: 'https://images.unsplash.com/photo-1601924994987-69e26d50dc26?w=400&q=80',
-          productUrl: 'https://aurora-apparel.myshopify.com/products/silk-scarf',
-        },
-      ],
-      status: 'ABANDONED',
-      abandonmentType: 'CHECKOUT_STEP',
-      recoveryStage: 'QUEUED',
-      checkoutUrl: 'https://aurora-apparel.myshopify.com/checkouts/c/tok_shpfy_99214a/recover',
-      createdAt: new Date(Date.now() - 1000 * 60 * 18),
-      updatedAt: new Date(Date.now() - 1000 * 60 * 18),
-    };
-
-    const sampleCart2: CartEvent = {
-      id: 'cart_evt_002',
-      cartToken: 'tok_shpfy_88192b',
-      merchantId: defaultMerchant.id,
-      customerName: 'Marcus Vance',
-      customerPhone: '+12065550192',
-      customerEmail: 'marcus.vance@techcorp.io',
-      currency: 'USD',
-      totalPrice: 420.0,
-      items: [
-        {
-          id: 'item_03',
-          variantId: 'gid://shopify/ProductVariant/4412019130',
-          title: 'Structured Wool Overcoat',
-          variantTitle: 'Charcoal Grey / 42R',
-          price: 420.0,
-          quantity: 1,
-          imageUrl: 'https://images.unsplash.com/photo-1544022613-e87ce7526edb?w=400&q=80',
-          productUrl: 'https://aurora-apparel.myshopify.com/products/wool-overcoat',
-        },
-      ],
-      status: 'CONTACTED',
-      abandonmentType: 'PAYMENT_FAILED',
-      recoveryStage: 'WHATSAPP_SENT',
-      checkoutUrl: 'https://aurora-apparel.myshopify.com/checkouts/c/tok_shpfy_88192b/recover',
-      suggestedDiscountCode: 'AURORA10',
-      createdAt: new Date(Date.now() - 1000 * 60 * 45),
-      updatedAt: new Date(Date.now() - 1000 * 60 * 20),
-    };
-
-    const sampleCart3: CartEvent = {
-      id: 'cart_evt_003',
-      cartToken: 'tok_shpfy_77401c',
-      merchantId: defaultMerchant.id,
-      customerName: 'Elena Rostova',
-      customerPhone: '+13125557812',
-      customerEmail: 'elena.rostova@designstudio.org',
-      currency: 'USD',
-      totalPrice: 160.0,
-      items: [
-        {
-          id: 'item_04',
-          variantId: 'gid://shopify/ProductVariant/4412019131',
-          title: 'Italian Leather Crossbody',
-          variantTitle: 'Cognac Brown',
-          price: 160.0,
-          quantity: 1,
-          imageUrl: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=400&q=80',
-          productUrl: 'https://aurora-apparel.myshopify.com/products/leather-crossbody',
-        },
-      ],
-      status: 'RECOVERED',
-      abandonmentType: 'CHECKOUT_STEP',
-      recoveryStage: 'RECOVERED',
-      checkoutUrl: 'https://aurora-apparel.myshopify.com/checkouts/c/tok_shpfy_77401c/recover',
-      suggestedDiscountCode: 'AURORA10',
-      recoveredAt: new Date(Date.now() - 1000 * 60 * 15),
-      createdAt: new Date(Date.now() - 1000 * 60 * 95),
-      updatedAt: new Date(Date.now() - 1000 * 60 * 15),
-    };
-
-    this.cartEvents.set(sampleCart1.id, sampleCart1);
-    this.cartEvents.set(sampleCart2.id, sampleCart2);
-    this.cartEvents.set(sampleCart3.id, sampleCart3);
-
-    const sampleLog: MessageLog = {
-      id: 'msg_log_001',
-      cartEventId: sampleCart2.id,
-      merchantId: defaultMerchant.id,
-      channel: 'WHATSAPP',
-      direction: 'OUTBOUND',
-      content: 'Hi Marcus, your payment for the Structured Wool Overcoat encountered a temporary card security block. We reserved your size in Charcoal 42R. Tap here to complete securely with Apple Pay or PayPal: https://aurora-apparel.myshopify.com/checkouts/c/tok_shpfy_88192b/recover?discount=AURORA10',
-      tokensUsed: 142,
-      latencyMs: 380,
-      deliveryStatus: 'DELIVERED',
-      externalMessageId: 'wamid.HBgLMTIwNjU1NTAxOTIVAgARGBI1',
-      createdAt: new Date(Date.now() - 1000 * 60 * 20),
-    };
-    this.messageLogs.set(sampleLog.id, sampleLog);
+  public seedDefaults(): void {
+    seedDemoDataset(this, { clearExisting: false });
   }
 
   // Merchant methods
