@@ -15,7 +15,9 @@ export type DataProvenanceSource =
   | 'manual_reviewer_observed'
   | 'benchmark'
   | 'hand_curated_safety'
-  | 'synthetic_fixture';
+  | 'synthetic_fixture'
+  | 'razorpay_test_mode'
+  | 'imported_dataset';
 
 // ─── Status Enums ───────────────────────────────────────────────────
 
@@ -58,7 +60,13 @@ export type DashboardTab =
   | 'evaluation_lab'
   | 'audit_ledger'
   | 'promise_to_pay'
-  | 'methodology_guide';
+  | 'methodology_guide'
+  | 'control_room'
+  | 'stream'
+  | 'analytics'
+  | 'tone_studio'
+  | 'chat_monitor'
+  | 'carts';
 
 // ─── Pipeline Item Interfaces ───────────────────────────────────────
 

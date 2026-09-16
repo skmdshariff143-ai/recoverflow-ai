@@ -105,12 +105,14 @@ interface GuideMeTourModalProps {
   isOpen: boolean;
   onClose: () => void;
   onNavigateTab: (tab: DashboardTab) => void;
+  onOpenReplayArena?: () => void;
 }
 
 export function GuideMeTourModal({
   isOpen,
   onClose,
   onNavigateTab,
+  onOpenReplayArena: _onOpenReplayArena,
 }: GuideMeTourModalProps) {
   const [stepIndex, setStepIndex] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(true);

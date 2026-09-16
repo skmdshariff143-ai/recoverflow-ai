@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Live Production QA Rehearsal Walkthrough', () => {
-  const LIVE_URL = 'https://recoverflow-ai-kohl.vercel.app';
+  const LIVE_URL = process.env.PLAYWRIGHT_TEST_BASE_URL || '/';
 
   test('Execute exact new 5-stop pitch rehearsal on live production', async ({ page }) => {
     const consoleErrors: string[] = [];

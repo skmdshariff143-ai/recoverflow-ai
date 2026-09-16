@@ -1,69 +1,83 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { 
-  Zap, 
-  ShoppingBag, 
-  TrendingUp, 
-  Sliders, 
-  MessageSquare, 
-  Store,
-  RefreshCw,
-  Command,
-  Volume2,
-  VolumeX,
-  Award,
-  Layers,
-  FlaskConical,
-  ShieldCheck,
-  CreditCard,
-  FileCheck2,
-  HelpCircle,
-} from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useRecoveryBatch } from '../hooks/useRecoveryBatch';
+import { Header } from '../components/Header';
+import { MetricsOverview } from '../components/MetricsOverview';
+import { CalibrationVisualizer } from '../components/CalibrationVisualizer';
+import { RankedQueueTable } from '../components/RankedQueueTable';
+import { PaymentDrilldownModal } from '../components/PaymentDrilldownModal';
+import { LiveRecoveryRunner } from '../components/LiveRecoveryRunner';
+import { EvaluationLab } from '../components/EvaluationLab';
+import { RecoveryIntelligence } from '../components/RecoveryIntelligence';
+import { PromiseToPayTracker } from '../components/PromiseToPayTracker';
+import { AuditTrailExplorer } from '../components/AuditTrailExplorer';
+import { MethodologyGuide } from '../components/MethodologyGuide';
+import { JudgeModeModal } from '../components/JudgeModeModal';
+import { CommandPalette } from '../components/CommandPalette';
+import { StickySummaryBar } from '../components/StickySummaryBar';
+import { BlindBotReplayModal } from '../components/BlindBotReplayModal';
+import { JudgeCheatSheetModal } from '../components/JudgeCheatSheetModal';
+import { FirstTimeVisitorSpotlight } from '../components/FirstTimeVisitorSpotlight';
+import { GuideMeTourModal } from '../components/GuideMeTourModal';
+import { AutonomousControlRoom } from '../components/AutonomousControlRoom';
+import { RazorpaySubscriptionsDashboard } from '../components/RazorpaySubscriptionsDashboard';
 import { LiveRecoveryStream } from '../components/LiveRecoveryStream';
 import { ConversionAnalytics } from '../components/ConversionAnalytics';
 import { BrandToneCalibrationStudio } from '../components/BrandToneCalibrationStudio';
 import { LiveChatMonitor } from '../components/LiveChatMonitor';
 import { CartsExplorer } from '../components/CartsExplorer';
-import { CommandPaletteModal } from '../components/CommandPaletteModal';
-import { AutonomousControlRoom } from '../components/AutonomousControlRoom';
-import { EvaluationLab } from '../components/EvaluationLab';
-import { AuditTrailExplorer } from '../components/AuditTrailExplorer';
-import { RazorpaySubscriptionsDashboard } from '../components/RazorpaySubscriptionsDashboard';
-import { JudgeModeModal } from '../components/JudgeModeModal';
-import { JudgeCheatSheetModal } from '../components/JudgeCheatSheetModal';
-import { GuideMeTourModal } from '../components/GuideMeTourModal';
-import { PaymentDrilldownModal } from '../components/PaymentDrilldownModal';
-import { useRecoveryBatch } from '../hooks/useRecoveryBatch';
-import { soundFx } from '../utils/soundEffects';
-import type { CartEvent, Merchant, MessageLog, SuppressionEntry, DashboardTab } from '@recoverflow/core';
+import type { CartEvent, Merchant, MessageLog, SuppressionEntry, DashboardTab, DataProvenanceSource } from '@recoverflow/core';
 
-type TabType = 
-  | 'STREAM' 
-  | 'CONTROL_ROOM'
-  | 'EVAL_LAB'
-  | 'AUDIT_LEDGER'
-  | 'SUBSCRIPTIONS'
-  | 'ANALYTICS' 
-  | 'TONE_STUDIO' 
-  | 'CHAT_MONITOR' 
-  | 'CARTS';
+export default function Home() {
+  const [isJudgeModeOpen, setIsJudgeModeOpen] = useState<boolean>(false);
+  const [isReplayModalOpen, setIsReplayModalOpen] = useState<boolean>(false);
+  const [isCheatSheetOpen, setIsCheatSheetOpen] = useState<boolean>(false);
+  const [isGuideTourOpen, setIsGuideTourOpen] = useState<boolean>(false);
 
-export default function MerchantDashboard() {
-  const [activeTab, setActiveTab] = useState<TabType>('STREAM');
-  const [loading, setLoading] = useState(true);
-  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
-  const [soundActive, setSoundActive] = useState(soundFx.isEnabled());
+  const {
+    payments,
+    budget,
+    setBudget,
+    simulationSeed,
+    setSimulationSeed,
+    scoringModel,
+    setScoringModel,
+    modelComparison,
+    provenance,
+    setProvenance,
+    activeTab,
+    setActiveTab,
+    selectedPaymentId,
+    setSelectedPaymentId,
+    selectedItem,
+    selectedItemAuditRecords,
+    batchResult,
+    chainedLedger,
+    ledgerVerification,
+    devData,
+    devReport,
+    heldoutReport,
+    filteredQueueItems,
+    kpis,
+    reviewerDecisions,
+    applyReviewerAction,
+    // Filters
+    statusFilter,
+    setStatusFilter,
+    categoryFilter,
+    setCategoryFilter,
+    searchQuery,
+    setSearchQuery,
+    sortField,
+    setSortField,
+    setSortAsc,
+    // Exports
+    handleExportCSV,
+    handleExportJSON,
+  } = useRecoveryBatch();
 
-  // Judge & Tour Modals
-  const [isJudgeModeOpen, setIsJudgeModeOpen] = useState(false);
-  const [isCheatSheetOpen, setIsCheatSheetOpen] = useState(false);
-  const [isTourOpen, setIsTourOpen] = useState(false);
-  const [selectedDrilldownPaymentId, setSelectedDrilldownPaymentId] = useState<string | null>(null);
-
-  // Recovery Engine batch hook
-  const recoveryBatch = useRecoveryBatch();
-
+  // Async data for cart recovery endpoints
   const [data, setData] = useState<{
     merchant: Merchant;
     carts: CartEvent[];
@@ -81,51 +95,87 @@ export default function MerchantDashboard() {
       }
     } catch (e) {
       console.error('Error fetching dashboard data:', e);
-    } finally {
-      setLoading(false);
     }
   };
 
   useEffect(() => {
-    let isMounted = true;
-    const load = async () => {
+    let ignore = false;
+    async function load() {
       try {
         const res = await fetch('/api/recovery/events');
-        if (res.ok && isMounted) {
+        if (res.ok && !ignore) {
           const json = await res.json();
           setData(json);
         }
       } catch (e) {
         console.error('Error fetching dashboard data:', e);
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
       }
-    };
-
+    }
     void load();
-    const interval = setInterval(() => {
-      void load();
-    }, 15000); // 15s refresh
     return () => {
-      isMounted = false;
-      clearInterval(interval);
+      ignore = true;
     };
   }, []);
 
-  // Global keyboard shortcut for Command Palette (Cmd+K / Ctrl+K)
+  const [resetToast, setResetToast] = useState<string | null>(null);
+
+  const handleResetDemoState = React.useCallback(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        sessionStorage.clear();
+        localStorage.removeItem('payback_spotlight_dismissed_v1');
+        localStorage.removeItem('payback_guide_completed_v1');
+      }
+    } catch {
+      // Ignore storage errors in restricted sandboxes
+    }
+
+    setBudget(40);
+    setSimulationSeed(42);
+    setScoringModel('trained_logistic');
+    setProvenance('synthetic_fixture');
+    setActiveTab('dashboard');
+    setSelectedPaymentId(null);
+    setStatusFilter('all');
+    setCategoryFilter('all');
+    setSearchQuery('');
+    setSortField('rank');
+    setSortAsc(true);
+
+    setResetToast('Demo state reset to initial defaults (40 budget slots, seed 42, trained logistic)');
+    setTimeout(() => {
+      setResetToast(null);
+    }, 4000);
+  }, [
+    setBudget,
+    setSimulationSeed,
+    setScoringModel,
+    setProvenance,
+    setActiveTab,
+    setSelectedPaymentId,
+    setStatusFilter,
+    setCategoryFilter,
+    setSearchQuery,
+    setSortField,
+    setSortAsc,
+  ]);
+
+  // Global Shift+R keyboard shortcut for instant demo reset
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+      const target = e.target as HTMLElement;
+      const isInput =
+        target?.tagName === 'INPUT' ||
+        target?.tagName === 'TEXTAREA' ||
+        target?.isContentEditable;
+      if (!isInput && e.shiftKey && (e.key === 'R' || e.key === 'r')) {
         e.preventDefault();
-        soundFx.playMechanicalClick();
-        setCommandPaletteOpen((prev) => !prev);
+        handleResetDemoState();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [handleResetDemoState]);
 
   const handleUpdateMerchant = (updated: Partial<Merchant>) => {
     if (data) {
@@ -136,345 +186,285 @@ export default function MerchantDashboard() {
     }
   };
 
-  const handleTabChange = (tab: TabType) => {
-    soundFx.playMechanicalClick();
-    setActiveTab(tab);
-  };
-
-  const toggleAudioFeedback = () => {
-    const next = soundFx.toggle();
-    setSoundActive(next);
-  };
-
-  const handleSimulateAbandonment = async () => {
-    try {
-      soundFx.playMechanicalClick();
-      await fetch('/api/recovery/simulate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'PAYMENT_FAILED' }),
-      });
-      fetchData();
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
   const handleExportCFOReport = () => {
-    soundFx.playMechanicalClick();
     window.open('/api/recovery/reports/export?format=csv', '_blank');
   };
 
-  const handleNavigateFromJudgeMode = (tab: DashboardTab) => {
-    if (tab === 'dashboard' || tab === 'live_runner') {
-      setActiveTab('CONTROL_ROOM');
-    } else if (tab === 'evaluation_lab') {
-      setActiveTab('EVAL_LAB');
-    } else if (tab === 'audit_ledger') {
-      setActiveTab('AUDIT_LEDGER');
-    } else if (tab === 'subscriptions') {
-      setActiveTab('SUBSCRIPTIONS');
-    } else {
-      setActiveTab('STREAM');
-    }
-    setIsJudgeModeOpen(false);
+  const handleReSimulate = () => {
+    setSimulationSeed(Math.floor(Math.random() * 100000) + 1);
   };
 
   return (
-    <div className="min-h-screen bg-[#09090b] text-zinc-100 font-sans selection:bg-indigo-500 selection:text-white">
-      {/* Top Navigation Bar */}
-      <header className="sticky top-0 z-40 border-b border-zinc-800/80 bg-[#09090b]/80 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 via-blue-600 to-emerald-500 p-0.5 shadow-lg shadow-indigo-500/20">
-              <div className="w-full h-full bg-zinc-950 rounded-[10px] flex items-center justify-center">
-                <Zap className="w-5 h-5 text-indigo-400" />
-              </div>
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-extrabold text-base tracking-tight text-white">RecoverFlow AI</span>
-                <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-mono">
-                  Autonomous MAB
-                </span>
-              </div>
-              <div className="text-xs text-zinc-400 flex items-center gap-1.5 font-mono">
-                <Store className="w-3 h-3 text-zinc-500" />
-                <span>{data?.merchant.storeName || 'Aurora Luxury Apparel'}</span>
-                <span className="text-zinc-600">•</span>
-                <span className="text-emerald-400 font-medium flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Live
-                </span>
-              </div>
-            </div>
+    <div className="min-h-screen bg-slate-100 text-slate-900 flex flex-col font-sans selection:bg-indigo-500 selection:text-white">
+      {/* ── Global Header & Navigation ─────────────────────────── */}
+      <Header
+        activeTab={activeTab}
+        onSelectTab={setActiveTab}
+        budget={budget}
+        onBudgetChange={setBudget}
+        simulationSeed={simulationSeed}
+        onReSimulate={handleReSimulate}
+        provenance={provenance}
+        onProvenanceChange={(p: DataProvenanceSource) => setProvenance(p)}
+        onOpenJudgeMode={() => setIsJudgeModeOpen(true)}
+        onOpenReplayArena={() => setIsReplayModalOpen(true)}
+        onOpenCheatSheet={() => setIsCheatSheetOpen(true)}
+        onOpenGuideTour={() => setIsGuideTourOpen(true)}
+      />
+
+      {/* ── Sticky Mini-Summary Bar (Appears on scroll past KPI cards) ─ */}
+      <StickySummaryBar
+        totalRevenueAtRisk={kpis.totalRevenueAtRisk}
+        totalRevenueRecovered={kpis.totalRevenueRecovered}
+        overallRecoveryRate={kpis.overallRecoveryRate}
+        budgetedCount={kpis.budgetedCount}
+        budgetLimit={budget}
+        brierScore={kpis.brierScore}
+        onReSimulate={handleReSimulate}
+      />
+
+      {/* ── Main Application Workspace ─────────────────────────── */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 overflow-hidden max-w-full">
+        {/* Workspace 1: Dashboard & Ranked Queue */}
+        {activeTab === 'dashboard' && (
+          <div className="space-y-6">
+            <MetricsOverview
+              kpis={kpis}
+              onNavigateTab={setActiveTab}
+            />
+
+            <RankedQueueTable
+              items={filteredQueueItems}
+              totalCount={batchResult.executed_items.length}
+              statusFilter={statusFilter}
+              onStatusFilterChange={setStatusFilter}
+              categoryFilter={categoryFilter}
+              onCategoryFilterChange={setCategoryFilter}
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              sortField={sortField}
+              onSortFieldChange={setSortField}
+              onSortAscToggle={() => setSortAsc((prev) => !prev)}
+              onSelectPayment={(id) => setSelectedPaymentId(id)}
+              provenance={provenance}
+            />
+
+            <AutonomousControlRoom
+              items={filteredQueueItems}
+              payments={payments}
+              batchResult={batchResult}
+              evaluationReport={devReport}
+              budget={budget}
+              onBudgetChange={setBudget}
+              onSelectPayment={(id) => setSelectedPaymentId(id)}
+              onNavigateTab={setActiveTab}
+              onReSimulate={handleReSimulate}
+            />
+
+            <CalibrationVisualizer
+              calibration={batchResult.calibration}
+              modelComparison={modelComparison}
+              scoringModel={scoringModel}
+              onScoringModelChange={setScoringModel}
+            />
           </div>
+        )}
 
-          {/* Tab Navigation Buttons */}
-          <nav className="hidden xl:flex items-center gap-1 bg-zinc-900/90 border border-zinc-800 p-1 rounded-xl text-xs">
-            {[
-              { id: 'STREAM', label: 'Live Stream', icon: Zap },
-              { id: 'CONTROL_ROOM', label: 'Control Room', icon: Layers },
-              { id: 'EVAL_LAB', label: 'Eval Lab', icon: FlaskConical },
-              { id: 'AUDIT_LEDGER', label: 'Audit Ledger', icon: ShieldCheck },
-              { id: 'SUBSCRIPTIONS', label: 'Subscriptions', icon: CreditCard },
-              { id: 'ANALYTICS', label: 'ROI & ROAS', icon: TrendingUp },
-              { id: 'TONE_STUDIO', label: 'Tone Studio', icon: Sliders },
-              { id: 'CHAT_MONITOR', label: 'Concierge', icon: MessageSquare },
-              { id: 'CARTS', label: 'Carts', icon: ShoppingBag },
-            ].map((tab) => {
-              const Icon = tab.icon;
-              const isActive = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => handleTabChange(tab.id as TabType)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition ${
-                    isActive
-                      ? 'bg-indigo-600 text-white shadow-sm'
-                      : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
-                  }`}
-                >
-                  <Icon className="w-3.5 h-3.5" />
-                  <span>{tab.label}</span>
-                </button>
-              );
-            })}
-          </nav>
+        {/* Workspace 2: Live Recovery Runner */}
+        {activeTab === 'live_runner' && (
+          <LiveRecoveryRunner
+            payments={payments}
+            outcomesMap={devData.outcomesMap}
+          />
+        )}
 
-          {/* Quick Actions, Judge Mode, Tour & Command Palette */}
-          <div className="flex items-center gap-2">
-            {/* Judge Mode Walkthrough Trigger */}
-            <button
-              onClick={() => {
-                soundFx.playMechanicalClick();
-                setIsJudgeModeOpen(true);
+        {/* Workspace 3: Evaluation Lab & Policy Simulator */}
+        {activeTab === 'evaluation_lab' && (
+          <div className="space-y-6">
+            <RecoveryIntelligence
+              items={batchResult.executed_items}
+              evaluationReport={devReport}
+            />
+            <EvaluationLab
+              devReport={devReport}
+              heldoutReport={heldoutReport}
+              payments={payments}
+              policyConfig={{
+                budget,
+                approvalThresholdPaise: 5_000_000,
+                maxAttemptsCap: 3,
               }}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 text-amber-300 border border-amber-500/30 rounded-xl text-xs font-semibold transition shadow-sm"
-              title="Open 10-Step Judge Evaluation Walkthrough"
-            >
-              <Award className="w-3.5 h-3.5 text-amber-400" />
-              <span className="hidden sm:inline">Judge Mode</span>
-            </button>
-
-            {/* Quick Cheat Sheet Modal */}
-            <button
-              onClick={() => {
-                soundFx.playMechanicalClick();
-                setIsCheatSheetOpen(true);
-              }}
-              className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 rounded-xl text-xs font-medium transition"
-              title="Open Track Cheat Sheet"
-            >
-              <FileCheck2 className="w-3.5 h-3.5 text-indigo-400" />
-              <span>Rubric</span>
-            </button>
-
-            {/* Interactive Tour */}
-            <button
-              onClick={() => {
-                soundFx.playMechanicalClick();
-                setIsTourOpen(true);
-              }}
-              className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 rounded-xl text-xs font-medium transition"
-              title="Start Interactive Guided Tour"
-            >
-              <HelpCircle className="w-3.5 h-3.5 text-blue-400" />
-              <span>Tour</span>
-            </button>
-
-            {/* Command Palette Button */}
-            <button
-              onClick={() => {
-                soundFx.playMechanicalClick();
-                setCommandPaletteOpen(true);
-              }}
-              className="hidden lg:flex items-center gap-2 px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 rounded-xl text-xs font-medium transition shadow-sm"
-              title="Open Command Palette (Cmd+K)"
-            >
-              <Command className="w-3.5 h-3.5 text-zinc-400" />
-              <span>Search</span>
-              <kbd className="px-1.5 py-0.5 text-[10px] font-mono text-zinc-400 bg-zinc-800 rounded border border-zinc-700">
-                ⌘K
-              </kbd>
-            </button>
-
-            {/* Sound Toggle */}
-            <button
-              onClick={toggleAudioFeedback}
-              title={soundActive ? 'Mute mechanical UI clicks' : 'Enable mechanical UI clicks'}
-              className="p-2 text-zinc-400 hover:text-white bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded-lg transition"
-            >
-              {soundActive ? <Volume2 className="w-4 h-4 text-emerald-400" /> : <VolumeX className="w-4 h-4 text-zinc-500" />}
-            </button>
-
-            {/* Quick Refresh */}
-            <button
-              onClick={() => {
-                soundFx.playMechanicalClick();
-                fetchData();
-              }}
-              title="Refresh Data"
-              className="p-2 text-zinc-400 hover:text-white bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded-lg transition"
-            >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            </button>
+              onPolicyConfigChange={(cfg) => setBudget(cfg.budget)}
+            />
           </div>
-        </div>
+        )}
 
-        {/* Mobile / Compact Navigation Row */}
-        <div className="xl:hidden flex items-center overflow-x-auto px-4 py-2 border-t border-zinc-800/60 bg-zinc-950 gap-1 text-xs">
-          {[
-            { id: 'STREAM', label: 'Live Stream' },
-            { id: 'CONTROL_ROOM', label: 'Control Room' },
-            { id: 'EVAL_LAB', label: 'Eval Lab' },
-            { id: 'AUDIT_LEDGER', label: 'Audit Ledger' },
-            { id: 'SUBSCRIPTIONS', label: 'Subscriptions' },
-            { id: 'ANALYTICS', label: 'Analytics' },
-            { id: 'TONE_STUDIO', label: 'Tone Studio' },
-            { id: 'CHAT_MONITOR', label: 'Concierge' },
-            { id: 'CARTS', label: 'Carts' },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => handleTabChange(tab.id as TabType)}
-              className={`px-3 py-1.5 rounded-lg font-medium whitespace-nowrap ${
-                activeTab === tab.id ? 'bg-indigo-600 text-white' : 'text-zinc-400'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      </header>
+        {/* Workspace 4: Promise-to-Pay Lifecycle Tracker */}
+        {activeTab === 'promise_to_pay' && (
+          <PromiseToPayTracker />
+        )}
 
-      {/* Main Workspace Body */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {loading && !data ? (
-          <div className="py-24 text-center space-y-3">
-            <RefreshCw className="w-8 h-8 animate-spin mx-auto text-indigo-500" />
-            <div className="text-zinc-400 text-sm font-medium">Connecting to RecoverFlow AI Pipeline...</div>
-          </div>
-        ) : (
-          <>
-            {activeTab === 'STREAM' && (
-              <LiveRecoveryStream
-                carts={data?.carts || []}
-                stats={data?.stats}
-                onRefresh={fetchData}
-              />
-            )}
+        {/* Workspace 5: Append-Only Cryptographic Audit Ledger */}
+        {activeTab === 'audit_ledger' && (
+          <AuditTrailExplorer
+            records={chainedLedger}
+            payments={payments}
+            verification={ledgerVerification}
+            onExportCSV={handleExportCSV}
+            onExportJSON={handleExportJSON}
+            onSelectPayment={(id) => setSelectedPaymentId(id)}
+          />
+        )}
 
-            {activeTab === 'CONTROL_ROOM' && (
-              <AutonomousControlRoom
-                items={recoveryBatch.batchResult.executed_items}
-                payments={recoveryBatch.payments}
-                batchResult={recoveryBatch.batchResult}
-                evaluationReport={recoveryBatch.devReport}
-                budget={recoveryBatch.budget}
-                onBudgetChange={recoveryBatch.setBudget}
-                onSelectPayment={(id) => setSelectedDrilldownPaymentId(id)}
-                onNavigateTab={handleNavigateFromJudgeMode}
-                onReSimulate={() => recoveryBatch.setSimulationSeed((s) => s + 1)}
-              />
-            )}
+        {/* Workspace 6: Methodology & Judge Guide */}
+        {activeTab === 'methodology_guide' && (
+          <MethodologyGuide />
+        )}
 
-            {activeTab === 'EVAL_LAB' && (
-              <EvaluationLab
-                devReport={recoveryBatch.devReport}
-                heldoutReport={recoveryBatch.heldoutReport}
-                payments={recoveryBatch.payments}
-              />
-            )}
+        {/* Workspace 7: Autonomous Control Room */}
+        {activeTab === 'control_room' && (
+          <AutonomousControlRoom
+            items={batchResult.executed_items}
+            payments={payments}
+            batchResult={batchResult}
+            evaluationReport={devReport}
+            budget={budget}
+            onBudgetChange={setBudget}
+            onSelectPayment={(id) => setSelectedPaymentId(id)}
+            onNavigateTab={(t: DashboardTab) => setActiveTab(t)}
+            onReSimulate={handleReSimulate}
+          />
+        )}
 
-            {activeTab === 'AUDIT_LEDGER' && (
-              <AuditTrailExplorer
-                records={recoveryBatch.chainedLedger}
-                payments={recoveryBatch.payments}
-                verification={recoveryBatch.ledgerVerification}
-                onExportCSV={recoveryBatch.handleExportCSV}
-                onExportJSON={recoveryBatch.handleExportJSON}
-                onSelectPayment={(id) => setSelectedDrilldownPaymentId(id)}
-              />
-            )}
+        {/* Workspace 8: Razorpay Subscriptions */}
+        {activeTab === 'subscriptions' && (
+          <RazorpaySubscriptionsDashboard />
+        )}
 
-            {activeTab === 'SUBSCRIPTIONS' && (
-              <RazorpaySubscriptionsDashboard />
-            )}
+        {/* Workspace 9: Live Recovery Stream */}
+        {activeTab === 'stream' && (
+          <LiveRecoveryStream
+            carts={data?.carts || []}
+            stats={data?.stats}
+            onRefresh={fetchData}
+          />
+        )}
 
-            {activeTab === 'ANALYTICS' && (
-              <ConversionAnalytics stats={data?.stats} onExportReport={handleExportCFOReport} />
-            )}
+        {/* Workspace 10: Conversion Analytics */}
+        {activeTab === 'analytics' && (
+          <ConversionAnalytics stats={data?.stats} onExportReport={handleExportCFOReport} />
+        )}
 
-            {activeTab === 'TONE_STUDIO' && data?.merchant && (
-              <BrandToneCalibrationStudio
-                merchant={data.merchant}
-                onUpdateMerchant={handleUpdateMerchant}
-              />
-            )}
+        {/* Workspace 11: Tone Studio */}
+        {activeTab === 'tone_studio' && data?.merchant && (
+          <BrandToneCalibrationStudio
+            merchant={data.merchant}
+            onUpdateMerchant={handleUpdateMerchant}
+          />
+        )}
 
-            {activeTab === 'CHAT_MONITOR' && (
-              <LiveChatMonitor
-                carts={data?.carts || []}
-                messages={data?.messages || []}
-              />
-            )}
+        {/* Workspace 12: Chat Monitor */}
+        {activeTab === 'chat_monitor' && (
+          <LiveChatMonitor
+            carts={data?.carts || []}
+            messages={data?.messages || []}
+          />
+        )}
 
-            {activeTab === 'CARTS' && (
-              <CartsExplorer
-                carts={data?.carts || []}
-                suppressions={data?.suppressions || []}
-                onRefresh={fetchData}
-              />
-            )}
-          </>
+        {/* Workspace 13: Carts Explorer */}
+        {activeTab === 'carts' && (
+          <CartsExplorer
+            carts={data?.carts || []}
+            suppressions={data?.suppressions || []}
+            onRefresh={fetchData}
+          />
         )}
       </main>
 
-      {/* Universal Command Palette Modal */}
-      <CommandPaletteModal
-        isOpen={commandPaletteOpen}
-        onClose={() => setCommandPaletteOpen(false)}
-        carts={data?.carts || []}
-        onSelectTab={(tab) => handleTabChange(tab as TabType)}
-        onSimulate={handleSimulateAbandonment}
-        onExportReport={handleExportCFOReport}
-      />
+      {/* ── Explainable Decision Drill-Down & Reviewer Action Modal ── */}
+      {selectedItem && (
+        <PaymentDrilldownModal
+          item={selectedItem}
+          allItems={batchResult.executed_items}
+          auditRecords={selectedItemAuditRecords}
+          onClose={() => setSelectedPaymentId(null)}
+          onApplyReviewerAction={applyReviewerAction}
+          existingReviewerAction={selectedPaymentId ? reviewerDecisions[selectedPaymentId] : undefined}
+        />
+      )}
 
-      {/* 10-Step Judge Evaluation Walkthrough Modal */}
+      {/* ── Guided Evaluator Walkthrough (Judge Mode) ─────────────── */}
       <JudgeModeModal
         isOpen={isJudgeModeOpen}
         onClose={() => setIsJudgeModeOpen(false)}
-        onNavigateTab={handleNavigateFromJudgeMode}
-        onSetProvenance={recoveryBatch.setProvenance}
+        onNavigateTab={(tab: DashboardTab) => setActiveTab(tab)}
+        onSetProvenance={(prov: DataProvenanceSource) => setProvenance(prov)}
       />
 
-      {/* Rubric Cheat Sheet Modal */}
+      {/* ── Blind-Bot vs PayBack AI Side-by-Side Replay Arena ─────── */}
+      <BlindBotReplayModal
+        isOpen={isReplayModalOpen}
+        onClose={() => setIsReplayModalOpen(false)}
+      />
+
+      {/* ── Global Command Palette (Cmd/Ctrl+K) ────────────────────── */}
+      <CommandPalette
+        items={batchResult.executed_items}
+        onNavigateTab={setActiveTab}
+        onSelectPayment={(id) => setSelectedPaymentId(id)}
+        onReSimulate={handleReSimulate}
+        onVerifyLedger={() => {
+          setActiveTab('audit_ledger');
+        }}
+        onOpenJudgeMode={() => setIsJudgeModeOpen(true)}
+        onOpenReplayArena={() => setIsReplayModalOpen(true)}
+        onOpenCheatSheet={() => setIsCheatSheetOpen(true)}
+        onOpenGuideTour={() => setIsGuideTourOpen(true)}
+        onResetDemoState={handleResetDemoState}
+      />
+
+      {/* ── Demo Reset Notification Toast ─────────────────────────── */}
+      {resetToast && (
+        <div
+          data-testid="demo-reset-toast"
+          role="status"
+          aria-live="polite"
+          className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white px-4 py-3 rounded-xl border border-indigo-500/50 shadow-2xl flex items-center gap-3 animate-fade-in text-xs font-semibold"
+        >
+          <div className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+          <span>{resetToast}</span>
+        </div>
+      )}
+
+      {/* ── Printable Judge Cheat Sheet Modal & QR Code Summary ─────── */}
       <JudgeCheatSheetModal
         isOpen={isCheatSheetOpen}
         onClose={() => setIsCheatSheetOpen(false)}
       />
 
-      {/* Interactive Guided Tour Modal */}
+      {/* ── Self-Playing Guided Proof Tour Modal ───────────────────── */}
       <GuideMeTourModal
-        isOpen={isTourOpen}
-        onClose={() => setIsTourOpen(false)}
-        onNavigateTab={handleNavigateFromJudgeMode}
+        isOpen={isGuideTourOpen}
+        onClose={() => setIsGuideTourOpen(false)}
+        onNavigateTab={setActiveTab}
+        onOpenReplayArena={() => setIsReplayModalOpen(true)}
       />
 
-      {/* Payment Details Drilldown Modal */}
-      {selectedDrilldownPaymentId && (
-        <PaymentDrilldownModal
-          item={
-            recoveryBatch.batchResult.executed_items.find(
-              (i) => i.payment.payment_id === selectedDrilldownPaymentId,
-            ) || null
-          }
-          allItems={recoveryBatch.batchResult.executed_items}
-          auditRecords={recoveryBatch.auditRecords}
-          onClose={() => setSelectedDrilldownPaymentId(null)}
-          onApplyReviewerAction={recoveryBatch.applyReviewerAction}
-        />
-      )}
+      {/* ── First-Time Visitor Dismissible Spotlight ─────────────── */}
+      <FirstTimeVisitorSpotlight />
+
+      {/* ── Global Footer ───────────────────────────────────────── */}
+      <footer className="bg-slate-900 border-t border-slate-800 text-slate-400 py-6 text-xs text-center">
+        <div className="max-w-7xl mx-auto px-4 space-y-1">
+          <p className="font-medium text-slate-300">
+            PayBack AI — Autonomous Bounded Revenue Recovery Engine
+          </p>
+          <p className="text-slate-400">
+            Submission for Razorpay AI Buildathon · Track 3: AI Revenue Recovery · Deterministic Calibration &amp; Cryptographic Audit Ledger
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }
+

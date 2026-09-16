@@ -20,7 +20,7 @@ export default defineConfig({
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
   ],
   webServer: {
-    command: 'npx next start -p 3000',
+    command: 'npm run start --workspace=@recoverflow/web',
     url: 'http://127.0.0.1:3000',
     reuseExistingServer: true,
     timeout: 120000,

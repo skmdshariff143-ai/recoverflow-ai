@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'RecoverFlow AI — Enterprise Cart & Checkout Recovery Platform',
-  description: 'Autonomous AI cart and checkout recovery engine for Shopify and WooCommerce with WhatsApp Cloud API and Resend email fallback.',
+  title: 'PayBack AI — Bounded, Explainable Recovery Orchestration for Failed Payments',
+  description: 'Autonomous recovery engine with deterministic calibration, knapsack allocation, and cryptographic audit ledger.',
 };
 
 export default function RootLayout({
