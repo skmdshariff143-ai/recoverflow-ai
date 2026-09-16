@@ -11,3 +11,5 @@ export * from './wismo-agent';
 export * from './orchestrator';
 export * from './post-purchase/upsell-agent';
 export * from './post-purchase/wismo-agent';
+export * from '@recoverflow/core';
+export * from './geminiClient';

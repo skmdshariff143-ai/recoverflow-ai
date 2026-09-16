@@ -12,6 +12,13 @@ import {
   Command,
   Volume2,
   VolumeX,
+  Award,
+  Layers,
+  FlaskConical,
+  ShieldCheck,
+  CreditCard,
+  FileCheck2,
+  HelpCircle,
 } from 'lucide-react';
 import { LiveRecoveryStream } from '../components/LiveRecoveryStream';
 import { ConversionAnalytics } from '../components/ConversionAnalytics';
@@ -19,16 +26,44 @@ import { BrandToneCalibrationStudio } from '../components/BrandToneCalibrationSt
 import { LiveChatMonitor } from '../components/LiveChatMonitor';
 import { CartsExplorer } from '../components/CartsExplorer';
 import { CommandPaletteModal } from '../components/CommandPaletteModal';
+import { AutonomousControlRoom } from '../components/AutonomousControlRoom';
+import { EvaluationLab } from '../components/EvaluationLab';
+import { AuditTrailExplorer } from '../components/AuditTrailExplorer';
+import { RazorpaySubscriptionsDashboard } from '../components/RazorpaySubscriptionsDashboard';
+import { JudgeModeModal } from '../components/JudgeModeModal';
+import { JudgeCheatSheetModal } from '../components/JudgeCheatSheetModal';
+import { GuideMeTourModal } from '../components/GuideMeTourModal';
+import { PaymentDrilldownModal } from '../components/PaymentDrilldownModal';
+import { useRecoveryBatch } from '../hooks/useRecoveryBatch';
 import { soundFx } from '../utils/soundEffects';
-import type { CartEvent, Merchant, MessageLog, SuppressionEntry } from '@recoverflow/core';
+import type { CartEvent, Merchant, MessageLog, SuppressionEntry, DashboardTab } from '@recoverflow/core';
 
-type TabType = 'STREAM' | 'ANALYTICS' | 'TONE_STUDIO' | 'CHAT_MONITOR' | 'CARTS';
+type TabType = 
+  | 'STREAM' 
+  | 'CONTROL_ROOM'
+  | 'EVAL_LAB'
+  | 'AUDIT_LEDGER'
+  | 'SUBSCRIPTIONS'
+  | 'ANALYTICS' 
+  | 'TONE_STUDIO' 
+  | 'CHAT_MONITOR' 
+  | 'CARTS';
 
 export default function MerchantDashboard() {
   const [activeTab, setActiveTab] = useState<TabType>('STREAM');
   const [loading, setLoading] = useState(true);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [soundActive, setSoundActive] = useState(soundFx.isEnabled());
+
+  // Judge & Tour Modals
+  const [isJudgeModeOpen, setIsJudgeModeOpen] = useState(false);
+  const [isCheatSheetOpen, setIsCheatSheetOpen] = useState(false);
+  const [isTourOpen, setIsTourOpen] = useState(false);
+  const [selectedDrilldownPaymentId, setSelectedDrilldownPaymentId] = useState<string | null>(null);
+
+  // Recovery Engine batch hook
+  const recoveryBatch = useRecoveryBatch();
+
   const [data, setData] = useState<{
     merchant: Merchant;
     carts: CartEvent[];
@@ -101,7 +136,7 @@ export default function MerchantDashboard() {
     }
   };
 
-  const handleTabChange = (tab: 'STREAM' | 'ANALYTICS' | 'TONE_STUDIO' | 'CHAT_MONITOR' | 'CARTS') => {
+  const handleTabChange = (tab: TabType) => {
     soundFx.playMechanicalClick();
     setActiveTab(tab);
   };
@@ -130,10 +165,25 @@ export default function MerchantDashboard() {
     window.open('/api/recovery/reports/export?format=csv', '_blank');
   };
 
+  const handleNavigateFromJudgeMode = (tab: DashboardTab) => {
+    if (tab === 'dashboard' || tab === 'live_runner') {
+      setActiveTab('CONTROL_ROOM');
+    } else if (tab === 'evaluation_lab') {
+      setActiveTab('EVAL_LAB');
+    } else if (tab === 'audit_ledger') {
+      setActiveTab('AUDIT_LEDGER');
+    } else if (tab === 'subscriptions') {
+      setActiveTab('SUBSCRIPTIONS');
+    } else {
+      setActiveTab('STREAM');
+    }
+    setIsJudgeModeOpen(false);
+  };
+
   return (
     <div className="min-h-screen bg-[#09090b] text-zinc-100 font-sans selection:bg-indigo-500 selection:text-white">
       {/* Top Navigation Bar */}
-      <header className="sticky top-0 z-50 border-b border-zinc-800/80 bg-[#09090b]/80 backdrop-blur-md">
+      <header className="sticky top-0 z-40 border-b border-zinc-800/80 bg-[#09090b]/80 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 via-blue-600 to-emerald-500 p-0.5 shadow-lg shadow-indigo-500/20">
@@ -160,13 +210,17 @@ export default function MerchantDashboard() {
           </div>
 
           {/* Tab Navigation Buttons */}
-          <nav className="hidden md:flex items-center gap-1 bg-zinc-900/90 border border-zinc-800 p-1 rounded-xl text-xs">
+          <nav className="hidden xl:flex items-center gap-1 bg-zinc-900/90 border border-zinc-800 p-1 rounded-xl text-xs">
             {[
               { id: 'STREAM', label: 'Live Stream', icon: Zap },
-              { id: 'ANALYTICS', label: 'Analytics & ROI', icon: TrendingUp },
+              { id: 'CONTROL_ROOM', label: 'Control Room', icon: Layers },
+              { id: 'EVAL_LAB', label: 'Eval Lab', icon: FlaskConical },
+              { id: 'AUDIT_LEDGER', label: 'Audit Ledger', icon: ShieldCheck },
+              { id: 'SUBSCRIPTIONS', label: 'Subscriptions', icon: CreditCard },
+              { id: 'ANALYTICS', label: 'ROI & ROAS', icon: TrendingUp },
               { id: 'TONE_STUDIO', label: 'Tone Studio', icon: Sliders },
-              { id: 'CHAT_MONITOR', label: 'Concierge Chat', icon: MessageSquare },
-              { id: 'CARTS', label: 'Carts & Suppression', icon: ShoppingBag },
+              { id: 'CHAT_MONITOR', label: 'Concierge', icon: MessageSquare },
+              { id: 'CARTS', label: 'Carts', icon: ShoppingBag },
             ].map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -174,7 +228,7 @@ export default function MerchantDashboard() {
                 <button
                   key={tab.id}
                   onClick={() => handleTabChange(tab.id as TabType)}
-                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg font-medium transition ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition ${
                     isActive
                       ? 'bg-indigo-600 text-white shadow-sm'
                       : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
@@ -187,8 +241,47 @@ export default function MerchantDashboard() {
             })}
           </nav>
 
-          {/* Quick Actions & Command Palette Trigger */}
+          {/* Quick Actions, Judge Mode, Tour & Command Palette */}
           <div className="flex items-center gap-2">
+            {/* Judge Mode Walkthrough Trigger */}
+            <button
+              onClick={() => {
+                soundFx.playMechanicalClick();
+                setIsJudgeModeOpen(true);
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 text-amber-300 border border-amber-500/30 rounded-xl text-xs font-semibold transition shadow-sm"
+              title="Open 10-Step Judge Evaluation Walkthrough"
+            >
+              <Award className="w-3.5 h-3.5 text-amber-400" />
+              <span className="hidden sm:inline">Judge Mode</span>
+            </button>
+
+            {/* Quick Cheat Sheet Modal */}
+            <button
+              onClick={() => {
+                soundFx.playMechanicalClick();
+                setIsCheatSheetOpen(true);
+              }}
+              className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 rounded-xl text-xs font-medium transition"
+              title="Open Track Cheat Sheet"
+            >
+              <FileCheck2 className="w-3.5 h-3.5 text-indigo-400" />
+              <span>Rubric</span>
+            </button>
+
+            {/* Interactive Tour */}
+            <button
+              onClick={() => {
+                soundFx.playMechanicalClick();
+                setIsTourOpen(true);
+              }}
+              className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 rounded-xl text-xs font-medium transition"
+              title="Start Interactive Guided Tour"
+            >
+              <HelpCircle className="w-3.5 h-3.5 text-blue-400" />
+              <span>Tour</span>
+            </button>
+
             {/* Command Palette Button */}
             <button
               onClick={() => {
@@ -228,10 +321,14 @@ export default function MerchantDashboard() {
           </div>
         </div>
 
-        {/* Mobile Navigation Row */}
-        <div className="md:hidden flex items-center overflow-x-auto px-4 py-2 border-t border-zinc-800/60 bg-zinc-950 gap-1 text-xs">
+        {/* Mobile / Compact Navigation Row */}
+        <div className="xl:hidden flex items-center overflow-x-auto px-4 py-2 border-t border-zinc-800/60 bg-zinc-950 gap-1 text-xs">
           {[
             { id: 'STREAM', label: 'Live Stream' },
+            { id: 'CONTROL_ROOM', label: 'Control Room' },
+            { id: 'EVAL_LAB', label: 'Eval Lab' },
+            { id: 'AUDIT_LEDGER', label: 'Audit Ledger' },
+            { id: 'SUBSCRIPTIONS', label: 'Subscriptions' },
             { id: 'ANALYTICS', label: 'Analytics' },
             { id: 'TONE_STUDIO', label: 'Tone Studio' },
             { id: 'CHAT_MONITOR', label: 'Concierge' },
@@ -265,6 +362,43 @@ export default function MerchantDashboard() {
                 stats={data?.stats}
                 onRefresh={fetchData}
               />
+            )}
+
+            {activeTab === 'CONTROL_ROOM' && (
+              <AutonomousControlRoom
+                items={recoveryBatch.batchResult.executed_items}
+                payments={recoveryBatch.payments}
+                batchResult={recoveryBatch.batchResult}
+                evaluationReport={recoveryBatch.devReport}
+                budget={recoveryBatch.budget}
+                onBudgetChange={recoveryBatch.setBudget}
+                onSelectPayment={(id) => setSelectedDrilldownPaymentId(id)}
+                onNavigateTab={handleNavigateFromJudgeMode}
+                onReSimulate={() => recoveryBatch.setSimulationSeed((s) => s + 1)}
+              />
+            )}
+
+            {activeTab === 'EVAL_LAB' && (
+              <EvaluationLab
+                devReport={recoveryBatch.devReport}
+                heldoutReport={recoveryBatch.heldoutReport}
+                payments={recoveryBatch.payments}
+              />
+            )}
+
+            {activeTab === 'AUDIT_LEDGER' && (
+              <AuditTrailExplorer
+                records={recoveryBatch.chainedLedger}
+                payments={recoveryBatch.payments}
+                verification={recoveryBatch.ledgerVerification}
+                onExportCSV={recoveryBatch.handleExportCSV}
+                onExportJSON={recoveryBatch.handleExportJSON}
+                onSelectPayment={(id) => setSelectedDrilldownPaymentId(id)}
+              />
+            )}
+
+            {activeTab === 'SUBSCRIPTIONS' && (
+              <RazorpaySubscriptionsDashboard />
             )}
 
             {activeTab === 'ANALYTICS' && (
@@ -301,10 +435,46 @@ export default function MerchantDashboard() {
         isOpen={commandPaletteOpen}
         onClose={() => setCommandPaletteOpen(false)}
         carts={data?.carts || []}
-        onSelectTab={handleTabChange}
+        onSelectTab={(tab) => handleTabChange(tab as TabType)}
         onSimulate={handleSimulateAbandonment}
         onExportReport={handleExportCFOReport}
       />
+
+      {/* 10-Step Judge Evaluation Walkthrough Modal */}
+      <JudgeModeModal
+        isOpen={isJudgeModeOpen}
+        onClose={() => setIsJudgeModeOpen(false)}
+        onNavigateTab={handleNavigateFromJudgeMode}
+        onSetProvenance={recoveryBatch.setProvenance}
+      />
+
+      {/* Rubric Cheat Sheet Modal */}
+      <JudgeCheatSheetModal
+        isOpen={isCheatSheetOpen}
+        onClose={() => setIsCheatSheetOpen(false)}
+      />
+
+      {/* Interactive Guided Tour Modal */}
+      <GuideMeTourModal
+        isOpen={isTourOpen}
+        onClose={() => setIsTourOpen(false)}
+        onNavigateTab={handleNavigateFromJudgeMode}
+      />
+
+      {/* Payment Details Drilldown Modal */}
+      {selectedDrilldownPaymentId && (
+        <PaymentDrilldownModal
+          item={
+            recoveryBatch.batchResult.executed_items.find(
+              (i) => i.payment.payment_id === selectedDrilldownPaymentId,
+            ) || null
+          }
+          allItems={recoveryBatch.batchResult.executed_items}
+          auditRecords={recoveryBatch.auditRecords}
+          onClose={() => setSelectedDrilldownPaymentId(null)}
+          onApplyReviewerAction={recoveryBatch.applyReviewerAction}
+        />
+      )}
     </div>
   );
 }

@@ -10,9 +10,9 @@
 
 import { writeFileSync, mkdirSync } from 'fs';
 import { resolve, dirname } from 'path';
-import { generateSyntheticPayments } from '../src/lib/engine/generateData';
-import { buildFrozenOutcomeEnvironment } from '../src/lib/engine/outcomeEnvironment';
-import type { FailedPayment } from '../src/types/payment';
+import { generateSyntheticPayments } from '@recoverflow/core';
+import { buildFrozenOutcomeEnvironment } from '@recoverflow/core';
+import type { FailedPayment } from '@recoverflow/core';
 
 const dataDir = resolve(dirname(import.meta.dirname!), 'data');
 mkdirSync(dataDir, { recursive: true });

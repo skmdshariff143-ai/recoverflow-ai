@@ -14,7 +14,7 @@
     "jsx": "react-jsx",
     "incremental": true,
     "paths": {
-      "@/*": ["./src/*"],
+      "@/*": ["./apps/web/src/*"],
       "@recoverflow/core": ["./packages/core/src/index.ts"],
       "@recoverflow/agents": ["./packages/agents/src/index.ts"],
       "@recoverflow/jobs": ["./packages/jobs/src/index.ts"],

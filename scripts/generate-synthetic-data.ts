@@ -9,7 +9,7 @@
 
 import { writeFileSync, mkdirSync } from 'fs';
 import { resolve, dirname } from 'path';
-import { generateSyntheticPayments } from '../src/lib/engine/generateData';
+import { generateSyntheticPayments } from '@recoverflow/core';
 
 const args = process.argv.slice(2);
 const isRandom = args.includes('--random');

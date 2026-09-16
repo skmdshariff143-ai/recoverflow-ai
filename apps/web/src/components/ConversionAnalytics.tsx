@@ -14,6 +14,8 @@ import {
   Download
 } from 'lucide-react';
 import { BanditConvergenceGraph } from './BanditConvergenceGraph';
+import type { DataProvenanceSource } from '@recoverflow/core';
+export type { DataProvenanceSource };
 
 interface ConversionAnalyticsProps {
   stats?: {

@@ -12,9 +12,9 @@ import {
   FailedPaymentSchema,
   FrozenPotentialOutcomesSchema,
   ModelWeightsSchema,
-} from '../src/types/schemas';
-import type { FailedPayment } from '../src/types/payment';
-import type { FrozenPotentialOutcomes } from '../src/lib/engine/outcomeEnvironment';
+} from '@recoverflow/core';
+import type { FailedPayment } from '@recoverflow/core';
+import type { FrozenPotentialOutcomes } from '@recoverflow/core';
 
 const root = dirname(import.meta.dirname!);
 
@@ -186,7 +186,7 @@ if (stressData) {
 }
 
 // 3. Verify Model Weights
-const weightsPath = resolve(root, 'src/data/model-weights.json');
+const weightsPath = resolve(root, 'data/model-weights.json');
 if (existsSync(weightsPath)) {
   try {
     const raw = readFileSync(weightsPath, 'utf-8');
@@ -196,14 +196,14 @@ if (existsSync(weightsPath)) {
       console.error('❌ Model weights schema violation:', res.error.format());
       errors++;
     } else {
-      console.log(`✓ ${'src/data/model-weights.json'.padEnd(38)} [VALID MODEL WEIGHTS ${res.data.modelVersion}]`);
+      console.log(`✓ ${'data/model-weights.json'.padEnd(38)} [VALID MODEL WEIGHTS ${res.data.modelVersion}]`);
     }
   } catch (e) {
     console.error('❌ Could not parse model-weights.json:', e);
     errors++;
   }
 } else {
-  console.error('❌ Missing src/data/model-weights.json');
+  console.error('❌ Missing data/model-weights.json');
   errors++;
 }
 
