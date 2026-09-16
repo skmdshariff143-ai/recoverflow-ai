@@ -41,6 +41,7 @@ export interface Merchant {
   discountCeilingPercentage: number; // e.g. 15 for 15%
   minMarginPercentage: number; // e.g. 20 for 20%
   brandProfile?: Record<string, unknown>;
+  customVoiceId?: string;
   createdAt: string | Date;
   updatedAt: string | Date;
 }

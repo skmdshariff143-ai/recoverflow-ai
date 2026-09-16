@@ -54,12 +54,64 @@ export async function POST(req: NextRequest) {
     const senderPhone = `+${incomingMsg.from}`;
     let userText = '';
 
+    // Handle Native WhatsApp Flow / Catalog Checkout Completion (Meta v21.0)
+    const nfmReply = incomingMsg.interactive?.nfm_reply;
+    if (incomingMsg.interactive?.type === 'nfm_reply' || nfmReply) {
+      const merchant = await db.getMerchant('merchant_default_01');
+      if (!merchant) return NextResponse.json({ error: 'Merchant not found' }, { status: 404 });
+
+      let flowData: Record<string, unknown> = {};
+      try {
+        flowData = nfmReply?.response_json ? JSON.parse(nfmReply.response_json) : {};
+      } catch {
+        flowData = {};
+      }
+
+      const allCarts = await db.listCartEvents(merchant.id);
+      const cartToken = (flowData.cart_token || flowData.cartToken) as string | undefined;
+      const targetCart = allCarts.find(
+        (c) => (cartToken && c.cartToken === cartToken) ||
+               (c.customerPhone && (c.customerPhone === senderPhone || c.customerPhone.endsWith(incomingMsg.from.slice(-10))))
+      );
+
+      if (targetCart) {
+        await db.updateCartStatus(targetCart.id, 'RECOVERED', 'RECOVERED');
+        const confirmationText = `Order Confirmed! Your payment for ${targetCart.items.length} item(s) (${targetCart.currency} ${targetCart.totalPrice.toFixed(2)}) has been processed successfully via WhatsApp Native Checkout. We are preparing your shipment!`;
+
+        await sendWhatsAppMessage({
+          to: senderPhone,
+          bodyText: confirmationText,
+          token: merchant.whatsappToken,
+          phoneNumberId: merchant.whatsappPhoneId,
+        });
+
+        await db.logMessage({
+          id: `msg_flow_done_${Date.now()}`,
+          cartEventId: targetCart.id,
+          merchantId: merchant.id,
+          channel: 'WHATSAPP',
+          direction: 'OUTBOUND',
+          content: confirmationText,
+          deliveryStatus: 'DELIVERED',
+          createdAt: new Date(),
+        });
+
+        return NextResponse.json({
+          status: 'flow_checkout_completed',
+          cartId: targetCart.id,
+          recovered: true,
+        });
+      }
+    }
+
     // Extract text from text message or interactive button reply
     if (incomingMsg.text?.body) {
       userText = incomingMsg.text.body.trim();
     } else if (incomingMsg.interactive?.button_reply) {
       const buttonId = incomingMsg.interactive.button_reply.id;
       userText = incomingMsg.interactive.button_reply.title || buttonId;
+    } else if (incomingMsg.interactive?.list_reply) {
+      userText = incomingMsg.interactive.list_reply.title || incomingMsg.interactive.list_reply.id;
     } else {
       return NextResponse.json({ status: 'unsupported_message_type' }, { status: 200 });
     }

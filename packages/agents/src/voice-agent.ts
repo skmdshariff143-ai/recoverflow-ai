@@ -13,6 +13,7 @@ export interface VIPVoiceContext {
   checkoutUrl: string;
   discountCeilingPercentage?: number;
   streamUrl?: string;
+  customVoiceId?: string;
 }
 
 export interface TwilioVoiceCallResult {
@@ -94,10 +95,14 @@ GUARDRAILS & OPERATING RULES:
 export function generateVIPVoiceTwiml(context: VIPVoiceContext): string {
   const name = context.customerName ? context.customerName.split(' ')[0] : 'Valued Client';
   const streamUrl = context.streamUrl || 'wss://recoverflow-ai-kohl.vercel.app/api/voice/media-stream';
+  const voiceName = context.customVoiceId || 'Polly.Joanna-Neural';
+  const customVoiceParam = context.customVoiceId
+    ? `\n      <Parameter name="customVoiceId" value="${escapeXml(context.customVoiceId)}" />`
+    : '';
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Say voice="Polly.Joanna-Neural" language="en-US">
+  <Say voice="${escapeXml(voiceName)}" language="en-US">
     Hello ${escapeXml(name)}, this is your dedicated concierge from ${escapeXml(context.storeName)}. We noticed an issue while securing your order of ${escapeXml(context.currency)} ${context.totalPrice.toFixed(2)}. Please hold while I connect you with our live VIP support assistant.
   </Say>
   <Connect>
@@ -108,7 +113,7 @@ export function generateVIPVoiceTwiml(context: VIPVoiceContext): string {
       <Parameter name="totalPrice" value="${escapeXml(String(context.totalPrice))}" />
       <Parameter name="currency" value="${escapeXml(context.currency)}" />
       <Parameter name="storeName" value="${escapeXml(context.storeName)}" />
-      <Parameter name="checkoutUrl" value="${escapeXml(context.checkoutUrl)}" />
+      <Parameter name="checkoutUrl" value="${escapeXml(context.checkoutUrl)}" />${customVoiceParam}
     </Stream>
   </Connect>
 </Response>`.trim();

@@ -17,11 +17,34 @@ export interface WhatsAppMessagePayload {
   phoneNumberId?: string;
 }
 
+export interface WhatsAppCatalogItem {
+  id?: string;
+  retailerId: string;
+  title: string;
+  price: number;
+  currency: string;
+  quantity?: number;
+  imageUrl?: string;
+}
+
+export interface WhatsAppCatalogCheckoutPayload {
+  to: string;
+  bodyText: string;
+  catalogId?: string;
+  items: WhatsAppCatalogItem[];
+  totalPrice?: number;
+  discountCode?: string | null;
+  token?: string;
+  phoneNumberId?: string;
+  fallbackCtaUrl?: string;
+}
+
 export interface WhatsAppSendResult {
   success: boolean;
   messageId?: string;
   error?: string;
   simulated?: boolean;
+  catalogPayload?: Record<string, unknown>;
 }
 
 /**
@@ -156,6 +179,95 @@ export async function sendWhatsAppMessage(payload: WhatsAppMessagePayload): Prom
     return {
       success: false,
       error: err instanceof Error ? err.message : 'Network error communicating with WhatsApp Cloud API',
+    };
+  }
+}
+
+/**
+ * Dispatches a native WhatsApp Catalog / Flow interactive message for instant in-chat checkout.
+ */
+export async function sendWhatsAppCatalogCheckout(
+  payload: WhatsAppCatalogCheckoutPayload
+): Promise<WhatsAppSendResult> {
+  const token = payload.token || process.env.WHATSAPP_API_TOKEN;
+  const phoneId = payload.phoneNumberId || process.env.WHATSAPP_PHONE_NUMBER_ID;
+  const recipientPhone = payload.to.replace(/[^0-9]/g, '');
+
+  const primaryItem = payload.items[0];
+  const thumbnailRetailerId = primaryItem?.retailerId || primaryItem?.id || 'prod_default_01';
+  const catalogId = payload.catalogId || 'catalog_default_01';
+
+  // Construct Meta WhatsApp Catalog message payload
+  const catalogPayload: Record<string, unknown> = {
+    messaging_product: 'whatsapp',
+    recipient_type: 'individual',
+    to: recipientPhone,
+    type: 'interactive',
+    interactive: {
+      type: 'catalog_message',
+      body: {
+        text: payload.bodyText,
+      },
+      action: {
+        name: 'catalog_message',
+        parameters: {
+          thumbnail_product_retailer_id: thumbnailRetailerId,
+          catalog_id: catalogId,
+        },
+      },
+      footer: {
+        text: payload.discountCode
+          ? `Special discount applied: ${payload.discountCode}`
+          : 'Powered by RecoverFlow Native Checkout',
+      },
+    },
+  };
+
+  if (!token || !phoneId || token === 'EAAG_test_token_mock') {
+    return {
+      success: true,
+      messageId: `wamid.HBgL${recipientPhone}CATALOG${Date.now().toString(36)}`,
+      simulated: true,
+      catalogPayload,
+    };
+  }
+
+  const endpoint = `https://graph.facebook.com/v21.0/${phoneId}/messages`;
+
+  try {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(catalogPayload),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      // Fallback to standard interactive button message
+      return sendWhatsAppMessage({
+        to: payload.to,
+        bodyText: payload.bodyText,
+        ctaUrl: payload.fallbackCtaUrl,
+        discountCode: payload.discountCode,
+        token: payload.token,
+        phoneNumberId: payload.phoneNumberId,
+      });
+    }
+
+    return {
+      success: true,
+      messageId: data.messages?.[0]?.id,
+      simulated: false,
+      catalogPayload,
+    };
+  } catch (err: unknown) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : 'Network error communicating with WhatsApp Catalog API',
     };
   }
 }

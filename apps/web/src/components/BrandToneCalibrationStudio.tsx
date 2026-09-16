@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   Sliders, 
   Sparkles, 
@@ -23,6 +23,88 @@ export function BrandToneCalibrationStudio({ merchant, onUpdateMerchant }: Brand
   const [guidelines, setGuidelines] = useState(merchant.brandToneGuidelines ?? '');
   const [saving, setSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
+
+  // Audio Cloning Sandbox State
+  const [recording, setRecording] = useState(false);
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [cloning, setCloning] = useState(false);
+  const [clonedVoiceId, setClonedVoiceId] = useState<string | undefined>(merchant.customVoiceId);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleStartRecording = async () => {
+    try {
+      if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
+        // Mock recording for unsupported environments
+        setRecording(true);
+        setRecordingSeconds(1);
+        timerRef.current = setInterval(() => {
+          setRecordingSeconds((prev) => prev + 1);
+        }, 1000);
+        return;
+      }
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      const chunks: Blob[] = [];
+
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunks.push(e.data);
+      };
+
+      recorder.onstop = () => {
+        const blob = new Blob(chunks, { type: 'audio/webm' });
+        setAudioBlob(blob);
+      };
+
+      mediaRecorderRef.current = recorder;
+      recorder.start();
+      setRecording(true);
+      setRecordingSeconds(0);
+
+      timerRef.current = setInterval(() => {
+        setRecordingSeconds((prev) => prev + 1);
+      }, 1000);
+    } catch {
+      // Graceful fallback for mock mode
+      setRecording(true);
+      setRecordingSeconds(1);
+      timerRef.current = setInterval(() => {
+        setRecordingSeconds((prev) => prev + 1);
+      }, 1000);
+    }
+  };
+
+  const handleStopRecording = () => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    }
+    setRecording(false);
+  };
+
+  const handleUploadVoiceClone = async () => {
+    try {
+      setCloning(true);
+      const res = await fetch('/api/merchant/voice-clone', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          label: `${merchant.storeName} Founder Custom Voice`,
+          durationSeconds: recordingSeconds || 45,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setClonedVoiceId(data.voiceId);
+        onUpdateMerchant({ customVoiceId: data.voiceId });
+      }
+    } catch (err) {
+      console.error('Voice clone failed:', err);
+    } finally {
+      setCloning(false);
+    }
+  };
 
   // Preview state
   const [generatingPreview, setGeneratingPreview] = useState(false);
@@ -242,6 +324,54 @@ export function BrandToneCalibrationStudio({ merchant, onUpdateMerchant }: Brand
             placeholder="e.g. Highlight sustainable Italian cashmere, keep sentences concise, never sound pushy."
             className="w-full bg-zinc-950 border border-zinc-800 focus:border-blue-500 text-zinc-200 text-xs rounded-lg p-3 outline-none transition"
           />
+        </div>
+
+        {/* Audio Cloning Sandbox (Track 3) */}
+        <div className="border border-zinc-800 bg-zinc-950/60 rounded-xl p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-2.5 h-2.5 rounded-full bg-indigo-500 animate-pulse" />
+              <span className="text-xs font-bold text-white uppercase tracking-wider">
+                VIP Founder Voice Cloning Sandbox
+              </span>
+            </div>
+            {clonedVoiceId && (
+              <span className="text-[10px] bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded font-mono">
+                {clonedVoiceId}
+              </span>
+            )}
+          </div>
+          <p className="text-[11px] text-zinc-400">
+            Record a 15-60s voice sample. Our neural TTS engine clones the founder&apos;s voice for VIP recovery calls.
+          </p>
+          <div className="flex items-center gap-2">
+            {!recording ? (
+              <button
+                type="button"
+                onClick={handleStartRecording}
+                className="flex items-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold py-1.5 px-3 rounded-lg border border-zinc-700 transition"
+              >
+                Start Recording (Mic)
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleStopRecording}
+                className="flex items-center gap-1.5 bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold py-1.5 px-3 rounded-lg animate-pulse transition"
+              >
+                Stop Recording ({recordingSeconds}s)
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={handleUploadVoiceClone}
+              disabled={cloning || (!audioBlob && !clonedVoiceId)}
+              className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white text-xs font-semibold py-1.5 px-3 rounded-lg transition"
+            >
+              {cloning ? 'Cloning TTS Voice...' : 'Save Cloned Voice'}
+            </button>
+          </div>
         </div>
 
         {/* Actions */}

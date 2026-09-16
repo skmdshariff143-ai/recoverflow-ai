@@ -75,6 +75,7 @@ model Merchant {
   discountCeilingPercentage     Float             @default(15.0)
   minMarginPercentage           Float             @default(20.0)
   brandProfile                  Json?
+  customVoiceId                 String?
   cartEvents                    CartEvent[]
   messageLogs                   MessageLog[]
   suppressions                  SuppressionList[]
