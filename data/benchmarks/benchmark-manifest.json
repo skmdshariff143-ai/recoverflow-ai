@@ -1,6 +1,6 @@
 {
   "manifest_version": "1.0.0",
-  "generated_at": "2026-09-17T01:08:14.346Z",
+  "generated_at": "2026-09-17T12:52:11.547Z",
   "environment": "FROZEN_COUNTERFACTUAL_BENCHMARK",
   "invariants": {
     "currency_unit": "INTEGER_PAISE",

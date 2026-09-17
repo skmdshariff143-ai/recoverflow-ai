@@ -7,7 +7,7 @@
 
 import { createHmac, timingSafeEqual } from 'crypto';
 
-export type UserRole = 'OWNER' | 'ADMIN' | 'RECOVERY_MANAGER' | 'ANALYST' | 'VIEWER';
+export type UserRole = 'OWNER' | 'ADMIN' | 'RECOVERY_MANAGER' | 'SUPPORT_AGENT' | 'DEVELOPER' | 'ANALYST' | 'VIEWER';
 
 export interface UserSession {
   userId: string;
@@ -30,6 +30,8 @@ export type Permission =
   | 'audit:export'
   | 'team:manage'
   | 'integration:manage'
+  | 'developer:manage_keys'
+  | 'support:intervene'
   | 'financials:view';
 
 const ROLE_PERMISSIONS: Record<UserRole, Set<Permission>> = {
@@ -42,6 +44,8 @@ const ROLE_PERMISSIONS: Record<UserRole, Set<Permission>> = {
     'audit:export',
     'team:manage',
     'integration:manage',
+    'developer:manage_keys',
+    'support:intervene',
     'financials:view',
   ]),
   ADMIN: new Set([
@@ -53,6 +57,8 @@ const ROLE_PERMISSIONS: Record<UserRole, Set<Permission>> = {
     'audit:export',
     'team:manage',
     'integration:manage',
+    'developer:manage_keys',
+    'support:intervene',
     'financials:view',
   ]),
   RECOVERY_MANAGER: new Set([
@@ -62,7 +68,20 @@ const ROLE_PERMISSIONS: Record<UserRole, Set<Permission>> = {
     'policy:view',
     'audit:view',
     'audit:export',
+    'support:intervene',
     'financials:view',
+  ]),
+  SUPPORT_AGENT: new Set([
+    'policy:view',
+    'audit:view',
+    'support:intervene',
+    'financials:view',
+  ]),
+  DEVELOPER: new Set([
+    'policy:view',
+    'audit:view',
+    'integration:manage',
+    'developer:manage_keys',
   ]),
   ANALYST: new Set([
     'policy:view',
@@ -81,7 +100,9 @@ const ROLE_HIERARCHY: Record<UserRole, number> = {
   OWNER: 50,
   ADMIN: 40,
   RECOVERY_MANAGER: 30,
-  ANALYST: 20,
+  SUPPORT_AGENT: 25,
+  DEVELOPER: 20,
+  ANALYST: 15,
   VIEWER: 10,
 };
 
@@ -217,6 +238,28 @@ export const DEMO_PERSONA_SESSIONS: Record<UserRole, UserSession> = {
     organizationSlug: 'luxurybrand-enterprise',
     activeMerchantId: 'merchant_01',
     role: 'RECOVERY_MANAGER',
+    issuedAt: Date.now(),
+    expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
+  },
+  SUPPORT_AGENT: {
+    userId: 'usr_support_demo_06',
+    email: 'sam.support@luxurybrand.com',
+    name: 'Sam Taylor (Customer Support Lead)',
+    organizationId: 'org_recoverflow_demo',
+    organizationSlug: 'luxurybrand-enterprise',
+    activeMerchantId: 'merchant_01',
+    role: 'SUPPORT_AGENT',
+    issuedAt: Date.now(),
+    expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
+  },
+  DEVELOPER: {
+    userId: 'usr_dev_demo_07',
+    email: 'jordan.dev@luxurybrand.com',
+    name: 'Jordan Lee (Integration Engineer)',
+    organizationId: 'org_recoverflow_demo',
+    organizationSlug: 'luxurybrand-enterprise',
+    activeMerchantId: 'merchant_01',
+    role: 'DEVELOPER',
     issuedAt: Date.now(),
     expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
   },

@@ -83,25 +83,40 @@ describe('RecoverFlow AI — Session Authentication & RBAC Security Matrix', () 
     expect(result.error).toBe('EXPIRED_TOKEN');
   });
 
-  it('enforces strict role hierarchy', () => {
+  it('enforces strict role hierarchy across 7 roles', () => {
     expect(hasMinimumRole('OWNER', 'VIEWER')).toBe(true);
     expect(hasMinimumRole('OWNER', 'RECOVERY_MANAGER')).toBe(true);
     expect(hasMinimumRole('RECOVERY_MANAGER', 'ADMIN')).toBe(false);
-    expect(hasMinimumRole('ANALYST', 'RECOVERY_MANAGER')).toBe(false);
+    expect(hasMinimumRole('SUPPORT_AGENT', 'RECOVERY_MANAGER')).toBe(false);
+    expect(hasMinimumRole('DEVELOPER', 'SUPPORT_AGENT')).toBe(false);
+    expect(hasMinimumRole('ANALYST', 'DEVELOPER')).toBe(false);
     expect(hasMinimumRole('VIEWER', 'VIEWER')).toBe(true);
   });
 
-  it('enforces granular permission matrix across all 5 roles', () => {
+  it('enforces granular permission matrix across all 7 roles', () => {
     // OWNER has all permissions
     expect(hasPermission('OWNER', 'recovery:execute')).toBe(true);
     expect(hasPermission('OWNER', 'team:manage')).toBe(true);
     expect(hasPermission('OWNER', 'policy:modify')).toBe(true);
+    expect(hasPermission('OWNER', 'developer:manage_keys')).toBe(true);
 
     // RECOVERY_MANAGER can execute and approve, but cannot manage team/integrations
     expect(hasPermission('RECOVERY_MANAGER', 'recovery:execute')).toBe(true);
     expect(hasPermission('RECOVERY_MANAGER', 'recovery:approve_high_value')).toBe(true);
     expect(hasPermission('RECOVERY_MANAGER', 'team:manage')).toBe(false);
     expect(hasPermission('RECOVERY_MANAGER', 'integration:manage')).toBe(false);
+
+    // SUPPORT_AGENT can intervene on support cases and view financials
+    expect(hasPermission('SUPPORT_AGENT', 'support:intervene')).toBe(true);
+    expect(hasPermission('SUPPORT_AGENT', 'financials:view')).toBe(true);
+    expect(hasPermission('SUPPORT_AGENT', 'policy:modify')).toBe(false);
+    expect(hasPermission('SUPPORT_AGENT', 'recovery:approve_high_value')).toBe(false);
+
+    // DEVELOPER can manage keys and integrations, but cannot execute money recoveries
+    expect(hasPermission('DEVELOPER', 'developer:manage_keys')).toBe(true);
+    expect(hasPermission('DEVELOPER', 'integration:manage')).toBe(true);
+    expect(hasPermission('DEVELOPER', 'recovery:execute')).toBe(false);
+    expect(hasPermission('DEVELOPER', 'recovery:approve_high_value')).toBe(false);
 
     // ANALYST can view policy and financials, but cannot execute or approve
     expect(hasPermission('ANALYST', 'policy:view')).toBe(true);

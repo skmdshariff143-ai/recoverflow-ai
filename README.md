@@ -5,9 +5,10 @@
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0%20Strict-blue.svg)](https://www.typescriptlang.org/)
 [![Next.js](https://img.shields.io/badge/Next.js-16%20Turbopack-black.svg)](https://nextjs.org/)
-[![Vitest](https://img.shields.io/badge/Tests-442%20Passed%20(78%20Suites)-brightgreen.svg)](https://vitest.dev/)
-[![Security Guardrail](https://img.shields.io/badge/Security-Pre--LLM%20Sanitizer%20Active-emerald.svg)](#track-1-defensive-prompt-engineering--security-harness)
-[![Outbox Pattern](https://img.shields.io/badge/Architecture-Transactional%20Outbox%20%26%20CQRS-indigo.svg)](#track-2-event-driven-transactional-outbox--cqrs)
+[![Vitest](https://img.shields.io/badge/Tests-450%20Passed%20(80%20Suites)-brightgreen.svg)](https://vitest.dev/)
+[![Playwright](https://img.shields.io/badge/Playwright-65%20Passed-emerald.svg)](https://playwright.dev/)
+[![Security Guardrail](https://img.shields.io/badge/Security-7--Role%20RBAC%20%26%20Pre--LLM%20Sanitizer-emerald.svg)](./docs/SECURITY.md)
+[![Outbox Pattern](https://img.shields.io/badge/Architecture-Transactional%20Outbox%20%26%20CQRS-indigo.svg)](./docs/EVENT_ARCHITECTURE.md)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](./LICENSE)
 
 ---
@@ -188,17 +189,20 @@ cd recoverflow-ai
 # 2. Install dependencies
 npm install
 
-# 3. Run verification test suite (78 test files, 442 tests)
+# 3. Run unit & integration test suite (80 test files, 450 tests)
 npx vitest run
 
-# 4. Run offline agent evaluation harness (50 golden benchmark cases)
-npm run eval:agents
+# 4. Run Playwright E2E test suite (65 browser tests across viewports)
+npm run test:e2e
 
-# 5. Type check & build Next.js production bundle
+# 5. Verify canonical benchmark artifacts & dataset hashes
+npm run verify:artifacts
+
+# 6. Type check & build Next.js production bundle
 npm run type-check
 npm run build --workspace=@recoverflow/web
 
-# 6. Seed demo data and start development server
+# 7. Seed demo data and start development server
 npm run seed:demo
 npm run dev
 ```
@@ -207,10 +211,11 @@ npm run dev
 
 ## 🧪 Verification & Engineering Evidence
 
-- **Vitest**: **78 test files, 442 tests passing (100% pass rate)**.
+- **Vitest**: **80 test files, 450 tests passing (100% pass rate)**.
+- **Playwright E2E**: **65 browser tests passing across desktop, tablet, and mobile**.
 - **TypeScript**: Strict mode with **0 compilation errors**.
-- **Offline Evaluation**: **100.0% prompt injection block rate**, **0.00% hallucination rate**, **100.0% margin compliance**.
-- **Next.js Production Build**: **18 static & dynamic routes** compiled cleanly with Turbopack.
+- **Canonical Benchmark Manifest**: Hashed SHA-256 evaluation matrix verified by CI.
+- **Next.js Production Build**: **29 static & dynamic routes** compiled cleanly with Turbopack.
 
 ---
 
