@@ -1,6 +1,8 @@
+import crypto from 'crypto';
 import { Worker, type Job } from 'bullmq';
-import { db } from '@recoverflow/core';
+import { db, getRuntimeMode, StartupConfigurationError } from '@recoverflow/core';
 import { QUEUE_NAMES, globalRecoveryQueue, type CartJobData, type FallbackJobData } from './queue';
+import { globalOutboxWorker } from './outbox-worker';
 
 /**
  * Data Sovereignty Compliance: Periodic 30-day retention hard-pruner.
@@ -17,7 +19,6 @@ export function startDataRetentionPruner(intervalMs = 3600 * 1000): NodeJS.Timeo
     }
   };
 
-  // Run initial check
   runPrune();
   return setInterval(runPrune, intervalMs);
 }
@@ -31,7 +32,6 @@ export class MetaRateLimitPacer {
 
   async acquireSlot(): Promise<void> {
     const now = Date.now();
-    // Prune timestamps older than 1 second
     this.lastDispatchTimes = this.lastDispatchTimes.filter((t) => now - t < 1000);
 
     if (this.lastDispatchTimes.length >= this.maxPerSecond) {
@@ -46,14 +46,28 @@ export class MetaRateLimitPacer {
 
 export const globalMetaPacer = new MetaRateLimitPacer();
 
+export interface WorkerRuntimeCoordinator {
+  workerId: string;
+  workers: Worker[];
+  isClosed: boolean;
+  close: () => Promise<void>;
+}
+
 /**
- * Starts the distributed BullMQ worker instances.
+ * Starts distributed BullMQ worker instances.
  */
-export function startDistributedWorkers() {
-  const redisUrl = process.env.REDIS_URL;
+export function startDistributedWorkers(connectionUrl?: string): Worker[] {
+  const redisUrl = connectionUrl || process.env.REDIS_URL;
+  const mode = getRuntimeMode();
+
   if (!redisUrl) {
+    if (mode === 'LIVE' || mode === 'SANDBOX') {
+      throw new StartupConfigurationError(
+        `REDIS_URL is required in '${mode}' mode. Production queue workers cannot fall back to in-memory queues.`
+      );
+    }
     console.log('[Worker Runtime] REDIS_URL not configured. Running in local in-memory queue mode.');
-    return;
+    return [];
   }
 
   const connection = { url: redisUrl };
@@ -101,20 +115,70 @@ export function startDistributedWorkers() {
     });
   }
 
-  // Graceful shutdown
-  const shutdown = async () => {
-    console.log('[Worker Runtime] Shutting down workers gracefully...');
-    await Promise.all(workers.map((w) => w.close()));
-    process.exit(0);
+  return workers;
+}
+
+/**
+ * Unified Worker Runtime Coordinator for production daemons and integration test harnesses.
+ */
+export async function startWorkerRuntime(options?: {
+  workerId?: string;
+  redisUrl?: string;
+  enablePruner?: boolean;
+}): Promise<WorkerRuntimeCoordinator> {
+  const workerId = options?.workerId || `worker_${crypto.randomBytes(6).toString('hex')}`;
+  const workers = startDistributedWorkers(options?.redisUrl);
+
+  // Start Transactional Outbox Worker
+  globalOutboxWorker.start();
+
+  let prunerTimer: NodeJS.Timeout | null = null;
+  if (options?.enablePruner !== false) {
+    prunerTimer = startDataRetentionPruner(3600 * 1000);
+  }
+
+  let isClosed = false;
+
+  const coordinator: WorkerRuntimeCoordinator = {
+    workerId,
+    workers,
+    isClosed: false,
+    close: async () => {
+      if (isClosed) return;
+      isClosed = true;
+      coordinator.isClosed = true;
+
+      // 1. Stop claiming outbox work
+      globalOutboxWorker.stop();
+
+      // 2. Stop pruner
+      if (prunerTimer) clearInterval(prunerTimer);
+
+      // 3. Close BullMQ workers
+      if (workers.length > 0) {
+        await Promise.all(workers.map((w) => w.close()));
+      }
+
+      // 4. Close queues
+      await globalRecoveryQueue.close();
+
+      // 5. Close DB
+      await db.close();
+    },
   };
 
-  process.on('SIGTERM', shutdown);
-  process.on('SIGINT', shutdown);
-
-  console.log('[Worker Runtime] Distributed BullMQ workers started successfully with Meta 50 msg/sec rate pacer.');
+  return coordinator;
 }
 
 // Automatically start if executed as standalone script
 if (process.argv[1] && process.argv[1].includes('worker')) {
-  startDistributedWorkers();
+  startWorkerRuntime().then((runtime) => {
+    const shutdown = async (sig: string) => {
+      console.log(`\n[Worker Runtime] Shutting down on ${sig}...`);
+      await runtime.close();
+      process.exit(0);
+    };
+    process.on('SIGTERM', () => shutdown('SIGTERM'));
+    process.on('SIGINT', () => shutdown('SIGINT'));
+  });
 }

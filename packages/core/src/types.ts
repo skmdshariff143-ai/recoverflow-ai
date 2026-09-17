@@ -168,7 +168,7 @@ export interface ShopifyGdprPayload {
   orders_to_redact?: number[];
 }
 
-export type OutboxStatus = 'PENDING' | 'PROCESSING' | 'PUBLISHED' | 'FAILED';
+export type OutboxStatus = 'PENDING' | 'PROCESSING' | 'PUBLISHED' | 'FAILED' | 'DEAD_LETTER';
 
 export interface OutboxEvent {
   id: string;

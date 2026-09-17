@@ -20,7 +20,7 @@ describe('Shopify Fulfillments Webhook Ingestion (Track 3 Integration)', () => {
   };
 
   beforeEach(async () => {
-    await db.createOrUpdateMerchant(mockMerchant);
+    await db.upsertMerchant(mockMerchant);
   });
 
   it('rejects webhook requests with invalid HMAC signatures', async () => {

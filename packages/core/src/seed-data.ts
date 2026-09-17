@@ -1273,7 +1273,7 @@ export function seedDemoDataset(db: MemoryDatabase, options: SeedDemoOptions = {
   ];
 
   for (const outbox of outboxEvents) {
-    db.outboxEvents.set(outbox.id, outbox);
+    db.outboxEvents.set(outbox.id, { ...outbox, attemptCount: outbox.retryCount || 0, maxAttempts: 5, availableAt: outbox.createdAt, updatedAt: outbox.createdAt } as any);
   }
 
   // 6. DEMO SECURITY INCIDENTS (2 records)

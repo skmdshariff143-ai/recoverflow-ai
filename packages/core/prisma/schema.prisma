@@ -9,6 +9,43 @@ generator client {
 
 // ── Multi-Tenancy & Access Control ──────────────────────────────────────
 
+// ── Authentication & Durable Session Revocation ─────────────────────────
+
+model Session {
+  id               String       @id @default(cuid())
+  userId           String
+  user             User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash        String       @unique
+  organizationId   String
+  activeMerchantId String
+  role             UserRole
+  isRevoked        Boolean      @default(false)
+  revokedAt        DateTime?
+  revocationReason String?
+  ipAddress        String?
+  userAgent        String?
+  expiresAt        DateTime
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  @@index([userId, isRevoked])
+  @@index([tokenHash])
+}
+
+model SessionRevocation {
+  id             String    @id @default(cuid())
+  sessionId      String?
+  userId         String?
+  organizationId String?
+  reason         String
+  revokedBy      String?
+  revokedAt      DateTime  @default(now())
+
+  @@index([userId])
+  @@index([sessionId])
+}
+
+
 enum UserRole {
   OWNER
   ADMIN
@@ -39,6 +76,7 @@ model User {
   memberships Membership[]
   approvals   ApprovalRequest[]
   auditEvents AuditEvent[]
+  sessions    Session[]
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 }
@@ -374,31 +412,41 @@ model WebhookEvent {
   id             String    @id @default(cuid())
   merchantId     String?
   merchant       Merchant? @relation(fields: [merchantId], references: [id], onDelete: SetNull)
-  source         String    // RAZORPAY, SHOPIFY, WHATSAPP
+  provider       String    @default("RAZORPAY") // RAZORPAY, SHOPIFY, WHATSAPP, WOOCOMMERCE
+  source         String    @default("RAZORPAY")
   eventType      String    // payment.failed, payment.captured, order.cancelled
+  providerEventId String?
   externalId     String?
   idempotencyKey String    @unique
+  payloadHash    String?
   rawPayload     Json
   signatureValid Boolean   @default(false)
   status         String    @default("PENDING") // PENDING, PROCESSED, DUPLICATE, FAILED
+  attemptCount   Int       @default(0)
+  lastError      String?
   errorMessage   String?
   receivedAt     DateTime  @default(now())
   processedAt    DateTime?
 
-  @@index([merchantId, source])
+  @@index([merchantId, provider])
   @@index([status, receivedAt])
 }
 
 model IdempotencyKey {
-  key         String    @id
-  merchantId  String
-  endpoint    String
-  responseCode Int
-  responseBody Json
-  createdAt   DateTime  @default(now())
-  expiresAt   DateTime
+  key          String    @id
+  merchantId   String
+  endpoint     String
+  requestHash  String?
+  status       String    @default("COMMITTED") // NEW, IN_PROGRESS, COMMITTED, CONFLICT, FAILED
+  responseCode Int?
+  responseBody Json?
+  lockedUntil  DateTime?
+  version      Int       @default(1)
+  createdAt    DateTime  @default(now())
+  expiresAt    DateTime
 
   @@index([merchantId, expiresAt])
+  @@index([status, lockedUntil])
 }
 
 model AuditEvent {
@@ -413,6 +461,7 @@ model AuditEvent {
   action         String        // INGEST, SCORE, SAFETY_HALT, APPROVAL_GRANTED, EXECUTE, OBSERVE
   entityType     String        // Payment, RecoveryCase, Policy
   entityId       String
+  correlationId  String?
   previousHash   String
   payloadHash    String
   currentHash    String
@@ -421,6 +470,7 @@ model AuditEvent {
 
   @@index([merchantId, createdAt])
   @@index([entityId, entityType])
+  @@index([correlationId])
 }
 
 // ── Model Management & Notifications ────────────────────────────────────
@@ -583,13 +633,22 @@ model OutboxEvent {
   eventType      String
   payload        Json
   idempotencyKey String    @unique
-  status         String    @default("PENDING")
+  status         String    @default("PENDING") // PENDING, PROCESSING, PUBLISHED, FAILED, DEAD_LETTER
+  attemptCount   Int       @default(0)
   retryCount     Int       @default(0)
+  maxAttempts    Int       @default(5)
+  availableAt    DateTime  @default(now())
+  lockedAt       DateTime?
+  lockedBy       String?
+  publishedAt    DateTime?
+  lastError      String?
   createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @default(now()) @updatedAt
   processedAt    DateTime?
 
-  @@index([status, createdAt])
+  @@index([status, availableAt])
   @@index([merchantId, status])
+  @@index([lockedBy, lockedAt])
 }
 
 model SecurityIncident {

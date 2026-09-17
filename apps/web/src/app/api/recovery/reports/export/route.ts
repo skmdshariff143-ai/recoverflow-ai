@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
     const format = searchParams.get('format') || 'csv';
 
     const carts = await db.listCartEvents();
-    const merchant = Array.from(db.merchants.values())[0];
+    const merchant = (await db.getMerchant("merchant_default_01")) || (db.listMerchants ? (await db.listMerchants())[0] : null);
 
     const totalCartsCount = carts.length || 100;
     const recoveredCarts = carts.filter((c) => c.status === 'RECOVERED');

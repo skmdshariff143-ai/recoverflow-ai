@@ -24,7 +24,7 @@ async function main() {
   console.log('===============================================================\n');
 
   console.log('[1/2] Seeding in-memory runtime persistence layer (MemoryDatabase)...');
-  const counts = seedDemoDataset(db, { clearExisting: true });
+  const counts = seedDemoDataset(db as any, { clearExisting: true });
 
   console.log('[2/2] Verification of seeded entities:');
   console.log(`  - Merchants:          ${counts.merchantCount} (Store: Aurora Luxury Apparel)`);

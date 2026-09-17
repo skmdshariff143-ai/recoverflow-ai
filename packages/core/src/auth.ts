@@ -2,14 +2,17 @@
  * RecoverFlow AI — Authentication, Session Security & Multi-Tenant RBAC Matrix.
  *
  * Implements cryptographic session token management, role-based authorization,
- * and tenant-isolation invariants.
+ * tenant-isolation invariants, fail-closed production secrets, and durable session revocation.
  */
 
-import { createHmac, timingSafeEqual } from 'crypto';
+import { createHmac, createHash, timingSafeEqual, randomBytes } from 'crypto';
+import { db } from './db';
+import { getRuntimeMode } from './data/databaseFactory';
 
 export type UserRole = 'OWNER' | 'ADMIN' | 'RECOVERY_MANAGER' | 'SUPPORT_AGENT' | 'DEVELOPER' | 'ANALYST' | 'VIEWER';
 
 export interface UserSession {
+  sessionId?: string;
   userId: string;
   email: string;
   name: string;
@@ -106,7 +109,26 @@ const ROLE_HIERARCHY: Record<UserRole, number> = {
   VIEWER: 10,
 };
 
-const DEFAULT_AUTH_SECRET = process.env.AUTH_SECRET || 'recoverflow_auth_secret_dev_32_bytes_min_sig';
+export const DEFAULT_DEV_AUTH_SECRET = 'recoverflow_auth_secret_dev_32_bytes_min_sig';
+
+/**
+ * Validates auth secret entropy and enforces fail-closed behavior in SANDBOX / LIVE.
+ */
+export function validateAuthSecret(secret?: string, mode?: string): string {
+  const currentMode = mode || getRuntimeMode();
+  const candidate = secret || process.env.AUTH_SECRET;
+
+  if (currentMode === 'LIVE' || currentMode === 'SANDBOX') {
+    if (!candidate || candidate === DEFAULT_DEV_AUTH_SECRET || candidate.length < 32) {
+      throw new Error(
+        `INSECURE_AUTH_SECRET: In '${currentMode}' mode, AUTH_SECRET must be explicitly set and contain at least 32 characters of high-entropy secret.`
+      );
+    }
+    return candidate;
+  }
+
+  return candidate || DEFAULT_DEV_AUTH_SECRET;
+}
 
 /**
  * Check if a role satisfies a minimum role requirement in the hierarchy.
@@ -123,22 +145,31 @@ export function hasPermission(role: UserRole, permission: Permission): boolean {
 }
 
 /**
+ * Computes deterministic SHA-256 hash of a session token for revocation lookups.
+ */
+export function hashSessionToken(token: string): string {
+  return createHash('sha256').update(token.trim()).digest('hex');
+}
+
+/**
  * Mint a cryptographically signed HMAC-SHA256 session token.
  */
 export function createSessionToken(
   session: Omit<UserSession, 'expiresAt' | 'issuedAt'>,
   ttlMs: number = 7 * 24 * 60 * 60 * 1000,
-  secret: string = DEFAULT_AUTH_SECRET,
+  secret?: string,
 ): string {
+  const resolvedSecret = validateAuthSecret(secret);
   const now = Date.now();
   const fullSession: UserSession = {
     ...session,
+    sessionId: session.sessionId || `sess_${randomBytes(8).toString('hex')}`,
     issuedAt: now,
     expiresAt: now + ttlMs,
   };
 
   const payload = Buffer.from(JSON.stringify(fullSession), 'utf-8').toString('base64url');
-  const signature = createHmac('sha256', secret).update(payload).digest('base64url');
+  const signature = createHmac('sha256', resolvedSecret).update(payload).digest('base64url');
   return `${payload}.${signature}`;
 }
 
@@ -147,19 +178,20 @@ export function createSessionToken(
  */
 export function verifySessionToken(
   token: string | null | undefined,
-  secret: string = DEFAULT_AUTH_SECRET,
+  secret?: string,
 ): { valid: boolean; session: UserSession | null; error?: string } {
   if (!token || typeof token !== 'string') {
     return { valid: false, session: null, error: 'MISSING_TOKEN' };
   }
 
+  const resolvedSecret = validateAuthSecret(secret);
   const parts = token.split('.');
   if (parts.length !== 2) {
     return { valid: false, session: null, error: 'MALFORMED_TOKEN' };
   }
 
   const [payloadBase64, providedSig] = parts;
-  const expectedSig = createHmac('sha256', secret).update(payloadBase64).digest('base64url');
+  const expectedSig = createHmac('sha256', resolvedSecret).update(payloadBase64).digest('base64url');
 
   const providedBuf = Buffer.from(providedSig, 'utf-8');
   const expectedBuf = Buffer.from(expectedSig, 'utf-8');
@@ -180,6 +212,42 @@ export function verifySessionToken(
   } catch {
     return { valid: false, session: null, error: 'CORRUPTED_PAYLOAD' };
   }
+}
+
+/**
+ * Registers session in the durable database store for revocation tracking.
+ */
+export async function registerDurableSession(session: UserSession, token: string): Promise<void> {
+  const tokenHash = hashSessionToken(token);
+  await db.createSession({
+    userId: session.userId,
+    tokenHash,
+    organizationId: session.organizationId,
+    activeMerchantId: session.activeMerchantId,
+    role: session.role,
+    expiresAt: new Date(session.expiresAt),
+  });
+}
+
+/**
+ * Asynchronously verifies session token including durable revocation check.
+ */
+export async function verifyDurableSession(
+  token: string | null | undefined,
+  secret?: string,
+): Promise<{ valid: boolean; session: UserSession | null; error?: string }> {
+  const result = verifySessionToken(token, secret);
+  if (!result.valid || !result.session || !token) {
+    return result;
+  }
+
+  const tokenHash = hashSessionToken(token);
+  const isRevoked = await db.isSessionRevoked(tokenHash);
+  if (isRevoked) {
+    return { valid: false, session: null, error: 'SESSION_REVOKED' };
+  }
+
+  return result;
 }
 
 /**
@@ -386,4 +454,3 @@ export function requirePermission(session: UserSession | null | undefined, permi
     throw new Error(`FORBIDDEN_PERMISSION: Role '${session.role}' lacks '${permission}' permission`);
   }
 }
-

@@ -1,6 +1,8 @@
 import { Queue, type ConnectionOptions } from 'bullmq';
 import { 
   db, 
+  getRuntimeMode, 
+  StartupConfigurationError, 
   globalSuppressionService, 
   checkShopifyInventoryAvailability,
   createShopifySingleUseDiscount,
@@ -483,6 +485,30 @@ export class RecoveryQueueService {
       createdAt: new Date(),
     });
   }
+
+  async close(): Promise<void> {
+    // Clear all in-memory timers
+    for (const job of this.memoryJobs.values()) {
+      if (job.timer) clearTimeout(job.timer);
+    }
+    this.memoryJobs.clear();
+
+    // Close BullMQ queues
+    const queues = [this.immediateQueue, this.standardQueue, this.fallbackQueue, this.dlqQueue];
+    for (const q of queues) {
+      if (q) {
+        try {
+          await q.close();
+        } catch {}
+      }
+    }
+    this.immediateQueue = null;
+    this.standardQueue = null;
+    this.fallbackQueue = null;
+    this.dlqQueue = null;
+    this.redisAvailable = false;
+  }
 }
 
 export const globalRecoveryQueue = new RecoveryQueueService();
+

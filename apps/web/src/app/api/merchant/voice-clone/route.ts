@@ -7,8 +7,8 @@ export async function POST(req: NextRequest) {
     const merchantId = req.headers.get('x-merchant-id') || 'merchant_default_01';
     let merchant = await db.getMerchant(merchantId);
 
-    if (!merchant) {
-      const allMerchants = Array.from(db['merchants'].values());
+    if (!merchant && db.listMerchants) {
+      const allMerchants = await db.listMerchants();
       merchant = allMerchants[0] || null;
     }
 

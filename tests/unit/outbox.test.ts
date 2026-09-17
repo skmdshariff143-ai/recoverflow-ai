@@ -19,8 +19,8 @@ describe('Transactional Outbox Pattern & CQRS Event Pipeline (Martin Kleppmann &
   };
 
   beforeEach(() => {
-    db.merchants.set(merchant.id, merchant);
-    db.outboxEvents.clear();
+    (db as any).merchants.set(merchant.id, merchant);
+    (db as any).outboxEvents.clear();
   });
 
   it('atomically creates CartEvent and OutboxEvent with cryptographic SHA-256 idempotency key', async () => {
@@ -52,7 +52,7 @@ describe('Transactional Outbox Pattern & CQRS Event Pipeline (Martin Kleppmann &
     const fetchedCart = await db.getCartById(cart.id);
     expect(fetchedCart).toBeDefined();
 
-    const pending = await db.getPendingOutboxEvents();
+    const pending = await (db as any).getPendingOutboxEvents();
     expect(pending.length).toBe(1);
     expect(pending[0].id).toBe(outbox.id);
   });
@@ -84,10 +84,10 @@ describe('Transactional Outbox Pattern & CQRS Event Pipeline (Martin Kleppmann &
 
     expect(count).toBe(1);
 
-    const pendingAfter = await db.getPendingOutboxEvents();
+    const pendingAfter = await (db as any).getPendingOutboxEvents();
     expect(pendingAfter.length).toBe(0);
 
-    const allEvents = Array.from(db.outboxEvents.values());
+    const allEvents = Array.from((db as any).outboxEvents.values()) as any[];
     expect(allEvents[0].status).toBe('PUBLISHED');
     expect(allEvents[0].processedAt).toBeDefined();
   });
@@ -106,17 +106,17 @@ describe('Transactional Outbox Pattern & CQRS Event Pipeline (Martin Kleppmann &
     });
 
     await db.markOutboxEventFailed(outbox.id, 'Simulated connection error');
-    let event = db.outboxEvents.get(outbox.id);
+    let event = (db as any).outboxEvents.get(outbox.id);
     expect(event?.retryCount).toBe(1);
     expect(event?.status).toBe('PENDING');
 
     // Simulate 4 more failures (reaching 5 max retries)
-    await db.markOutboxEventFailed(outbox.id);
-    await db.markOutboxEventFailed(outbox.id);
-    await db.markOutboxEventFailed(outbox.id);
-    await db.markOutboxEventFailed(outbox.id);
+    await db.markOutboxEventFailed(outbox.id, 'Failure retry');
+    await db.markOutboxEventFailed(outbox.id, 'Failure retry');
+    await db.markOutboxEventFailed(outbox.id, 'Failure retry');
+    await db.markOutboxEventFailed(outbox.id, 'Failure retry');
 
-    event = db.outboxEvents.get(outbox.id);
+    event = (db as any).outboxEvents.get(outbox.id);
     expect(event?.retryCount).toBe(5);
     expect(event?.status).toBe('FAILED');
   });

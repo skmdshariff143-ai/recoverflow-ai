@@ -1,49 +1,53 @@
-import { db } from '@recoverflow/core';
+import crypto from 'crypto';
+import { db, type OutboxEventRecord } from '@recoverflow/core';
 import { globalRecoveryQueue } from './queue';
 
 export interface OutboxWorkerConfig {
+  workerId?: string;
   pollIntervalMs?: number;
   batchSize?: number;
+  lockTtlMs?: number;
 }
 
 export class TransactionalOutboxWorker {
   private isRunning = false;
   private timer: NodeJS.Timeout | null = null;
   private config: Required<OutboxWorkerConfig>;
-  private processedIds = new Set<string>();
+  public readonly workerId: string;
 
   constructor(config?: OutboxWorkerConfig) {
+    this.workerId = config?.workerId || `worker_outbox_${crypto.randomBytes(6).toString('hex')}`;
     this.config = {
+      workerId: this.workerId,
       pollIntervalMs: config?.pollIntervalMs || 1000,
       batchSize: config?.batchSize || 20,
+      lockTtlMs: config?.lockTtlMs || 30000,
     };
   }
 
   public async processBatch(): Promise<number> {
-    const pendingEvents = await db.getPendingOutboxEvents(this.config.batchSize);
-    if (pendingEvents.length === 0) return 0;
+    // Durable database claiming across multiple worker processes
+    const claimedEvents = await db.claimOutboxEvents(
+      this.workerId,
+      this.config.batchSize,
+      this.config.lockTtlMs
+    );
+
+    if (claimedEvents.length === 0) return 0;
 
     let processedCount = 0;
 
-    for (const event of pendingEvents) {
-      // Idempotency check on in-flight events
-      if (this.processedIds.has(event.idempotencyKey)) {
-        await db.markOutboxEventPublished(event.id);
-        continue;
-      }
-
-      await db.markOutboxEventProcessing(event.id);
-
+    for (const event of claimedEvents) {
       try {
         const abandonmentType = event.eventType === 'PAYMENT_FAILED' ? 'PAYMENT_FAILED' : 'CHECKOUT_STEP';
         await globalRecoveryQueue.scheduleRecovery(event.aggregateId, abandonmentType);
 
-        this.processedIds.add(event.idempotencyKey);
         await db.markOutboxEventPublished(event.id);
         processedCount++;
       } catch (err: unknown) {
-        console.error(`[OutboxWorker] Failed to process event ${event.id}:`, err);
-        await db.markOutboxEventFailed(event.id, err instanceof Error ? err.message : 'Processing error');
+        const errMsg = err instanceof Error ? err.message : String(err);
+        console.error(`[OutboxWorker ${this.workerId}] Failed to process event ${event.id}:`, errMsg);
+        await db.markOutboxEventFailed(event.id, errMsg, 5000);
       }
     }
 
@@ -59,7 +63,7 @@ export class TransactionalOutboxWorker {
       try {
         await this.processBatch();
       } catch (e) {
-        console.error('[OutboxWorker] Loop error:', e);
+        console.error(`[OutboxWorker ${this.workerId}] Loop error:`, e);
       }
       if (this.isRunning) {
         this.timer = setTimeout(loop, this.config.pollIntervalMs);

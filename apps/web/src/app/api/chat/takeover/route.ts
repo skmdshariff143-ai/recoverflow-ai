@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     cartId,
     isTakenOver,
-    remainingMs: isTakenOver ? Math.max(0, (db.takeoverLocks.get(cartId) || 0) - Date.now()) : 0,
+    remainingMs: isTakenOver ? (db.getAdminTakeoverRemainingMs ? db.getAdminTakeoverRemainingMs(cartId) : 0) : 0,
   });
 }
 

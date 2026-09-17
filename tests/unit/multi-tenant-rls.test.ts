@@ -116,10 +116,10 @@ describe('Multi-Tenant Row-Level Security & Data Isolation', () => {
   });
 
   it('isolates pending outbox events per merchantId', async () => {
-    const alphaOutbox = await db.getPendingOutboxEvents(50, MERCHANT_A);
-    const betaOutbox = await db.getPendingOutboxEvents(50, MERCHANT_B);
+    const alphaOutbox = await (db as any).getPendingOutboxEvents(50, MERCHANT_A);
+    const betaOutbox = await (db as any).getPendingOutboxEvents(50, MERCHANT_B);
 
-    expect(alphaOutbox.every((e) => e.merchantId === MERCHANT_A)).toBe(true);
-    expect(betaOutbox.every((e) => e.merchantId === MERCHANT_B)).toBe(true);
+    expect(alphaOutbox.every((e: any) => e.merchantId === MERCHANT_A)).toBe(true);
+    expect(betaOutbox.every((e: any) => e.merchantId === MERCHANT_B)).toBe(true);
   });
 });

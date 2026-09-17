@@ -2,39 +2,25 @@
  * RecoverFlow AI — Standalone Production Worker Daemon.
  *
  * Runs BullMQ distributed recovery queues, the transactional outbox publisher worker,
- * and the 30-day compliance retention hard-pruner in a single resilient daemon process.
+ * and the compliance retention pruner in a single unified, resilient runtime.
  */
 
-import {
-  startDistributedWorkers,
-  startDataRetentionPruner,
-  globalOutboxWorker,
-} from '@recoverflow/jobs';
+import { startWorkerRuntime } from '@recoverflow/jobs';
 
 async function main() {
   console.log('====================================================');
   console.log('  RECOVERFLOW AI — PRODUCTION WORKER DAEMON STARTED  ');
   console.log('====================================================');
   console.log(`[Runtime] Node: ${process.version}, PID: ${process.pid}, Env: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`[Runtime] Redis URL: ${process.env.REDIS_URL ? 'CONFIGURED' : 'LOCAL_IN_MEMORY_MODE'}`);
+  console.log(`[Runtime] Mode: ${process.env.RECOVERFLOW_RUNTIME_MODE || 'DEMO'}`);
+  console.log(`[Runtime] Redis: ${process.env.REDIS_URL ? 'CONFIGURED' : 'LOCAL_IN_MEMORY_MODE'}`);
 
-  // 1. Start BullMQ queue consumers (Immediate, Standard, Fallback Email)
-  startDistributedWorkers();
+  const runtime = await startWorkerRuntime();
 
-  // 2. Start Transactional Outbox Worker
-  globalOutboxWorker.start();
-  console.log('[Worker Runtime] Transactional outbox worker polling started (1000ms cadence).');
-
-  // 3. Start Data Sovereignty 30-day Retention Hard-Pruner
-  const prunerTimer = startDataRetentionPruner(3600 * 1000);
-  console.log('[Worker Runtime] Compliance data retention hard-pruner scheduled.');
-
-  // Graceful shutdown handling
   const shutdown = async (signal: string) => {
-    console.log(`\n[Worker Runtime] Received ${signal}. Initiating graceful shutdown...`);
-    globalOutboxWorker.stop();
-    clearInterval(prunerTimer);
-    console.log('[Worker Runtime] Workers and background pollers drained.');
+    console.log(`\n[Worker Runtime] Received ${signal}. Draining and closing...`);
+    await runtime.close();
+    console.log('[Worker Runtime] Gracefully terminated.');
     process.exit(0);
   };
 

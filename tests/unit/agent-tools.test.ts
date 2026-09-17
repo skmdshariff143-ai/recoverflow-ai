@@ -14,8 +14,8 @@ import {
 
 describe('RecoverFlow AI — Bounded Multi-Agent Typed Tool Interfaces', () => {
   beforeEach(() => {
-    db.clear();
-    db.seedDefaults();
+    (db as any).clear?.();
+    (db as any).seedDefaults?.();
   });
 
   const ownerSession = DEMO_PERSONA_SESSIONS.OWNER;
