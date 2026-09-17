@@ -54,3 +54,5 @@ export * from './utils/audioCues';
 export * from './atomicIdempotencyStore';
 export * from './liveWebhookStore';
 export * from './rateLimiter';
+
+export * from './auth';

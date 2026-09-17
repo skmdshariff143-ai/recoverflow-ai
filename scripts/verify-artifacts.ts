@@ -226,6 +226,28 @@ for (const doc of requiredDocs) {
   }
 }
 
+
+// 5. Verify Canonical Benchmark Manifest
+const manifestPath = resolve(root, 'data/benchmarks/benchmark-manifest.json');
+if (existsSync(manifestPath)) {
+  try {
+    const raw = readFileSync(manifestPath, 'utf-8');
+    const parsed = JSON.parse(raw);
+    if (!parsed.manifest_version || !parsed.benchmarks || !parsed.datasets) {
+      console.error('❌ Benchmark manifest missing required root fields');
+      errors++;
+    } else {
+      console.log(`✓ ${'data/benchmarks/benchmark-manifest.json'.padEnd(38)} [VALID CANONICAL MANIFEST v${parsed.manifest_version}]`);
+    }
+  } catch (e) {
+    console.error('❌ Could not parse benchmark-manifest.json:', e);
+    errors++;
+  }
+} else {
+  console.error('❌ Missing data/benchmarks/benchmark-manifest.json');
+  errors++;
+}
+
 if (errors > 0) {
   console.error(`\n❌ Artifact verification failed with ${errors} error(s).`);
   process.exit(1);
