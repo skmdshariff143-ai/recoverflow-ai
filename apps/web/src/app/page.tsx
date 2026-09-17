@@ -34,6 +34,8 @@ export default function Home() {
   const [isReplayModalOpen, setIsReplayModalOpen] = useState<boolean>(false);
   const [isCheatSheetOpen, setIsCheatSheetOpen] = useState<boolean>(false);
   const [isGuideTourOpen, setIsGuideTourOpen] = useState<boolean>(false);
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState<boolean>(false);
+  const [isRegulatoryFootprintOpen, setIsRegulatoryFootprintOpen] = useState<boolean>(false);
 
   const {
     payments,
@@ -231,6 +233,7 @@ export default function Home() {
             <MetricsOverview
               kpis={kpis}
               onNavigateTab={setActiveTab}
+              onRegulatoryFootprintOpenChange={setIsRegulatoryFootprintOpen}
             />
 
             <RankedQueueTable
@@ -421,6 +424,7 @@ export default function Home() {
         onOpenCheatSheet={() => setIsCheatSheetOpen(true)}
         onOpenGuideTour={() => setIsGuideTourOpen(true)}
         onResetDemoState={handleResetDemoState}
+        onOpenChange={setIsCommandPaletteOpen}
       />
 
       {/* ── Demo Reset Notification Toast ─────────────────────────── */}
@@ -451,7 +455,17 @@ export default function Home() {
       />
 
       {/* ── First-Time Visitor Dismissible Spotlight ─────────────── */}
-      <FirstTimeVisitorSpotlight />
+      <FirstTimeVisitorSpotlight
+        suppressedByOtherOverlay={Boolean(
+          isJudgeModeOpen ||
+          isReplayModalOpen ||
+          isCheatSheetOpen ||
+          isGuideTourOpen ||
+          selectedPaymentId !== null ||
+          isCommandPaletteOpen ||
+          isRegulatoryFootprintOpen
+        )}
+      />
 
       {/* ── Global Footer ───────────────────────────────────────── */}
       <footer className="bg-slate-900 border-t border-slate-800 text-slate-400 py-6 text-xs text-center">

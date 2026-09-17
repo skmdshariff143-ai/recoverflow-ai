@@ -27,9 +27,10 @@ import { RegulatoryFootprintBadge } from './RegulatoryFootprintBadge';
 interface TrustScoreWidgetProps {
   inputs: TrustScoreInputs;
   onNavigateTab?: (tab: 'dashboard' | 'live_runner' | 'evaluation_lab' | 'promise_to_pay' | 'audit_ledger' | 'methodology_guide') => void;
+  onRegulatoryFootprintOpenChange?: (open: boolean) => void;
 }
 
-export function TrustScoreWidget({ inputs, onNavigateTab }: TrustScoreWidgetProps) {
+export function TrustScoreWidget({ inputs, onNavigateTab, onRegulatoryFootprintOpenChange }: TrustScoreWidgetProps) {
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
   const trustBreakdown = computeTrustScore(inputs);
 
@@ -93,7 +94,7 @@ export function TrustScoreWidget({ inputs, onNavigateTab }: TrustScoreWidgetProp
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                 {grade}
               </span>
-              <RegulatoryFootprintBadge />
+              <RegulatoryFootprintBadge onOpenChange={onRegulatoryFootprintOpenChange} />
             </div>
             <p className="text-xs text-slate-400 mt-0.5 max-w-xl">
               Composite telemetry synthesized from calibration reliability, zero-tolerance safety rule tests, and append-only cryptographic ledger completeness.

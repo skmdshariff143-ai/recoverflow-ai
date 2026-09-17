@@ -88,6 +88,8 @@ interface CommandPaletteProps {
   onOpenGuideTour?: () => void;
   /** Reset demo state to initial defaults. */
   onResetDemoState?: () => void;
+  /** Callback when Command Palette open state changes. */
+  onOpenChange?: (open: boolean) => void;
 }
 
 export function CommandPalette({
@@ -101,12 +103,17 @@ export function CommandPalette({
   onOpenCheatSheet,
   onOpenGuideTour,
   onResetDemoState,
+  onOpenChange,
 }: CommandPaletteProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    onOpenChange?.(isOpen);
+  }, [isOpen, onOpenChange]);
 
   // Build payment commands from executed items
   const paymentCommands: CommandItem[] = useMemo(

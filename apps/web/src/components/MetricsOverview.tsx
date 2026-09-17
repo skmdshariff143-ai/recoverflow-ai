@@ -23,9 +23,10 @@ interface MetricsOverviewProps {
   kpis: ReturnType<typeof useRecoveryBatch>['kpis'];
   onNavigateTab?: (tab: 'dashboard' | 'live_runner' | 'evaluation_lab' | 'promise_to_pay' | 'audit_ledger' | 'methodology_guide') => void;
   recomputeFeedback?: string | null;
+  onRegulatoryFootprintOpenChange?: (open: boolean) => void;
 }
 
-export function MetricsOverview({ kpis, onNavigateTab, recomputeFeedback }: MetricsOverviewProps) {
+export function MetricsOverview({ kpis, onNavigateTab, recomputeFeedback, onRegulatoryFootprintOpenChange }: MetricsOverviewProps) {
   return (
     <div className="space-y-4" aria-live="polite">
       {/* ── Explainability & Safety Trust Score Headline Banner ─── */}
@@ -39,6 +40,7 @@ export function MetricsOverview({ kpis, onNavigateTab, recomputeFeedback }: Metr
           loggedAuditRecords: 100,
         }}
         onNavigateTab={onNavigateTab}
+        onRegulatoryFootprintOpenChange={onRegulatoryFootprintOpenChange}
       />
 
       {recomputeFeedback && (

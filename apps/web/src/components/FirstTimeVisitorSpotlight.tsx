@@ -53,7 +53,11 @@ const SPOTLIGHT_STEPS: SpotlightStep[] = [
 
 const STORAGE_KEY = 'payback_spotlight_dismissed_v1';
 
-export function FirstTimeVisitorSpotlight() {
+interface FirstTimeVisitorSpotlightProps {
+  suppressedByOtherOverlay?: boolean;
+}
+
+export function FirstTimeVisitorSpotlight({ suppressedByOtherOverlay = false }: FirstTimeVisitorSpotlightProps) {
   const [isVisible, setIsVisible] = useState<boolean>(false);
   const [stepIndex, setStepIndex] = useState<number>(0);
 
@@ -86,15 +90,15 @@ export function FirstTimeVisitorSpotlight() {
   // Global Escape key listener to dismiss
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isVisible) {
+      if (e.key === 'Escape' && isVisible && !suppressedByOtherOverlay) {
         handleDismiss();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isVisible, handleDismiss]);
+  }, [isVisible, suppressedByOtherOverlay, handleDismiss]);
 
-  if (!isVisible) return null;
+  if (!isVisible || suppressedByOtherOverlay) return null;
 
   const currentStep = SPOTLIGHT_STEPS[stepIndex];
 
