@@ -179,6 +179,14 @@ export class MemoryDatabase {
     return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
 
+  async getCartEvent(id: string, merchantId?: string): Promise<CartEvent | null> {
+    return this.getCartById(id, merchantId);
+  }
+
+  async getCartEventsByMerchant(merchantId: string): Promise<CartEvent[]> {
+    return this.listCartEvents(merchantId);
+  }
+
   // Message Log methods
   async logMessage(log: MessageLog): Promise<MessageLog> {
     this.messageLogs.set(log.id, log);

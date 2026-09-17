@@ -214,7 +214,7 @@ export const DEMO_PERSONA_SESSIONS: Record<UserRole, UserSession> = {
     name: 'Sarah Jenkins (CFO / Owner)',
     organizationId: 'org_recoverflow_demo',
     organizationSlug: 'luxurybrand-enterprise',
-    activeMerchantId: 'merchant_01',
+    activeMerchantId: 'merchant_default_01',
     role: 'OWNER',
     issuedAt: Date.now(),
     expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
@@ -225,7 +225,7 @@ export const DEMO_PERSONA_SESSIONS: Record<UserRole, UserSession> = {
     name: 'Alex Rivera (VP Operations)',
     organizationId: 'org_recoverflow_demo',
     organizationSlug: 'luxurybrand-enterprise',
-    activeMerchantId: 'merchant_01',
+    activeMerchantId: 'merchant_default_01',
     role: 'ADMIN',
     issuedAt: Date.now(),
     expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
@@ -236,7 +236,7 @@ export const DEMO_PERSONA_SESSIONS: Record<UserRole, UserSession> = {
     name: 'Priya Sharma (Recovery Operations Lead)',
     organizationId: 'org_recoverflow_demo',
     organizationSlug: 'luxurybrand-enterprise',
-    activeMerchantId: 'merchant_01',
+    activeMerchantId: 'merchant_default_01',
     role: 'RECOVERY_MANAGER',
     issuedAt: Date.now(),
     expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
@@ -247,7 +247,7 @@ export const DEMO_PERSONA_SESSIONS: Record<UserRole, UserSession> = {
     name: 'Sam Taylor (Customer Support Lead)',
     organizationId: 'org_recoverflow_demo',
     organizationSlug: 'luxurybrand-enterprise',
-    activeMerchantId: 'merchant_01',
+    activeMerchantId: 'merchant_default_01',
     role: 'SUPPORT_AGENT',
     issuedAt: Date.now(),
     expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
@@ -258,7 +258,7 @@ export const DEMO_PERSONA_SESSIONS: Record<UserRole, UserSession> = {
     name: 'Jordan Lee (Integration Engineer)',
     organizationId: 'org_recoverflow_demo',
     organizationSlug: 'luxurybrand-enterprise',
-    activeMerchantId: 'merchant_01',
+    activeMerchantId: 'merchant_default_01',
     role: 'DEVELOPER',
     issuedAt: Date.now(),
     expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
@@ -269,7 +269,7 @@ export const DEMO_PERSONA_SESSIONS: Record<UserRole, UserSession> = {
     name: 'David Chen (Risk & Recovery Analyst)',
     organizationId: 'org_recoverflow_demo',
     organizationSlug: 'luxurybrand-enterprise',
-    activeMerchantId: 'merchant_01',
+    activeMerchantId: 'merchant_default_01',
     role: 'ANALYST',
     issuedAt: Date.now(),
     expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
@@ -280,9 +280,110 @@ export const DEMO_PERSONA_SESSIONS: Record<UserRole, UserSession> = {
     name: 'Guest Judge / Auditor',
     organizationId: 'org_recoverflow_demo',
     organizationSlug: 'luxurybrand-enterprise',
-    activeMerchantId: 'merchant_01',
+    activeMerchantId: 'merchant_default_01',
     role: 'VIEWER',
     issuedAt: Date.now(),
     expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
   },
 };
+
+/**
+ * Extracts a session token from HTTP headers or a direct token string.
+ * Supports Web standard Headers, Next.js / Express header dictionaries, and cookies.
+ */
+export function extractTokenFromHeaders(
+  headers: Headers | Record<string, string | string[] | undefined> | string | null | undefined,
+): string | null {
+  if (!headers) return null;
+  if (typeof headers === 'string') {
+    if (headers.startsWith('Bearer ')) return headers.slice(7).trim();
+    return headers.trim();
+  }
+
+  // Web Standard Headers instance
+  if (typeof (headers as Headers).get === 'function') {
+    const webHeaders = headers as Headers;
+    const auth = webHeaders.get('authorization') || webHeaders.get('Authorization');
+    if (auth && auth.startsWith('Bearer ')) {
+      return auth.slice(7).trim();
+    }
+    const customHeader = webHeaders.get('x-session-token') || webHeaders.get('x-tenant-session');
+    if (customHeader) return customHeader.trim();
+
+    const cookieHeader = webHeaders.get('cookie') || webHeaders.get('Cookie');
+    if (cookieHeader) {
+      const match = cookieHeader.match(/(?:recoverflow_session|auth_token)=([^;]+)/);
+      if (match) return decodeURIComponent(match[1]);
+    }
+    return null;
+  }
+
+  // Dictionary object: Record<string, string | string[] | undefined>
+  const rec = headers as Record<string, string | string[] | undefined>;
+  const auth = rec['authorization'] || rec['Authorization'];
+  const authVal = Array.isArray(auth) ? auth[0] : auth;
+  if (authVal && typeof authVal === 'string' && authVal.startsWith('Bearer ')) {
+    return authVal.slice(7).trim();
+  }
+
+  const custom = rec['x-session-token'] || rec['x-tenant-session'];
+  const customVal = Array.isArray(custom) ? custom[0] : custom;
+  if (customVal && typeof customVal === 'string') {
+    return customVal.trim();
+  }
+
+  const cookie = rec['cookie'] || rec['Cookie'];
+  const cookieVal = Array.isArray(cookie) ? cookie[0] : cookie;
+  if (cookieVal && typeof cookieVal === 'string') {
+    const match = cookieVal.match(/(?:recoverflow_session|auth_token)=([^;]+)/);
+    if (match) return decodeURIComponent(match[1]);
+  }
+
+  return null;
+}
+
+/**
+ * Resolves verified UserSession tenant context from request headers, or null if unauthenticated.
+ */
+export function getTenantContext(
+  headers: Headers | Record<string, string | string[] | undefined> | string | null | undefined,
+  secret?: string,
+): UserSession | null {
+  const token = extractTokenFromHeaders(headers);
+  if (!token) return null;
+  const result = verifySessionToken(token, secret);
+  return result.valid ? result.session : null;
+}
+
+/**
+ * Resolves verified UserSession tenant context from request headers, throwing if unauthenticated
+ * or if cross-tenant / cross-merchant access is attempted.
+ */
+export function requireTenantContext(
+  headers: Headers | Record<string, string | string[] | undefined> | string | null | undefined,
+  targetMerchantId?: string,
+  targetOrgId?: string,
+  secret?: string,
+): UserSession {
+  const session = getTenantContext(headers, secret);
+  if (!session) {
+    throw new Error('UNAUTHENTICATED: Valid session required for tenant context');
+  }
+  if (targetMerchantId) {
+    assertTenantScoping(session, targetMerchantId, targetOrgId);
+  }
+  return session;
+}
+
+/**
+ * Enforces that a session's role possesses a required granular permission.
+ */
+export function requirePermission(session: UserSession | null | undefined, permission: Permission): void {
+  if (!session) {
+    throw new Error('UNAUTHENTICATED: Session required to evaluate permissions');
+  }
+  if (!hasPermission(session.role, permission)) {
+    throw new Error(`FORBIDDEN_PERMISSION: Role '${session.role}' lacks '${permission}' permission`);
+  }
+}
+

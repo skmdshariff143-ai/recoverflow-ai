@@ -1,11 +1,11 @@
 # RecoverFlow AI (PayBack AI)
 
-> **Autonomous AI-Assisted E-Commerce Cart & Checkout Recovery Infrastructure**  
-> *Engineered to the standards of Hinton, Torvalds, Fowler, Kleppmann, Willison, and Rams.*
+> **Autonomous AI-Assisted Commerce Revenue Recovery Infrastructure**  
+> *Deterministic Financial Controls, Bounded Advisory AI, and Tamper-Evident SHA-256 Auditing.*
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0%20Strict-blue.svg)](https://www.typescriptlang.org/)
 [![Next.js](https://img.shields.io/badge/Next.js-16%20Turbopack-black.svg)](https://nextjs.org/)
-[![Vitest](https://img.shields.io/badge/Tests-450%20Passed%20(80%20Suites)-brightgreen.svg)](https://vitest.dev/)
+[![Vitest](https://img.shields.io/badge/Tests-461%20Passed%20(81%20Suites)-brightgreen.svg)](https://vitest.dev/)
 [![Playwright](https://img.shields.io/badge/Playwright-65%20Passed-emerald.svg)](https://playwright.dev/)
 [![Security Guardrail](https://img.shields.io/badge/Security-7--Role%20RBAC%20%26%20Pre--LLM%20Sanitizer-emerald.svg)](./docs/SECURITY.md)
 [![Outbox Pattern](https://img.shields.io/badge/Architecture-Transactional%20Outbox%20%26%20CQRS-indigo.svg)](./docs/EVENT_ARCHITECTURE.md)
@@ -15,18 +15,18 @@
 
 ## ⚡ 60-Second Executive Summary
 
-**RecoverFlow AI** is an autonomous e-commerce recovery infrastructure built for high-scale direct-to-consumer (Shopify/WooCommerce) storefronts and subscription platforms. 
+**RecoverFlow AI** is an autonomous e-commerce recovery infrastructure built for direct-to-consumer (Shopify/WooCommerce) storefronts and subscription platforms. 
 
 Traditional recovery tools rely on static email sequences, blind payment retries, or unconstrained LLMs that hallucinate coupon codes and erode merchant margins. RecoverFlow AI enforces a strict architectural boundary:
 
 > **AI may advise, classify, normalize, summarize, or draft communication, but AI must NEVER directly execute financial transactions or mutate state without deterministic policy verification.**
 
-### The 5 Autonomous Innovations:
-1. **Edge Intent Pixel SDK (`@recoverflow/pixel`)**: A $<4\text{KB}$ zero-dependency client SDK detecting upward exit-velocity vectors ($v_y = \frac{dy}{dt} < -1.0\text{ px/ms}$), tab switches, and checkout field blurs to link customer identity graphs *before* checkout desertion.
-2. **Reinforcement Learning Margin Guardian**: A Contextual Multi-Armed Bandit using Thompson Sampling over Beta-Bernoulli posteriors across 4 policy arms (Zero-Discount Urgency, Free Shipping, Dynamic Micro-Discount, Bundle Gift Swap) optimizing for net gross contribution margin.
-3. **Multimodal WhatsApp Concierge**: Decodes customer voice memos (`.ogg` Opus) and analyzes product style photos via Gemini 2.0 with GraphQL inventory validation before making recommendations.
-4. **Localized 1-Tap Payment Rescue**: Classifies payment gateway failures (3DS timeout, currency mismatches, bank throttling) and dispatches instant India UPI deep links (`upi://pay`), Brazil Pix EMVCo QR keys, and US/EU Apple Pay permalinks.
-5. **Transactional Outbox & CQRS**: Guarantees zero event loss and strict atomic idempotency (`sha256(shopDomain + cartToken + timestamp)`), with an automated 10% uncontacted holdout control group proving causal incremental ROAS (22.4x).
+### The 5 Core Architectural Pillars:
+1. **Edge Intent Pixel SDK (`@recoverflow/pixel`)**: A $<2.8\text{KB}$ Brotli client SDK capturing upward exit-velocity vectors ($v_y = \frac{dy}{dt} < -1.0\text{ px/ms}$), tab switches, and checkout field blurs to link customer identity graphs *before* checkout desertion.
+2. **Reinforcement Learning Margin Guardian**: A Contextual Multi-Armed Bandit using Thompson Sampling over Beta-Bernoulli posteriors across 4 policy arms (Zero-Discount Urgency, Free Shipping, Dynamic Micro-Discount, Bundle Gift Swap) optimizing for net gross contribution margin under hard margin floors.
+3. **Multimodal WhatsApp Concierge**: Decodes customer voice memos (`.ogg` Opus) and analyzes product style photos via Gemini with GraphQL inventory validation before generating drafted responses.
+4. **Localized 1-Tap Payment Rescue**: Classifies payment gateway failures (3DS timeout, currency mismatches, bank throttling) and dispatches localized payment rescue links (India UPI, Brazil Pix, US/EU Apple Pay).
+5. **Transactional Outbox & Invariant State Machine**: Designed for durable at-least-once delivery with atomic SHA-256 idempotency (`sha256(shopDomain + cartToken + timestamp)`), evaluated against randomized holdout control groups to measure causal recovery lift (+24.8% on canonical 200-cohort manifest).
 
 ---
 
@@ -35,12 +35,12 @@ Traditional recovery tools rely on static email sequences, blind payment retries
 | Metric / Dimension | RecoverFlow AI (Open-Source) | Klaviyo / CartSaver | Traditional Fixed Cron Dunning |
 |:---|:---|:---|:---|
 | **Recovery Engine** | **Contextual Multi-Armed Bandit (Thompson Sampling)** | Static Delay Rules | Blind fixed retries (wasteful fees) |
-| **Pre-Drop Intent Capture** | **Real-Time $<4\text{KB}$ Pixel (Exit Vector & Field Blur)** | Post-drop Webhook only (30m delay) | None |
+| **Pre-Drop Intent Capture** | **Real-Time $<2.8\text{KB}$ Brotli Pixel (Exit Vector & Field Blur)** | Post-drop Webhook only (30m delay) | None |
 | **Messaging Channels** | **Multimodal WhatsApp Voice/Vision + Responsive Email** | Plain Email / SMS | Plain text email |
-| **Margin Protection** | **Algorithmically bounded 0–15% with zero margin bleed** | Static codes leaked to coupon scrapers | Fixed discount giveaways |
+| **Margin Protection** | **Deterministic Gross Margin Floors (15-20% Minimum)** | Static codes leaked to coupon scrapers | Fixed discount giveaways |
 | **Architectural Invariant** | **Transactional Outbox Pattern + SHA-256 Idempotency** | Best-effort worker push | Unsafe retry loops |
-| **Security Guardrail** | **Pre-LLM Heuristic & Token Classifier (Simon Willison)** | None | None |
-| **Causal Attribution** | **10% Double-Blind Randomized Holdout (+218.8% Lift)** | Correlational last-touch claims | Organic return confusion |
+| **Security Guardrail** | **Pre-LLM Heuristic & Token Classifier** | None | None |
+| **Causal Attribution** | **Randomized Holdout Control Group (+24.8% Manifest Lift)** | Correlational last-touch claims | Organic return confusion |
 
 ---
 
@@ -111,12 +111,12 @@ The codebase is organized as a modular TypeScript monorepo:
 ```
 recoverflow-ai/
 ├── apps/
-│   └── web/                    # Next.js 15 App Router merchant control room & API
+│   └── web/                    # Next.js 16.3.2 App Router merchant control room & API
 ├── packages/
 │   ├── core/                   # Prisma models, DB transactions, crypto, payment rails
 │   ├── agents/                 # Thompson Sampling MAB, Concierge agent, Prompt Guardrails
 │   ├── jobs/                   # BullMQ queues, Transactional Outbox worker, Meta rate pacer
-│   └── pixel/                  # Zero-dependency <4KB client intent tracking script
+│   └── pixel/                  # Zero-dependency <2.8KB client intent tracking script
 ├── scripts/
 │   ├── eval-agents.ts          # 50-case offline LLM benchmark evaluation harness
 │   └── simulate-abandonment.ts # Real-time synthetic cart drop-off simulator

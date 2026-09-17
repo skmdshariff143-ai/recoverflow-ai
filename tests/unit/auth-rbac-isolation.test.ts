@@ -5,6 +5,10 @@ import {
   hasMinimumRole,
   hasPermission,
   assertTenantScoping,
+  extractTokenFromHeaders,
+  getTenantContext,
+  requireTenantContext,
+  requirePermission,
   DEMO_PERSONA_SESSIONS,
   type UserRole,
 } from '@recoverflow/core';
@@ -134,7 +138,7 @@ describe('RecoverFlow AI — Session Authentication & RBAC Security Matrix', () 
     const session = DEMO_PERSONA_SESSIONS.RECOVERY_MANAGER;
 
     // Same merchant and org -> OK
-    expect(() => assertTenantScoping(session, 'merchant_01', 'org_recoverflow_demo')).not.toThrow();
+    expect(() => assertTenantScoping(session, 'merchant_default_01', 'org_recoverflow_demo')).not.toThrow();
 
     // Cross-merchant attempt -> throws
     expect(() => assertTenantScoping(session, 'merchant_OTHER_STORE', 'org_recoverflow_demo')).toThrow(
@@ -142,13 +146,81 @@ describe('RecoverFlow AI — Session Authentication & RBAC Security Matrix', () 
     );
 
     // Cross-organization attempt -> throws
-    expect(() => assertTenantScoping(session, 'merchant_01', 'org_OTHER_CORP')).toThrow(
+    expect(() => assertTenantScoping(session, 'merchant_default_01', 'org_OTHER_CORP')).toThrow(
       /FORBIDDEN_CROSS_TENANT/,
     );
 
     // Unauthenticated attempt -> throws
-    expect(() => assertTenantScoping(null, 'merchant_01')).toThrow(
+    expect(() => assertTenantScoping(null, 'merchant_default_01')).toThrow(
+      /UNAUTHENTICATED/,
+    );
+  });
+
+  it('extracts session tokens from multiple HTTP header patterns', () => {
+    const rawToken = createSessionToken(DEMO_PERSONA_SESSIONS.ADMIN, 60000, secret);
+
+    // 1. Direct Bearer header in Record
+    expect(extractTokenFromHeaders({ authorization: `Bearer ${rawToken}` })).toBe(rawToken);
+
+    // 2. Custom header in Record
+    expect(extractTokenFromHeaders({ 'x-session-token': rawToken })).toBe(rawToken);
+
+    // 3. Cookie header in Record
+    expect(extractTokenFromHeaders({ cookie: `foo=bar; recoverflow_session=${rawToken}; theme=dark` })).toBe(rawToken);
+
+    // 4. Raw string
+    expect(extractTokenFromHeaders(`Bearer ${rawToken}`)).toBe(rawToken);
+    expect(extractTokenFromHeaders(rawToken)).toBe(rawToken);
+
+    // 5. Null or empty
+    expect(extractTokenFromHeaders(null)).toBeNull();
+    expect(extractTokenFromHeaders({})).toBeNull();
+  });
+
+  it('resolves tenant context via getTenantContext and requireTenantContext', () => {
+    const token = createSessionToken(DEMO_PERSONA_SESSIONS.RECOVERY_MANAGER, 60000, secret);
+
+    // getTenantContext with valid header
+    const resolved = getTenantContext({ authorization: `Bearer ${token}` }, secret);
+    expect(resolved).not.toBeNull();
+    expect(resolved?.role).toBe('RECOVERY_MANAGER');
+    expect(resolved?.activeMerchantId).toBe('merchant_default_01');
+
+    // getTenantContext with missing header
+    expect(getTenantContext({}, secret)).toBeNull();
+
+    // requireTenantContext with matching merchant
+    const required = requireTenantContext({ authorization: `Bearer ${token}` }, 'merchant_default_01', undefined, secret);
+    expect(required.userId).toBe(DEMO_PERSONA_SESSIONS.RECOVERY_MANAGER.userId);
+
+    // requireTenantContext with cross-merchant -> throws
+    expect(() => requireTenantContext({ authorization: `Bearer ${token}` }, 'merchant_OTHER', undefined, secret)).toThrow(
+      /FORBIDDEN_CROSS_MERCHANT/,
+    );
+
+    // requireTenantContext unauthenticated -> throws
+    expect(() => requireTenantContext({}, 'merchant_default_01', undefined, secret)).toThrow(
+      /UNAUTHENTICATED/,
+    );
+  });
+
+  it('enforces granular permissions via requirePermission', () => {
+    const ownerSession = DEMO_PERSONA_SESSIONS.OWNER;
+    const viewerSession = DEMO_PERSONA_SESSIONS.VIEWER;
+
+    // Allowed permission should not throw
+    expect(() => requirePermission(ownerSession, 'recovery:execute')).not.toThrow();
+    expect(() => requirePermission(viewerSession, 'financials:view')).not.toThrow();
+
+    // Forbidden permission should throw
+    expect(() => requirePermission(viewerSession, 'recovery:execute')).toThrow(
+      /FORBIDDEN_PERMISSION/,
+    );
+
+    // Null session should throw
+    expect(() => requirePermission(null, 'financials:view')).toThrow(
       /UNAUTHENTICATED/,
     );
   });
 });
+
