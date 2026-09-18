@@ -164,6 +164,7 @@ model Merchant {
   recoveryPolicies              RecoveryPolicy[]
   auditEvents                   AuditEvent[]
   webhookEvents                 WebhookEvent[]
+  experiments                   Experiment[]
   createdAt                     DateTime          @default(now())
   updatedAt                     DateTime          @updatedAt
 
@@ -428,6 +429,7 @@ model WebhookEvent {
   receivedAt     DateTime  @default(now())
   processedAt    DateTime?
 
+  @@unique([merchantId, provider, providerEventId])
   @@index([merchantId, provider])
   @@index([status, receivedAt])
 }
@@ -642,6 +644,7 @@ model OutboxEvent {
   availableAt    DateTime  @default(now())
   lockedAt       DateTime?
   lockedBy       String?
+  leaseExpiresAt DateTime?
   publishedAt    DateTime?
   lastError      String?
   createdAt      DateTime  @default(now())
@@ -651,6 +654,7 @@ model OutboxEvent {
   @@index([status, availableAt])
   @@index([merchantId, status])
   @@index([lockedBy, lockedAt])
+  @@index([status, leaseExpiresAt])
 }
 
 model SecurityIncident {
@@ -767,6 +771,7 @@ model Return {
   reason                ReturnReason  @default(SIZE_TOO_SMALL)
   status                ReturnStatus  @default(REQUESTED)
   refundAmount          Float?
+  refundAmountMinor     BigInt?
   currency              String        @default("USD")
   notes                 String?
   returnTrackingNumber  String?
@@ -775,4 +780,86 @@ model Return {
 
   @@index([orderId])
   @@index([merchantId, status])
+}
+
+
+// ── Experimentation & Bandit Metrics Persistence ─────────────────────────
+
+model Experiment {
+  id             String                @id @default(cuid())
+  merchantId     String
+  merchant       Merchant              @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  name           String
+  description    String?
+  status         String                @default("ACTIVE") // ACTIVE, PAUSED, CONCLUDED
+  variants       ExperimentVariant[]
+  assignments    ExperimentAssignment[]
+  exposures      ExperimentExposure[]
+  outcomes       ExperimentOutcome[]
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  @@index([merchantId, status])
+}
+
+model ExperimentVariant {
+  id             String                @id @default(cuid())
+  experimentId   String
+  experiment     Experiment            @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+  key            String                // e.g. "control", "dynamic_mab", "vip_concierge"
+  name           String
+  weight         Float                 @default(1.0)
+  isControl      Boolean               @default(false)
+  config         Json?
+  assignments    ExperimentAssignment[]
+  exposures      ExperimentExposure[]
+  outcomes       ExperimentOutcome[]
+
+  @@unique([experimentId, key])
+}
+
+model ExperimentAssignment {
+  id             String            @id @default(cuid())
+  experimentId   String
+  experiment     Experiment        @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+  merchantId     String
+  subjectKey     String            // e.g. customer phone/email or cartToken
+  variantId      String
+  variant        ExperimentVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  assignedAt     DateTime          @default(now())
+
+  @@unique([experimentId, subjectKey])
+  @@index([merchantId, experimentId])
+}
+
+model ExperimentExposure {
+  id             String            @id @default(cuid())
+  experimentId   String
+  experiment     Experiment        @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+  merchantId     String
+  subjectKey     String
+  variantId      String
+  variant        ExperimentVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  exposedAt      DateTime          @default(now())
+  context        Json?
+
+  @@index([experimentId, variantId])
+  @@index([merchantId, exposedAt])
+}
+
+model ExperimentOutcome {
+  id                   String            @id @default(cuid())
+  experimentId         String
+  experiment           Experiment        @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+  merchantId           String
+  subjectKey           String
+  variantId            String
+  variant              ExperimentVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  isConverted          Boolean           @default(false)
+  grossRecoveredPaise  BigInt            @default(0)
+  netMarginPaise       BigInt            @default(0)
+  observedAt           DateTime          @default(now())
+
+  @@index([experimentId, variantId])
+  @@index([merchantId, observedAt])
 }

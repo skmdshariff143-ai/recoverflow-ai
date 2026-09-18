@@ -463,15 +463,39 @@ export class PrismaDatabase implements DatabasePort {
     return { ...rc, expectedValuePaise: Number(rc.expectedValuePaise) };
   }
 
-  async updateRecoveryCase(id: string, updates: Partial<RecoveryCaseRecord>, _merchantId?: string): Promise<RecoveryCaseRecord | null> {
+  async updateRecoveryCase(
+    paramsOrId: any,
+    legacyUpdates?: Partial<RecoveryCaseRecord>,
+    legacyMerchantId?: string
+  ): Promise<RecoveryCaseRecord | null> {
+    const id = typeof paramsOrId === 'string' ? paramsOrId : paramsOrId.id;
+    const updates = typeof paramsOrId === 'string' ? (legacyUpdates || {}) : paramsOrId.updates;
+    const merchantId = typeof paramsOrId === 'string' ? legacyMerchantId : paramsOrId.merchantId;
+
+    if (!merchantId) {
+      throw new Error('TENANT_SCOPED_SECURITY_ERROR: merchantId is required for updateRecoveryCase');
+    }
+
+    const existing = await this.prisma.recoveryCase.findFirst({
+      where: { id, merchantId },
+    });
+    if (!existing) return null;
+
     const data: Record<string, unknown> = { ...updates };
     if (updates.expectedValuePaise !== undefined) {
       data.expectedValuePaise = BigInt(updates.expectedValuePaise);
     }
+
     const rc = await this.prisma.recoveryCase.update({
       where: { id },
       data: data as any,
     });
+    return { ...rc, expectedValuePaise: Number(rc.expectedValuePaise) };
+  }
+
+  async adminGetRecoveryCaseById(id: string): Promise<RecoveryCaseRecord | null> {
+    const rc = await this.prisma.recoveryCase.findUnique({ where: { id } });
+    if (!rc) return null;
     return { ...rc, expectedValuePaise: Number(rc.expectedValuePaise) };
   }
 
@@ -577,6 +601,43 @@ export class PrismaDatabase implements DatabasePort {
     outbox?: OutboxEventRecord;
   }> {
     return this.prisma.$transaction(async (tx) => {
+      // Replay & Conflict Safety Check
+      if (params.webhookEvent.providerEventId && params.webhookEvent.merchantId) {
+        const existing = await tx.webhookEvent.findFirst({
+          where: {
+            merchantId: params.webhookEvent.merchantId,
+            provider: params.webhookEvent.provider,
+            providerEventId: params.webhookEvent.providerEventId,
+          },
+        });
+
+        if (existing) {
+          if (existing.payloadHash && params.webhookEvent.payloadHash && existing.payloadHash === params.webhookEvent.payloadHash) {
+            return {
+              webhook: {
+                ...existing,
+                status: 'DUPLICATE' as any,
+                rawPayload: existing.rawPayload as Record<string, unknown>,
+              },
+            };
+          } else {
+            await tx.securityIncident.create({
+              data: {
+                merchantId: params.webhookEvent.merchantId,
+                attackType: 'WEBHOOK_PAYLOAD_TAMPERING',
+                flaggedPatterns: ['PROVIDER_EVENT_ID_PAYLOAD_HASH_MISMATCH'],
+                rawInput: JSON.stringify(params.webhookEvent.rawPayload),
+                normalizedInput: `providerEventId: ${params.webhookEvent.providerEventId}`,
+                riskScore: 1.0,
+              },
+            });
+            const conflictError = new Error('INTEGRITY_CONFLICT: Webhook payload hash mismatch for provider event ID');
+            (conflictError as any).statusCode = 409;
+            throw conflictError;
+          }
+        }
+      }
+
       const webhook = await tx.webhookEvent.create({
         data: {
           merchantId: params.webhookEvent.merchantId,
@@ -1809,4 +1870,130 @@ export class PrismaDatabase implements DatabasePort {
     ]);
     return { prunedCarts: c.count, prunedLogs: l.count };
   }
+
+  // ── Experiment Persistence & Metrics ────────────────────────────────────
+
+  async recordExperimentAssignment(params: {
+    experimentId: string;
+    merchantId: string;
+    subjectKey: string;
+    variantId: string;
+  }): Promise<void> {
+    await this.prisma.experimentAssignment.upsert({
+      where: {
+        experimentId_subjectKey: {
+          experimentId: params.experimentId,
+          subjectKey: params.subjectKey,
+        },
+      },
+      create: {
+        experimentId: params.experimentId,
+        merchantId: params.merchantId,
+        subjectKey: params.subjectKey,
+        variantId: params.variantId,
+      },
+      update: {}, // Sticky assignment: do not overwrite existing assignment
+    });
+  }
+
+  async recordExperimentExposure(params: {
+    experimentId: string;
+    merchantId: string;
+    subjectKey: string;
+    variantId: string;
+    context?: Record<string, unknown>;
+  }): Promise<void> {
+    await this.prisma.experimentExposure.create({
+      data: {
+        experimentId: params.experimentId,
+        merchantId: params.merchantId,
+        subjectKey: params.subjectKey,
+        variantId: params.variantId,
+        context: (params.context as any) || undefined,
+      },
+    });
+  }
+
+  async recordExperimentOutcome(params: {
+    experimentId: string;
+    merchantId: string;
+    subjectKey: string;
+    variantId: string;
+    isConverted: boolean;
+    grossRecoveredPaise: bigint | number;
+    netMarginPaise: bigint | number;
+  }): Promise<void> {
+    await this.prisma.experimentOutcome.create({
+      data: {
+        experimentId: params.experimentId,
+        merchantId: params.merchantId,
+        subjectKey: params.subjectKey,
+        variantId: params.variantId,
+        isConverted: params.isConverted,
+        grossRecoveredPaise: BigInt(params.grossRecoveredPaise),
+        netMarginPaise: BigInt(params.netMarginPaise),
+      },
+    });
+  }
+
+  async getExperimentMetrics(
+    merchantId: string,
+    experimentId?: string
+  ): Promise<Array<{
+    armId: string;
+    strategyName: string;
+    impressions: number;
+    conversions: number;
+    conversionRateBps: number;
+    grossRecoveredPaise: number;
+    netContributionPaise: number;
+    liftOverBaselineBps: number;
+  }>> {
+    const experiments = await this.prisma.experiment.findMany({
+      where: {
+        merchantId,
+        ...(experimentId ? { id: experimentId } : { status: 'ACTIVE' }),
+      },
+      include: {
+        variants: {
+          include: {
+            exposures: true,
+            outcomes: true,
+          },
+        },
+      },
+    });
+
+    if (experiments.length === 0) {
+      return [];
+    }
+
+    const exp = experiments[0];
+    const controlVariant = exp.variants.find((v) => v.isControl) || exp.variants[0];
+    const controlExposures = controlVariant ? controlVariant.exposures.length : 0;
+    const controlConversions = controlVariant ? controlVariant.outcomes.filter((o) => o.isConverted).length : 0;
+    const baselineRateBps = controlExposures > 0 ? Math.round((controlConversions / controlExposures) * 10000) : 0;
+
+    return exp.variants.map((variant) => {
+      const impressions = variant.exposures.length;
+      const conversions = variant.outcomes.filter((o) => o.isConverted).length;
+      const conversionRateBps = impressions > 0 ? Math.round((conversions / impressions) * 10000) : 0;
+      const liftOverBaselineBps = conversionRateBps - baselineRateBps;
+
+      const grossRecoveredPaise = variant.outcomes.reduce((sum, o) => sum + Number(o.grossRecoveredPaise), 0);
+      const netContributionPaise = variant.outcomes.reduce((sum, o) => sum + Number(o.netMarginPaise), 0);
+
+      return {
+        armId: variant.key,
+        strategyName: variant.name,
+        impressions,
+        conversions,
+        conversionRateBps,
+        grossRecoveredPaise,
+        netContributionPaise,
+        liftOverBaselineBps,
+      };
+    });
+  }
+
 }

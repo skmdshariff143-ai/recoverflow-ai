@@ -56,3 +56,5 @@ export * from './auth';
 export * from './money';
 export * from './data';
 export * from './subscriptionStore';
+
+export * from './retention/RetentionPolicyService';

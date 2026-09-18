@@ -2,22 +2,25 @@ import http from 'http';
 import crypto from 'crypto';
 import Redis from 'ioredis';
 import { Worker, type Job } from 'bullmq';
-import { db, getRuntimeMode, StartupConfigurationError } from '@recoverflow/core';
+import { db, getRuntimeMode, StartupConfigurationError, globalRetentionService } from '@recoverflow/core';
 import { QUEUE_NAMES, globalRecoveryQueue, type CartJobData, type FallbackJobData } from './queue';
 import { globalOutboxWorker } from './outbox-worker';
+import { DistributedMetaRateLimiter } from './rate-limiter';
 
 /**
- * Data Sovereignty Compliance: Periodic 30-day retention hard-pruner.
+ * Scheduled Data Retention Pruner.
+ * Invokes RetentionPolicyService with configurable retention rules.
  */
 export function startDataRetentionPruner(intervalMs = 3600 * 1000): NodeJS.Timeout {
   const runPrune = async () => {
     try {
-      const stats = await db.pruneRecordsOlderThan(30);
-      if (stats.prunedCarts > 0 || stats.prunedLogs > 0) {
-        console.log(`[Data Sovereignty] Pruned records older than 30 days: ${stats.prunedCarts} carts, ${stats.prunedLogs} logs`);
+      const results = await globalRetentionService.executePruning(db);
+      const pruned = results.filter((r) => r.prunedCount > 0);
+      if (pruned.length > 0) {
+        console.log(`[Retention Policy] Pruned expired records:`, pruned);
       }
     } catch (err) {
-      console.error('[Data Sovereignty] Retention pruning error:', err);
+      console.error('[Retention Policy] Retention pruning error:', err);
     }
   };
 
@@ -25,32 +28,10 @@ export function startDataRetentionPruner(intervalMs = 3600 * 1000): NodeJS.Timeo
   return setInterval(runPrune, intervalMs);
 }
 
-/**
- * Meta Rate-Limit Pacer: Enforces max 50 messages/sec per phone number ID.
- */
-export class MetaRateLimitPacer {
-  private lastDispatchTimes: number[] = [];
-  private readonly maxPerSecond = 50;
-
-  async acquireSlot(): Promise<void> {
-    const now = Date.now();
-    this.lastDispatchTimes = this.lastDispatchTimes.filter((t) => now - t < 1000);
-
-    if (this.lastDispatchTimes.length >= this.maxPerSecond) {
-      const oldest = this.lastDispatchTimes[0];
-      const waitTime = Math.max(0, 1000 - (now - oldest));
-      await new Promise((resolve) => setTimeout(resolve, waitTime));
-    }
-
-    this.lastDispatchTimes.push(Date.now());
-  }
-}
-
-export const globalMetaPacer = new MetaRateLimitPacer();
-
 export interface WorkerRuntimeCoordinator {
   workerId: string;
   workers: Worker[];
+  rateLimiter: DistributedMetaRateLimiter;
   healthServer?: http.Server;
   isClosed: boolean;
   close: () => Promise<void>;
@@ -59,9 +40,10 @@ export interface WorkerRuntimeCoordinator {
 /**
  * Starts distributed BullMQ worker instances.
  */
-export function startDistributedWorkers(connectionUrl?: string): Worker[] {
+export function startDistributedWorkers(connectionUrl?: string, rateLimiter?: DistributedMetaRateLimiter): Worker[] {
   const redisUrl = connectionUrl || process.env.REDIS_URL;
   const mode = getRuntimeMode();
+  const limiter = rateLimiter || new DistributedMetaRateLimiter(redisUrl);
 
   if (!redisUrl) {
     if (mode === 'LIVE' || mode === 'SANDBOX' || process.env.NODE_ENV === 'production') {
@@ -80,7 +62,7 @@ export function startDistributedWorkers(connectionUrl?: string): Worker[] {
     QUEUE_NAMES.IMMEDIATE,
     async (job: Job<CartJobData>) => {
       console.log(`[Immediate Worker] Processing payment recovery job ${job.id} for cart ${job.data.cartEventId}`);
-      await globalMetaPacer.acquireSlot();
+      await limiter.waitForSlot(job.data.merchantId || 'default', job.data.cartEventId);
       return globalRecoveryQueue.executePrimaryRecovery(job.data.cartEventId);
     },
     { connection, concurrency: 5 }
@@ -91,7 +73,7 @@ export function startDistributedWorkers(connectionUrl?: string): Worker[] {
     QUEUE_NAMES.STANDARD,
     async (job: Job<CartJobData>) => {
       console.log(`[Standard Worker] Processing cart recovery job ${job.id} for cart ${job.data.cartEventId}`);
-      await globalMetaPacer.acquireSlot();
+      await limiter.waitForSlot(job.data.merchantId || 'default', job.data.cartEventId);
       return globalRecoveryQueue.executePrimaryRecovery(job.data.cartEventId);
     },
     { connection, concurrency: 10 }
@@ -122,7 +104,7 @@ export function startDistributedWorkers(connectionUrl?: string): Worker[] {
 }
 
 /**
- * Starts an HTTP health server on port 4000 (or HEALTH_PORT) for Kubernetes / Docker / ECS probes.
+ * Starts an HTTP health server on port 4000 for Kubernetes / Docker / ECS probes.
  */
 export function startHealthServer(port = Number(process.env.HEALTH_PORT || 4000), redisUrl?: string): http.Server {
   const server = http.createServer(async (req, res) => {
@@ -136,12 +118,17 @@ export function startHealthServer(port = Number(process.env.HEALTH_PORT || 4000)
 
     if (req.method === 'GET' && url === '/ready') {
       try {
+        const mode = getRuntimeMode();
         const dbOk = await db.ping();
         if (!dbOk) {
           throw new Error('Database ping failed');
         }
 
         const rUrl = redisUrl || process.env.REDIS_URL;
+        if (!rUrl && (mode === 'LIVE' || mode === 'SANDBOX' || process.env.NODE_ENV === 'production')) {
+          throw new Error(`REDIS_URL is required in ${mode} mode; in-memory queue is not acceptable`);
+        }
+
         if (rUrl) {
           const client = new Redis(rUrl, { connectTimeout: 3000, maxRetriesPerRequest: 1, lazyConnect: true });
           await client.connect();
@@ -153,7 +140,12 @@ export function startHealthServer(port = Number(process.env.HEALTH_PORT || 4000)
         }
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ status: 'ready', db: 'ok', redis: rUrl ? 'ok' : 'in-memory' }));
+        res.end(JSON.stringify({
+          status: 'ready',
+          mode,
+          db: dbOk ? 'ok' : 'failed',
+          redis: rUrl ? 'ok' : 'in-memory',
+        }));
       } catch (err: unknown) {
         res.writeHead(503, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ status: 'unready', error: err instanceof Error ? err.message : String(err) }));
@@ -183,7 +175,8 @@ export async function startWorkerRuntime(options?: {
   healthPort?: number;
 }): Promise<WorkerRuntimeCoordinator> {
   const workerId = options?.workerId || `worker_${crypto.randomBytes(6).toString('hex')}`;
-  const workers = startDistributedWorkers(options?.redisUrl);
+  const rateLimiter = new DistributedMetaRateLimiter(options?.redisUrl);
+  const workers = startDistributedWorkers(options?.redisUrl, rateLimiter);
 
   // Start Transactional Outbox Worker
   globalOutboxWorker.start();
@@ -203,6 +196,7 @@ export async function startWorkerRuntime(options?: {
   const coordinator: WorkerRuntimeCoordinator = {
     workerId,
     workers,
+    rateLimiter,
     healthServer,
     isClosed: false,
     close: async () => {
@@ -221,15 +215,18 @@ export async function startWorkerRuntime(options?: {
         await Promise.all(workers.map((w) => w.close()));
       }
 
-      // 4. Close health server
+      // 4. Close rate limiter
+      await rateLimiter.close();
+
+      // 5. Close health server
       if (healthServer) {
         await new Promise<void>((resolve) => healthServer!.close(() => resolve()));
       }
 
-      // 5. Close queues
+      // 6. Close queues
       await globalRecoveryQueue.close();
 
-      // 6. Close DB
+      // 7. Close DB
       await db.close();
     },
   };

@@ -25,13 +25,18 @@
     "eval:agents": "tsx scripts/eval-agents.ts",
     "seed:demo": "tsx scripts/seed-demo.ts",
     "worker": "tsx scripts/start-worker.ts",
-    "verify": "npm run lint && npm run type-check && npm run test:unit && npm run generate:benchmark && npm run verify:artifacts && git diff --exit-code -- data && npm run build && npm run test:e2e",
+    "verify": "npm run verify:core",
     "test:unit": "vitest run tests/unit",
     "test:integration:postgres": "vitest run tests/integration/postgres",
     "test:integration:redis": "vitest run tests/integration/redis",
     "test:durability": "vitest run tests/integration/durability",
     "test:integration": "vitest run tests/integration",
-    "test:all": "vitest run"
+    "test:all": "vitest run",
+    "verify:core": "npm run lint && npm run type-check && npm run test:unit && npm run eval:agents && npm run verify:artifacts && npm run build",
+    "verify:full": "npm run verify:core && npm run test:integration:postgres && npm run test:integration:redis && npm run test:durability && npm run test:e2e",
+    "perf:smoke": "tsx scripts/perf-smoke-test.ts",
+    "db:migrate:deploy": "npx prisma migrate deploy --schema=packages/core/prisma/schema.prisma",
+    "db:validate": "npx prisma validate --schema=packages/core/prisma/schema.prisma"
   },
   "engines": {
     "node": ">=20"

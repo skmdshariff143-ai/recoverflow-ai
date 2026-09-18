@@ -68,3 +68,18 @@ export const ModelWeightsSchema = z.object({
     iterations: z.number().int().positive(),
   }),
 });
+
+export const CartItemSchema = z.object({
+  id: z.string().min(1),
+  variantId: z.string().optional(),
+  title: z.string().min(1),
+  variantTitle: z.string().optional(),
+  quantity: z.number().int().positive(),
+  currency: z.string().min(1).default('INR'),
+  unitAmountMinor: z.union([z.bigint(), z.number().int().nonnegative()]),
+  price: z.number().nonnegative().optional(), // Deprecated legacy float representation
+  imageUrl: z.string().url().optional(),
+  productUrl: z.string().url().optional(),
+});
+
+export type ValidatedCartItem = z.infer<typeof CartItemSchema>;

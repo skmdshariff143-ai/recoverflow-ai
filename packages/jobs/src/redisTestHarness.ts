@@ -18,6 +18,7 @@ export class InfrastructureUnavailableError extends Error {
 
 export interface RedisTestContext {
   redis: Redis;
+  redisUrl: string;
   createTestQueue: (queueName: string) => Queue;
   cleanup: () => Promise<void>;
 }
@@ -73,7 +74,16 @@ export async function createRedisTestHarness(): Promise<RedisTestContext> {
 
   return {
     redis,
+    redisUrl,
     createTestQueue,
     cleanup,
   };
+}
+
+export const setupRedisTestHarness = createRedisTestHarness;
+
+export async function teardownRedisTestHarness(ctx?: RedisTestContext): Promise<void> {
+  if (ctx) {
+    await ctx.cleanup();
+  }
 }

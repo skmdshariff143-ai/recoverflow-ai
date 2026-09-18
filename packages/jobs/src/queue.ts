@@ -50,6 +50,7 @@ export function calculateJitteredBackoffMs(attempt: number, baseMs = 1000, maxMs
 export interface CartJobData {
   cartEventId: string;
   abandonmentType: AbandonmentType;
+  merchantId?: string;
 }
 
 export interface FallbackJobData {

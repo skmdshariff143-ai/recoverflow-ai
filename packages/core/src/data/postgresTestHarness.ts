@@ -66,3 +66,11 @@ export async function createPostgresTestHarness(): Promise<PostgresTestContext> 
     cleanup,
   };
 }
+
+export const setupPostgresTestHarness = createPostgresTestHarness;
+
+export async function teardownPostgresTestHarness(ctx?: PostgresTestContext): Promise<void> {
+  if (ctx) {
+    await ctx.cleanup();
+  }
+}

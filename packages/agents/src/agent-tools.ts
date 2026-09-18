@@ -21,10 +21,25 @@ import {
 import { runRecoveryAgent, generateDeterministicRecoveryCopy } from './recovery-agent';
 
 export interface RecoverySearchQuery {
-  status?: CartStatus;
-  dropOffReason?: AbandonmentType;
+  status?: string;
+  search?: string;
+  minExpectedValuePaise?: number | bigint;
   limit?: number;
   offset?: number;
+}
+
+export interface SanitizedRecoveryCaseItem {
+  caseId: string;
+  paymentId: string;
+  merchantId: string;
+  customerMasked?: string;
+  status: string;
+  expectedValueMinor: number;
+  recoveryProbabilityBps: number;
+  strategy: string;
+  attemptCount: number;
+  nextAction: string;
+  createdAt: string | Date;
 }
 
 export interface SanitizedRecoveryCase {
@@ -113,33 +128,63 @@ export async function getRecoveryCaseTool(
 }
 
 /**
- * Tool: Search and filter recovery cases strictly bounded to the authenticated tenant.
+ * Tool: Search and filter recovery cases strictly bounded to the authenticated tenant using DB-level queries.
  */
 export async function searchRecoveryCasesTool(
   query: RecoverySearchQuery,
   session: UserSession,
-): Promise<{ total: number; limit: number; offset: number; cases: SanitizedRecoveryCase[] }> {
+): Promise<{ total: number; limit: number; offset: number; cases: SanitizedRecoveryCaseItem[] }> {
   requirePermission(session, 'policy:view');
 
-  const allCarts = await db.getCartEventsByMerchant(session.activeMerchantId);
-  let filtered = allCarts;
-
-  if (query.status) {
-    filtered = filtered.filter((c) => c.status === query.status);
-  }
-  if (query.dropOffReason) {
-    filtered = filtered.filter((c) => c.abandonmentType === query.dropOffReason);
-  }
-
-  const offset = Math.max(0, query.offset || 0);
   const limit = Math.min(100, Math.max(1, query.limit || 20));
-  const paginated = filtered.slice(offset, offset + limit);
+  const offset = Math.max(0, query.offset || 0);
 
-  return {
-    total: filtered.length,
+  // Execute database-level filtering, pagination, and sorting
+  const result = await db.searchRecoveryCases({
+    merchantId: session.activeMerchantId,
+    status: query.status,
+    search: query.search,
+    minExpectedValuePaise: query.minExpectedValuePaise,
     limit,
     offset,
-    cases: paginated.map(sanitizeCart),
+  });
+
+  const sanitizedCases: SanitizedRecoveryCaseItem[] = result.items.map((rc) => {
+    const custId = rc.customerId;
+    const maskedCustomer = custId ? `${custId.slice(0, 3)}***${custId.slice(-2)}` : undefined;
+    const expectedValueMinor = typeof rc.expectedValuePaise === 'bigint' ? Number(rc.expectedValuePaise) : Number(rc.expectedValuePaise || 0);
+    const probBps = rc.recoveryProbBps || 0;
+
+    const strategy = 'DYNAMIC_DISCOUNT_MAB';
+    let nextAction = 'SCHEDULE_DISPATCH';
+    if (rc.status === 'RECOVERED') {
+      nextAction = 'ARCHIVE_SUCCESS';
+    } else if (rc.status === 'STOPPED' || rc.attemptCount >= rc.maxAttempts) {
+      nextAction = 'CLOSE_EXPIRED';
+    } else if (rc.status === 'APPROVAL_REQUIRED') {
+      nextAction = 'REQUEST_DUAL_APPROVAL';
+    }
+
+    return {
+      caseId: rc.id,
+      paymentId: rc.paymentId,
+      merchantId: rc.merchantId,
+      customerMasked: maskedCustomer,
+      status: rc.status,
+      expectedValueMinor,
+      recoveryProbabilityBps: probBps,
+      strategy,
+      attemptCount: rc.attemptCount,
+      nextAction,
+      createdAt: rc.createdAt,
+    };
+  });
+
+  return {
+    total: result.total,
+    limit,
+    offset,
+    cases: sanitizedCases,
   };
 }
 
@@ -175,43 +220,65 @@ export async function getMerchantMetricsTool(
 
 /**
  * Tool: Inspect multi-armed bandit (MAB) experimentation and lift metrics.
+ * In DEMO: Returns fixture benchmark data (dataSource: 'DEMO').
+ * In SANDBOX / LIVE: Queries genuine persisted experiment records (dataSource: 'OBSERVED').
+ * Never fabricates observed numbers if none exist.
  */
 export async function getExperimentPerformanceTool(
   session: UserSession,
 ): Promise<{ merchantId: string; dataSource: 'DEMO' | 'OBSERVED' | 'BENCHMARK'; arms: ExperimentArmPerformance[] }> {
   requirePermission(session, 'policy:view');
 
-  // Baseline vs Active Arms
-  const arms: ExperimentArmPerformance[] = [
-    {
-      armId: 'arm_control_static',
-      strategyName: 'Static Generic WhatsApp Reminder',
-      impressions: 240,
-      conversions: 42,
-      conversionRateBps: 1750, // 17.5%
-      liftOverBaselineBps: 0,
-    },
-    {
-      armId: 'arm_dynamic_incentive_mab',
-      strategyName: 'Thompson Sampling Multi-Armed Dynamic Recovery',
-      impressions: 280,
-      conversions: 78,
-      conversionRateBps: 2785, // 27.85%
-      liftOverBaselineBps: 1035, // +10.35% absolute lift
-    },
-    {
-      armId: 'arm_high_touch_concierge',
-      strategyName: 'AI Concierge VIP Assisted Checkout',
-      impressions: 110,
-      conversions: 41,
-      conversionRateBps: 3727, // 37.27%
-      liftOverBaselineBps: 1977, // +19.77% absolute lift
-    },
-  ];
+  const mode = process.env.RECOVERFLOW_RUNTIME_MODE || 'DEMO';
+
+  if (mode === 'DEMO') {
+    const demoArms: ExperimentArmPerformance[] = [
+      {
+        armId: 'arm_control_static',
+        strategyName: 'Static Generic WhatsApp Reminder',
+        impressions: 240,
+        conversions: 42,
+        conversionRateBps: 1750, // 17.5%
+        liftOverBaselineBps: 0,
+      },
+      {
+        armId: 'arm_dynamic_incentive_mab',
+        strategyName: 'Thompson Sampling Multi-Armed Dynamic Recovery',
+        impressions: 280,
+        conversions: 78,
+        conversionRateBps: 2785, // 27.85%
+        liftOverBaselineBps: 1035, // +10.35% absolute lift
+      },
+      {
+        armId: 'arm_high_touch_concierge',
+        strategyName: 'AI Concierge VIP Assisted Checkout',
+        impressions: 110,
+        conversions: 41,
+        conversionRateBps: 3727, // 37.27%
+        liftOverBaselineBps: 1977, // +19.77% absolute lift
+      },
+    ];
+    return {
+      merchantId: session.activeMerchantId,
+      dataSource: 'DEMO',
+      arms: demoArms,
+    };
+  }
+
+  // SANDBOX or LIVE: Query genuine database records
+  const dbMetrics = await db.getExperimentMetrics(session.activeMerchantId);
+  const arms: ExperimentArmPerformance[] = dbMetrics.map((m) => ({
+    armId: m.armId,
+    strategyName: m.strategyName,
+    impressions: m.impressions,
+    conversions: m.conversions,
+    conversionRateBps: m.conversionRateBps,
+    liftOverBaselineBps: m.liftOverBaselineBps,
+  }));
 
   return {
     merchantId: session.activeMerchantId,
-    dataSource: process.env.RECOVERFLOW_RUNTIME_MODE === 'LIVE' ? 'OBSERVED' : 'DEMO',
+    dataSource: 'OBSERVED',
     arms,
   };
 }

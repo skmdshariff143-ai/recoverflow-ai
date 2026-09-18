@@ -75,6 +75,9 @@ export class MemoryDatabase implements DatabasePort {
   public orders = new Map<string, OrderRecord>();
   public fulfillments = new Map<string, FulfillmentRecord>();
   public returns = new Map<string, ReturnRecord>();
+  public experimentAssignments = new Map<string, { experimentId: string; merchantId: string; subjectKey: string; variantId: string; assignedAt: Date }>();
+  public experimentExposures: Array<{ experimentId: string; merchantId: string; subjectKey: string; variantId: string; context?: Record<string, unknown>; exposedAt: Date }> = [];
+  public experimentOutcomes: Array<{ experimentId: string; merchantId: string; subjectKey: string; variantId: string; isConverted: boolean; grossRecoveredPaise: bigint; netMarginPaise: bigint; observedAt: Date }> = [];
 
   constructor() {
     this.seedDefaults();
@@ -107,6 +110,38 @@ export class MemoryDatabase implements DatabasePort {
 
   public seedDefaults(): void {
     seedDemoDataset(this as unknown as any, { clearExisting: false });
+    // Seed initial recovery cases and payments for demo carts
+    for (const cart of this.cartEvents.values()) {
+      if (!this.payments.has(`pay_${cart.id}`)) {
+        const payment: PaymentRecord = {
+          id: `pay_${cart.id}`,
+          merchantId: cart.merchantId,
+          externalPaymentId: `ext_${cart.cartToken}`,
+          amountPaise: cart.totalAmountMinor ? Number(cart.totalAmountMinor) : Math.round(cart.totalPrice * 100),
+          currency: cart.currency || 'INR',
+          status: cart.status === 'RECOVERED' ? 'CAPTURED' : 'FAILED',
+          gateway: 'RAZORPAY',
+          createdAt: new Date(cart.createdAt),
+          updatedAt: new Date(cart.updatedAt),
+        };
+        this.payments.set(payment.id, payment);
+
+        const recoveryCase: RecoveryCaseRecord = {
+          id: `rc_${cart.id}`,
+          merchantId: cart.merchantId,
+          paymentId: payment.id,
+          customerId: cart.customerPhone || cart.customerEmail,
+          status: cart.status === 'RECOVERED' ? 'RECOVERED' : 'OPEN',
+          attemptCount: cart.recoveryStage === 'QUEUED' ? 0 : 1,
+          maxAttempts: 3,
+          recoveryProbBps: 5500,
+          expectedValuePaise: payment.amountPaise,
+          createdAt: new Date(cart.createdAt),
+          updatedAt: new Date(cart.updatedAt),
+        };
+        this.recoveryCases.set(recoveryCase.id, recoveryCase);
+      }
+    }
   }
 
   async ping(): Promise<boolean> {
@@ -489,10 +524,23 @@ export class MemoryDatabase implements DatabasePort {
     return rc;
   }
 
-  async updateRecoveryCase(id: string, updates: Partial<RecoveryCaseRecord>, merchantId?: string): Promise<RecoveryCaseRecord | null> {
+  async updateRecoveryCase(
+    paramsOrId: any,
+    legacyUpdates?: Partial<RecoveryCaseRecord>,
+    legacyMerchantId?: string
+  ): Promise<RecoveryCaseRecord | null> {
+    const id = typeof paramsOrId === 'string' ? paramsOrId : paramsOrId.id;
+    const updates = typeof paramsOrId === 'string' ? (legacyUpdates || {}) : paramsOrId.updates;
+    const merchantId = typeof paramsOrId === 'string' ? legacyMerchantId : paramsOrId.merchantId;
+
+    if (!merchantId) {
+      throw new Error('TENANT_SCOPED_SECURITY_ERROR: merchantId is required for updateRecoveryCase');
+    }
+
     const rc = this.recoveryCases.get(id);
     if (!rc) return null;
-    if (merchantId && rc.merchantId !== merchantId) return null;
+    if (rc.merchantId !== merchantId) return null;
+
     const updated: RecoveryCaseRecord = {
       ...rc,
       ...updates,
@@ -501,6 +549,10 @@ export class MemoryDatabase implements DatabasePort {
     };
     this.recoveryCases.set(id, updated);
     return updated;
+  }
+
+  async adminGetRecoveryCaseById(id: string): Promise<RecoveryCaseRecord | null> {
+    return this.recoveryCases.get(id) || null;
   }
 
   async listRecoveryCases(params: { merchantId: string; status?: string; limit?: number; offset?: number }): Promise<RecoveryCaseRecord[]> {
@@ -1261,4 +1313,103 @@ export class MemoryDatabase implements DatabasePort {
 
     return { prunedCarts, prunedLogs };
   }
+
+  // ── Experiment Persistence & Metrics ────────────────────────────────────
+
+  async recordExperimentAssignment(params: {
+    experimentId: string;
+    merchantId: string;
+    subjectKey: string;
+    variantId: string;
+  }): Promise<void> {
+    const key = `${params.experimentId}:${params.subjectKey}`;
+    if (!this.experimentAssignments.has(key)) {
+      this.experimentAssignments.set(key, { ...params, assignedAt: new Date() });
+    }
+  }
+
+  async recordExperimentExposure(params: {
+    experimentId: string;
+    merchantId: string;
+    subjectKey: string;
+    variantId: string;
+    context?: Record<string, unknown>;
+  }): Promise<void> {
+    this.experimentExposures.push({ ...params, exposedAt: new Date() });
+  }
+
+  async recordExperimentOutcome(params: {
+    experimentId: string;
+    merchantId: string;
+    subjectKey: string;
+    variantId: string;
+    isConverted: boolean;
+    grossRecoveredPaise: bigint | number;
+    netMarginPaise: bigint | number;
+  }): Promise<void> {
+    this.experimentOutcomes.push({
+      ...params,
+      grossRecoveredPaise: BigInt(params.grossRecoveredPaise),
+      netMarginPaise: BigInt(params.netMarginPaise),
+      observedAt: new Date(),
+    });
+  }
+
+  async getExperimentMetrics(
+    merchantId: string,
+    experimentId?: string
+  ): Promise<Array<{
+    armId: string;
+    strategyName: string;
+    impressions: number;
+    conversions: number;
+    conversionRateBps: number;
+    grossRecoveredPaise: number;
+    netContributionPaise: number;
+    liftOverBaselineBps: number;
+  }>> {
+    const relevantExposures = this.experimentExposures.filter(
+      (e) => e.merchantId === merchantId && (!experimentId || e.experimentId === experimentId)
+    );
+    const relevantOutcomes = this.experimentOutcomes.filter(
+      (o) => o.merchantId === merchantId && (!experimentId || o.experimentId === experimentId)
+    );
+
+    if (relevantExposures.length === 0 && relevantOutcomes.length === 0) {
+      return [];
+    }
+
+    const armMap = new Map<string, { impressions: number; conversions: number; gross: bigint; net: bigint }>();
+
+    for (const exp of relevantExposures) {
+      const current = armMap.get(exp.variantId) || { impressions: 0, conversions: 0, gross: 0n, net: 0n };
+      current.impressions += 1;
+      armMap.set(exp.variantId, current);
+    }
+
+    for (const out of relevantOutcomes) {
+      const current = armMap.get(out.variantId) || { impressions: 0, conversions: 0, gross: 0n, net: 0n };
+      if (out.isConverted) current.conversions += 1;
+      current.gross += out.grossRecoveredPaise;
+      current.net += out.netMarginPaise;
+      armMap.set(out.variantId, current);
+    }
+
+    const arms = Array.from(armMap.entries()).map(([variantId, stats]) => {
+      const conversionRateBps = stats.impressions > 0 ? Math.round((stats.conversions / stats.impressions) * 10000) : 0;
+      return {
+        armId: variantId,
+        strategyName: variantId,
+        impressions: stats.impressions,
+        conversions: stats.conversions,
+        conversionRateBps,
+        grossRecoveredPaise: Number(stats.gross),
+        netContributionPaise: Number(stats.net),
+        liftOverBaselineBps: 0,
+      };
+    });
+
+    return arms;
+  }
+
 }

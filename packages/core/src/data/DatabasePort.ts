@@ -276,6 +276,49 @@ export interface IngestRazorpayWebhookParams {
   };
 }
 
+
+export interface UpdateRecoveryCaseParams {
+  merchantId: string;
+  id: string;
+  updates: Partial<RecoveryCaseRecord>;
+}
+
+export interface RecordExperimentAssignmentParams {
+  experimentId: string;
+  merchantId: string;
+  subjectKey: string;
+  variantId: string;
+}
+
+export interface RecordExperimentExposureParams {
+  experimentId: string;
+  merchantId: string;
+  subjectKey: string;
+  variantId: string;
+  context?: Record<string, unknown>;
+}
+
+export interface RecordExperimentOutcomeParams {
+  experimentId: string;
+  merchantId: string;
+  subjectKey: string;
+  variantId: string;
+  isConverted: boolean;
+  grossRecoveredPaise: bigint | number;
+  netMarginPaise: bigint | number;
+}
+
+export interface ExperimentMetricArm {
+  armId: string;
+  strategyName: string;
+  impressions: number;
+  conversions: number;
+  conversionRateBps: number;
+  grossRecoveredPaise: number;
+  netContributionPaise: number;
+  liftOverBaselineBps: number;
+}
+
 export interface SearchRecoveryCasesParams {
   merchantId: string;
   status?: string;
@@ -394,7 +437,17 @@ export interface DatabasePort {
     expectedValuePaise?: bigint | number;
   }): Promise<RecoveryCaseRecord>;
   getRecoveryCase(id: string, merchantId?: string): Promise<RecoveryCaseRecord | null>;
-  updateRecoveryCase(id: string, updates: Partial<RecoveryCaseRecord>, merchantId?: string): Promise<RecoveryCaseRecord | null>;
+
+  // ── Recovery Case Tenant Mutations & Privileged Lookups ─────────────────
+  updateRecoveryCase(params: UpdateRecoveryCaseParams | string, updates?: Partial<RecoveryCaseRecord>, merchantId?: string): Promise<RecoveryCaseRecord | null>;
+  adminGetRecoveryCaseById(id: string): Promise<RecoveryCaseRecord | null>;
+
+  // ── Experiment Persistence & Metrics ────────────────────────────────────
+  recordExperimentAssignment(params: RecordExperimentAssignmentParams): Promise<void>;
+  recordExperimentExposure(params: RecordExperimentExposureParams): Promise<void>;
+  recordExperimentOutcome(params: RecordExperimentOutcomeParams): Promise<void>;
+  getExperimentMetrics(merchantId: string, experimentId?: string): Promise<ExperimentMetricArm[]>;
+
   listRecoveryCases(params: { merchantId: string; status?: string; limit?: number; offset?: number }): Promise<RecoveryCaseRecord[]>;
   searchRecoveryCases(params: SearchRecoveryCasesParams): Promise<{ items: RecoveryCaseRecord[]; total: number }>;
 
