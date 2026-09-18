@@ -13,7 +13,9 @@ export interface CartItem {
   title: string;
   variantTitle?: string;
   price: number;
+  unitAmountMinor?: bigint | number;
   quantity: number;
+  currency?: string;
   imageUrl?: string;
   productUrl?: string;
 }
@@ -23,6 +25,16 @@ export interface Merchant {
   storeUrl: string;
   shopDomain?: string;
   storeName: string;
+  organizationId?: string;
+  supportEmail?: string;
+  currency?: string;
+  whatsappTemplateNamespace?: string;
+  enableRazorpayRecovery?: boolean;
+  enableShopifyRecovery?: boolean;
+  smsSenderId?: string;
+  activeRecoveryModel?: string;
+  minRecoveryThresholdPaise?: bigint | number;
+  maxRecoveryThresholdPaise?: bigint | number;
   webhookSecret: string;
   shopifyScopes?: string[];
   shopifyAccessToken?: string;
@@ -58,6 +70,7 @@ export interface CartEvent {
   customerName?: string;
   currency: string;
   totalPrice: number;
+  totalAmountMinor?: bigint | number;
   items: CartItem[];
   status: CartStatus;
   abandonmentType: AbandonmentType;
@@ -72,6 +85,9 @@ export interface CartEvent {
 export interface MessageLog {
   id: string;
   cartEventId?: string;
+  cartId?: string;
+  status?: DeliveryStatus;
+  sentAt?: string | Date;
   merchantId: string;
   channel: MessageChannel;
   direction: MessageDirection;
@@ -89,7 +105,8 @@ export interface SuppressionEntry {
   type: SuppressionType;
   reason: 'USER_UNSUBSCRIBE' | 'BOUNCE' | 'COMPLAINT' | 'MANUAL';
   optedOutAt: string | Date;
-  merchantId: string;
+  suppressedAt?: string | Date;
+  merchantId?: string;
 }
 
 export interface RecoveryAgentInput {

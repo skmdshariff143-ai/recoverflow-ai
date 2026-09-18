@@ -1,9 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   validateAuthSecret,
-  createSessionToken,
   DEFAULT_DEV_AUTH_SECRET,
-  DEMO_PERSONA_SESSIONS,
 } from '@recoverflow/core';
 
 describe('RecoverFlow AI — Fail-Closed Auth Secrets Matrix', () => {

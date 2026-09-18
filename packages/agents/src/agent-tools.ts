@@ -1,3 +1,4 @@
+import { parseDecimalToMinorUnits } from '@recoverflow/core';
 /**
  * RecoverFlow AI — Bounded Multi-Agent Typed Tool Interfaces.
  *
@@ -155,7 +156,10 @@ export async function getMerchantMetricsTool(
   const recovered = carts.filter((c) => c.status === 'RECOVERED');
   const openOrContacted = carts.filter((c) => c.status === 'OPEN' || c.status === 'CONTACTED');
 
-  const recoveredPaise = recovered.reduce((acc, c) => acc + Math.round(c.totalPrice * 100), 0);
+  const recoveredPaiseBigInt = recovered.reduce((acc, c) => {
+    const minor = c.totalAmountMinor !== undefined ? BigInt(c.totalAmountMinor) : parseDecimalToMinorUnits(c.totalPrice || 0);
+    return acc + minor;
+  }, 0n);
   const recoveryRateBps = totalCarts > 0 ? Math.round((recovered.length / totalCarts) * 10000) : 0;
 
   return {
@@ -164,7 +168,7 @@ export async function getMerchantMetricsTool(
     recoveredCarts: recovered.length,
     openOrContactedCarts: openOrContacted.length,
     recoveryRateBps,
-    totalGrossRecoveredPaise: recoveredPaise,
+    totalGrossRecoveredPaise: Number(recoveredPaiseBigInt),
     currency: carts[0]?.currency || 'INR',
   };
 }
@@ -174,7 +178,7 @@ export async function getMerchantMetricsTool(
  */
 export async function getExperimentPerformanceTool(
   session: UserSession,
-): Promise<{ merchantId: string; arms: ExperimentArmPerformance[] }> {
+): Promise<{ merchantId: string; dataSource: 'DEMO' | 'OBSERVED' | 'BENCHMARK'; arms: ExperimentArmPerformance[] }> {
   requirePermission(session, 'policy:view');
 
   // Baseline vs Active Arms
@@ -207,6 +211,7 @@ export async function getExperimentPerformanceTool(
 
   return {
     merchantId: session.activeMerchantId,
+    dataSource: process.env.RECOVERFLOW_RUNTIME_MODE === 'LIVE' ? 'OBSERVED' : 'DEMO',
     arms,
   };
 }

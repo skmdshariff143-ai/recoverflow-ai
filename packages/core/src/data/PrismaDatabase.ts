@@ -15,10 +15,6 @@ import type {
   SuppressionEntry,
   CartStatus,
   RecoveryStage,
-  AbandonmentType,
-  MessageChannel,
-  MessageDirection,
-  DeliveryStatus,
   OrderRecord,
   FulfillmentRecord,
   ReturnRecord,
@@ -37,9 +33,11 @@ import type {
   RecoveryAttemptRecord,
   RecoveryOutcomeRecord,
   OutboxEventRecord,
-  IdempotencyKeyRecord,
   WebhookEventRecord,
   AuditEventRecord,
+  CreateRecoveryCaseAndEnqueueParams,
+  IngestRazorpayWebhookParams,
+  SearchRecoveryCasesParams,
 } from './DatabasePort';
 
 export class PrismaDatabase implements DatabasePort {
@@ -249,44 +247,32 @@ export class PrismaDatabase implements DatabasePort {
       where: { id: merchant.id },
       create: {
         id: merchant.id,
+        organizationId: merchant.organizationId,
+        storeName: merchant.storeName,
         storeUrl: merchant.storeUrl,
         shopDomain: merchant.shopDomain,
-        storeName: merchant.storeName,
-        webhookSecret: merchant.webhookSecret,
-        shopifyScopes: merchant.shopifyScopes || [],
-        encryptedShopifyAccessToken: merchant.encryptedShopifyAccessToken,
-        encryptedWhatsappToken: merchant.encryptedWhatsappToken,
-        whatsappPhoneId: merchant.whatsappPhoneId,
-        whatsappTemplateName: merchant.whatsappTemplateName,
-        encryptedResendApiKey: merchant.encryptedResendApiKey,
-        fromEmail: merchant.fromEmail,
+        webhookSecret: merchant.webhookSecret || 'whsec_default',
+        brandVoiceCasualVsFormal: merchant.brandVoiceCasualVsFormal ?? 0.3,
+        brandVoiceUrgencyVsGentle: merchant.brandVoiceUrgencyVsGentle ?? 0.4,
+        discountCeilingPercentage: merchant.discountCeilingPercentage ?? 15.0,
+        minMarginPercentage: merchant.minMarginPercentage ?? 20.0,
+        brandToneGuidelines: merchant.brandToneGuidelines || 'Helpful, conversational, and direct.',
+        whatsappTemplateName: merchant.whatsappTemplateName || 'recoverflow_cart_recovery',
+        fromEmail: merchant.fromEmail || 'recovery@recoverflow.ai',
         supportPhone: merchant.supportPhone,
-        brandToneGuidelines: merchant.brandToneGuidelines,
-        brandVoiceCasualVsFormal: merchant.brandVoiceCasualVsFormal,
-        brandVoiceUrgencyVsGentle: merchant.brandVoiceUrgencyVsGentle,
-        discountCeilingPercentage: merchant.discountCeilingPercentage,
-        minMarginPercentage: merchant.minMarginPercentage,
-        dataTier: merchant.dataTier || 'STANDARD',
       },
       update: {
+        storeName: merchant.storeName,
         storeUrl: merchant.storeUrl,
         shopDomain: merchant.shopDomain,
-        storeName: merchant.storeName,
-        webhookSecret: merchant.webhookSecret,
-        shopifyScopes: merchant.shopifyScopes || [],
-        encryptedShopifyAccessToken: merchant.encryptedShopifyAccessToken,
-        encryptedWhatsappToken: merchant.encryptedWhatsappToken,
-        whatsappPhoneId: merchant.whatsappPhoneId,
-        whatsappTemplateName: merchant.whatsappTemplateName,
-        encryptedResendApiKey: merchant.encryptedResendApiKey,
-        fromEmail: merchant.fromEmail,
+        brandVoiceCasualVsFormal: merchant.brandVoiceCasualVsFormal ?? 0.3,
+        brandVoiceUrgencyVsGentle: merchant.brandVoiceUrgencyVsGentle ?? 0.4,
+        discountCeilingPercentage: merchant.discountCeilingPercentage ?? 15.0,
+        minMarginPercentage: merchant.minMarginPercentage ?? 20.0,
+        brandToneGuidelines: merchant.brandToneGuidelines || 'Helpful, conversational, and direct.',
+        whatsappTemplateName: merchant.whatsappTemplateName || 'recoverflow_cart_recovery',
+        fromEmail: merchant.fromEmail || 'recovery@recoverflow.ai',
         supportPhone: merchant.supportPhone,
-        brandToneGuidelines: merchant.brandToneGuidelines,
-        brandVoiceCasualVsFormal: merchant.brandVoiceCasualVsFormal,
-        brandVoiceUrgencyVsGentle: merchant.brandVoiceUrgencyVsGentle,
-        discountCeilingPercentage: merchant.discountCeilingPercentage,
-        minMarginPercentage: merchant.minMarginPercentage,
-        dataTier: merchant.dataTier || 'STANDARD',
       },
     });
     return upserted as unknown as Merchant;
@@ -339,6 +325,7 @@ export class PrismaDatabase implements DatabasePort {
   }
 
   async upsertCartEvent(cart: CartEvent): Promise<CartEvent> {
+    const totalAmountMinor = cart.totalAmountMinor !== undefined ? BigInt(cart.totalAmountMinor) : BigInt(Math.round((cart.totalPrice || 0) * 100));
     const upserted = await this.prisma.cartEvent.upsert({
       where: { cartToken: cart.cartToken },
       create: {
@@ -350,6 +337,7 @@ export class PrismaDatabase implements DatabasePort {
         customerName: cart.customerName,
         currency: cart.currency,
         totalPrice: cart.totalPrice,
+        totalAmountMinor,
         items: cart.items as any,
         status: cart.status as any,
         abandonmentType: cart.abandonmentType as any,
@@ -363,6 +351,7 @@ export class PrismaDatabase implements DatabasePort {
         customerName: cart.customerName,
         currency: cart.currency,
         totalPrice: cart.totalPrice,
+        totalAmountMinor,
         items: cart.items as any,
         status: cart.status as any,
         abandonmentType: cart.abandonmentType as any,
@@ -474,7 +463,7 @@ export class PrismaDatabase implements DatabasePort {
     return { ...rc, expectedValuePaise: Number(rc.expectedValuePaise) };
   }
 
-  async updateRecoveryCase(id: string, updates: Partial<RecoveryCaseRecord>, merchantId?: string): Promise<RecoveryCaseRecord | null> {
+  async updateRecoveryCase(id: string, updates: Partial<RecoveryCaseRecord>, _merchantId?: string): Promise<RecoveryCaseRecord | null> {
     const data: Record<string, unknown> = { ...updates };
     if (updates.expectedValuePaise !== undefined) {
       data.expectedValuePaise = BigInt(updates.expectedValuePaise);
@@ -497,6 +486,169 @@ export class PrismaDatabase implements DatabasePort {
       orderBy: { createdAt: 'desc' },
     });
     return list.map((rc) => ({ ...rc, expectedValuePaise: Number(rc.expectedValuePaise) }));
+  }
+
+  async searchRecoveryCases(params: SearchRecoveryCasesParams): Promise<{ items: RecoveryCaseRecord[]; total: number }> {
+    const where: Record<string, any> = {
+      merchantId: params.merchantId,
+      ...(params.status ? { status: params.status } : {}),
+      ...(params.minExpectedValuePaise ? { expectedValuePaise: { gte: BigInt(params.minExpectedValuePaise) } } : {}),
+    };
+
+    if (params.search) {
+      where.OR = [
+        { customerId: { contains: params.search, mode: 'insensitive' } },
+        { paymentId: { contains: params.search, mode: 'insensitive' } },
+        { id: { contains: params.search, mode: 'insensitive' } },
+      ];
+    }
+
+    const [total, list] = await Promise.all([
+      this.prisma.recoveryCase.count({ where }),
+      this.prisma.recoveryCase.findMany({
+        where,
+        skip: params.offset || 0,
+        take: params.limit || 50,
+        orderBy: { createdAt: 'desc' },
+      }),
+    ]);
+
+    return {
+      items: list.map((rc) => ({ ...rc, expectedValuePaise: Number(rc.expectedValuePaise) })),
+      total,
+    };
+  }
+
+  // ── Unit of Work Atomic Transactions ─────────────────────────────────────
+
+  async createRecoveryCaseAndEnqueue(params: CreateRecoveryCaseAndEnqueueParams): Promise<{
+    payment: PaymentRecord;
+    recoveryCase: RecoveryCaseRecord;
+    outbox: OutboxEventRecord;
+  }> {
+    return this.prisma.$transaction(async (tx) => {
+      const p = await tx.payment.create({
+        data: {
+          merchantId: params.payment.merchantId,
+          externalPaymentId: params.payment.externalPaymentId,
+          amountPaise: BigInt(params.payment.amountPaise),
+          currency: params.payment.currency,
+          status: (params.payment.status as any) || 'FAILED',
+          gateway: params.payment.gateway || 'RAZORPAY',
+          customerId: params.payment.customerId,
+          orderReference: params.payment.orderReference,
+        },
+      });
+
+      const rc = await tx.recoveryCase.create({
+        data: {
+          merchantId: params.payment.merchantId,
+          paymentId: p.id,
+          customerId: params.recoveryCase.customerId || params.payment.customerId,
+          recoveryProbBps: params.recoveryCase.recoveryProbBps || 0,
+          expectedValuePaise: BigInt(params.recoveryCase.expectedValuePaise || 0),
+        },
+      });
+
+      const out = await tx.outboxEvent.create({
+        data: {
+          merchantId: params.payment.merchantId,
+          aggregateType: 'RECOVERY_CASE',
+          aggregateId: rc.id,
+          eventType: params.outbox.eventType,
+          payload: { ...params.outbox.payload, recoveryCaseId: rc.id, paymentId: p.id } as any,
+          idempotencyKey: params.outbox.idempotencyKey,
+          status: 'PENDING',
+        },
+      });
+
+      return {
+        payment: { ...p, amountPaise: Number(p.amountPaise) },
+        recoveryCase: { ...rc, expectedValuePaise: Number(rc.expectedValuePaise) },
+        outbox: { ...out, status: out.status as any, payload: out.payload as Record<string, unknown> },
+      };
+    });
+  }
+
+  async ingestRazorpayWebhookTransaction(params: IngestRazorpayWebhookParams): Promise<{
+    webhook: WebhookEventRecord;
+    payment?: PaymentRecord;
+    recoveryCase?: RecoveryCaseRecord;
+    outbox?: OutboxEventRecord;
+  }> {
+    return this.prisma.$transaction(async (tx) => {
+      const webhook = await tx.webhookEvent.create({
+        data: {
+          merchantId: params.webhookEvent.merchantId,
+          provider: params.webhookEvent.provider,
+          source: params.webhookEvent.source || params.webhookEvent.provider,
+          eventType: params.webhookEvent.eventType,
+          providerEventId: params.webhookEvent.providerEventId,
+          externalId: params.webhookEvent.externalId,
+          idempotencyKey: params.webhookEvent.idempotencyKey,
+          payloadHash: params.webhookEvent.payloadHash,
+          rawPayload: params.webhookEvent.rawPayload as any,
+          signatureValid: params.webhookEvent.signatureValid,
+          status: 'PROCESSED',
+          processedAt: new Date(),
+        },
+      });
+
+      let payment: PaymentRecord | undefined;
+      let recoveryCase: RecoveryCaseRecord | undefined;
+      let outbox: OutboxEventRecord | undefined;
+
+      if (params.payment) {
+        const p = await tx.payment.create({
+          data: {
+            merchantId: params.payment.merchantId,
+            externalPaymentId: params.payment.externalPaymentId,
+            amountPaise: BigInt(params.payment.amountPaise),
+            currency: params.payment.currency,
+            status: (params.payment.status as any) || 'FAILED',
+            gateway: params.payment.gateway || 'RAZORPAY',
+            customerId: params.payment.customerId,
+            orderReference: params.payment.orderReference,
+          },
+        });
+        payment = { ...p, amountPaise: Number(p.amountPaise) };
+
+        if (params.recoveryCase) {
+          const rc = await tx.recoveryCase.create({
+            data: {
+              merchantId: params.payment.merchantId,
+              paymentId: p.id,
+              customerId: params.recoveryCase.customerId || params.payment.customerId,
+              recoveryProbBps: params.recoveryCase.recoveryProbBps || 0,
+              expectedValuePaise: BigInt(params.recoveryCase.expectedValuePaise || 0),
+            },
+          });
+          recoveryCase = { ...rc, expectedValuePaise: Number(rc.expectedValuePaise) };
+
+          if (params.outbox) {
+            const out = await tx.outboxEvent.create({
+              data: {
+                merchantId: params.payment.merchantId,
+                aggregateType: 'RECOVERY_CASE',
+                aggregateId: rc.id,
+                eventType: params.outbox.eventType,
+                payload: { ...params.outbox.payload, recoveryCaseId: rc.id, paymentId: p.id } as any,
+                idempotencyKey: params.outbox.idempotencyKey,
+                status: 'PENDING',
+              },
+            });
+            outbox = { ...out, status: out.status as any, payload: out.payload as Record<string, unknown> };
+          }
+        }
+      }
+
+      return {
+        webhook: { ...webhook, status: webhook.status as any, rawPayload: webhook.rawPayload as Record<string, unknown> },
+        payment,
+        recoveryCase,
+        outbox,
+      };
+    });
   }
 
   async createRecoveryDecision(data: {
@@ -573,7 +725,7 @@ export class PrismaDatabase implements DatabasePort {
     };
   }
 
-  // ── Transactional Outbox ─────────────────────────────────────────────────
+  // ── Transactional Outbox (PostgreSQL FOR UPDATE SKIP LOCKED) ──────────────
 
   async createOutboxEvent(data: {
     merchantId?: string;
@@ -601,11 +753,12 @@ export class PrismaDatabase implements DatabasePort {
     };
   }
 
-  async getPendingOutboxEvents(batchSize = 20): Promise<OutboxEventRecord[]> {
+  async getPendingOutboxEvents(batchSize = 20, merchantId?: string): Promise<OutboxEventRecord[]> {
     const events = await this.prisma.outboxEvent.findMany({
       where: {
         status: 'PENDING',
         availableAt: { lte: new Date() },
+        ...(merchantId ? { merchantId } : {}),
       },
       take: batchSize,
       orderBy: { createdAt: 'asc' },
@@ -621,43 +774,79 @@ export class PrismaDatabase implements DatabasePort {
     const now = new Date();
     const expiredCutoff = new Date(Date.now() - lockTtlMs);
 
-    // Atomic claim via PostgreSQL query or transaction
-    return this.prisma.$transaction(async (tx) => {
-      const candidates = await tx.outboxEvent.findMany({
-        where: {
-          OR: [
-            { status: 'PENDING', availableAt: { lte: now } },
-            { status: 'PROCESSING', lockedAt: { lte: expiredCutoff } },
-          ],
-        },
-        take: batchSize,
-        orderBy: { createdAt: 'asc' },
-      });
+    try {
+      const updatedEvents: any[] = await this.prisma.$queryRaw`
+        WITH candidates AS (
+          SELECT id FROM "OutboxEvent"
+          WHERE (status = 'PENDING' AND "availableAt" <= ${now})
+             OR (status = 'PROCESSING' AND "lockedAt" <= ${expiredCutoff})
+          ORDER BY "createdAt" ASC
+          LIMIT ${batchSize}
+          FOR UPDATE SKIP LOCKED
+        )
+        UPDATE "OutboxEvent"
+        SET status = 'PROCESSING',
+            "lockedBy" = ${workerId},
+            "lockedAt" = ${now},
+            "attemptCount" = "attemptCount" + 1,
+            "updatedAt" = ${now}
+        WHERE id IN (SELECT id FROM candidates)
+        RETURNING *;
+      `;
 
-      if (candidates.length === 0) return [];
-
-      const ids = candidates.map((c) => c.id);
-      await tx.outboxEvent.updateMany({
-        where: { id: { in: ids } },
-        data: {
-          status: 'PROCESSING',
-          lockedAt: now,
-          lockedBy: workerId,
-          attemptCount: { increment: 1 },
-          updatedAt: now,
-        },
-      });
-
-      const updated = await tx.outboxEvent.findMany({
-        where: { id: { in: ids } },
-      });
-
-      return updated.map((e) => ({
-        ...e,
-        status: e.status as any,
-        payload: e.payload as Record<string, unknown>,
+      return updatedEvents.map((e) => ({
+        id: e.id,
+        merchantId: e.merchantId,
+        aggregateType: e.aggregateType,
+        aggregateId: e.aggregateId,
+        eventType: e.eventType,
+        payload: typeof e.payload === 'string' ? JSON.parse(e.payload) : e.payload,
+        idempotencyKey: e.idempotencyKey,
+        status: e.status,
+        attemptCount: e.attemptCount,
+        maxAttempts: e.maxAttempts,
+        availableAt: e.availableAt,
+        lockedAt: e.lockedAt,
+        lockedBy: e.lockedBy,
+        publishedAt: e.publishedAt,
+        lastError: e.lastError,
+        createdAt: e.createdAt,
+        updatedAt: e.updatedAt,
       }));
-    });
+    } catch {
+      return this.prisma.$transaction(async (tx) => {
+        const candidates = await tx.outboxEvent.findMany({
+          where: {
+            OR: [
+              { status: 'PENDING', availableAt: { lte: now } },
+              { status: 'PROCESSING', lockedAt: { lte: expiredCutoff } },
+            ],
+          },
+          take: batchSize,
+          orderBy: { createdAt: 'asc' },
+        });
+
+        if (candidates.length === 0) return [];
+        const ids = candidates.map((c) => c.id);
+        await tx.outboxEvent.updateMany({
+          where: { id: { in: ids } },
+          data: {
+            status: 'PROCESSING',
+            lockedAt: now,
+            lockedBy: workerId,
+            attemptCount: { increment: 1 },
+            updatedAt: now,
+          },
+        });
+
+        const updated = await tx.outboxEvent.findMany({ where: { id: { in: ids } } });
+        return updated.map((e) => ({
+          ...e,
+          status: e.status as any,
+          payload: e.payload as Record<string, unknown>,
+        }));
+      });
+    }
   }
 
   async markOutboxEventProcessing(id: string, workerId?: string): Promise<void> {
@@ -671,9 +860,13 @@ export class PrismaDatabase implements DatabasePort {
     });
   }
 
-  async markOutboxEventPublished(id: string): Promise<void> {
-    await this.prisma.outboxEvent.update({
-      where: { id },
+  async markOutboxEventPublished(id: string, workerId?: string): Promise<boolean> {
+    const res = await this.prisma.outboxEvent.updateMany({
+      where: {
+        id,
+        status: 'PROCESSING',
+        ...(workerId ? { lockedBy: workerId } : {}),
+      },
       data: {
         status: 'PUBLISHED',
         publishedAt: new Date(),
@@ -681,26 +874,50 @@ export class PrismaDatabase implements DatabasePort {
         lockedAt: null,
       },
     });
+    return res.count > 0;
   }
 
-  async markOutboxEventFailed(id: string, error: string, retryDelayMs = 5000): Promise<void> {
+  async markOutboxEventFailed(id: string, error: string, retryDelayMs = 5000, workerId?: string): Promise<boolean> {
     const existing = await this.prisma.outboxEvent.findUnique({ where: { id } });
-    if (!existing) return;
+    if (!existing) return false;
 
-    const shouldDeadLetter = existing.attemptCount >= existing.maxAttempts;
-    await this.prisma.outboxEvent.update({
-      where: { id },
+    if (workerId && existing.lockedBy && existing.lockedBy !== workerId) {
+      return false;
+    }
+
+    const shouldFail = (existing.attemptCount >= existing.maxAttempts) || ((existing.retryCount || 0) >= existing.maxAttempts);
+    const res = await this.prisma.outboxEvent.updateMany({
+      where: {
+        id,
+        ...(workerId ? { lockedBy: workerId } : {}),
+      },
       data: {
         lastError: error,
         lockedBy: null,
         lockedAt: null,
-        status: shouldDeadLetter ? 'DEAD_LETTER' : 'PENDING',
-        availableAt: shouldDeadLetter ? existing.availableAt : new Date(Date.now() + retryDelayMs),
+        status: shouldFail ? 'FAILED' : 'PENDING',
+        availableAt: shouldFail ? existing.availableAt : new Date(Date.now() + retryDelayMs),
       },
     });
+    return res.count > 0;
   }
 
-  // ── Idempotency Store ────────────────────────────────────────────────────
+  async extendOutboxLease(id: string, workerId: string, _extendMs = 30000): Promise<boolean> {
+    const res = await this.prisma.outboxEvent.updateMany({
+      where: {
+        id,
+        lockedBy: workerId,
+        status: 'PROCESSING',
+      },
+      data: {
+        lockedAt: new Date(),
+        updatedAt: new Date(),
+      },
+    });
+    return res.count > 0;
+  }
+
+  // ── Idempotency Store (Multi-tenant scoped) ──────────────────────────────
 
   async acquireIdempotencyKey(params: {
     key: string;
@@ -714,18 +931,19 @@ export class PrismaDatabase implements DatabasePort {
     const expiresAt = new Date(now.getTime() + ttl);
 
     return this.prisma.$transaction(async (tx) => {
-      const existing = await tx.idempotencyKey.findUnique({
-        where: { key: params.key },
+      const existing = await tx.idempotencyKey.findFirst({
+        where: {
+          key: params.key,
+          merchantId: params.merchantId,
+          endpoint: params.endpoint,
+        },
       });
 
       if (existing) {
         if (existing.expiresAt.getTime() <= now.getTime()) {
-          // Expired, overwrite
-          await tx.idempotencyKey.update({
-            where: { key: params.key },
+          await tx.idempotencyKey.updateMany({
+            where: { merchantId: params.merchantId, endpoint: params.endpoint, key: params.key },
             data: {
-              merchantId: params.merchantId,
-              endpoint: params.endpoint,
               requestHash: params.requestHash,
               status: 'IN_PROGRESS',
               lockedUntil: new Date(now.getTime() + 30000),
@@ -753,9 +971,8 @@ export class PrismaDatabase implements DatabasePort {
           return { acquired: false };
         }
 
-        // Re-acquire lock
-        await tx.idempotencyKey.update({
-          where: { key: params.key },
+        await tx.idempotencyKey.updateMany({
+          where: { merchantId: params.merchantId, endpoint: params.endpoint, key: params.key },
           data: {
             status: 'IN_PROGRESS',
             lockedUntil: new Date(now.getTime() + 30000),
@@ -765,25 +982,35 @@ export class PrismaDatabase implements DatabasePort {
         return { acquired: true };
       }
 
-      // Create new lock
-      await tx.idempotencyKey.create({
-        data: {
-          key: params.key,
-          merchantId: params.merchantId,
-          endpoint: params.endpoint,
-          requestHash: params.requestHash,
-          status: 'IN_PROGRESS',
-          lockedUntil: new Date(now.getTime() + 30000),
-          expiresAt,
-        },
-      });
-      return { acquired: true };
+      try {
+        await tx.idempotencyKey.create({
+          data: {
+            key: params.key,
+            merchantId: params.merchantId,
+            endpoint: params.endpoint,
+            requestHash: params.requestHash,
+            status: 'IN_PROGRESS',
+            lockedUntil: new Date(now.getTime() + 30000),
+            expiresAt,
+          },
+        });
+        return { acquired: true };
+      } catch (err: any) {
+        if (err.code === 'P2002') {
+          return { acquired: false };
+        }
+        throw err;
+      }
     });
   }
 
-  async commitIdempotencyKey(key: string, merchantId: string, responseCode: number, responseBody: unknown): Promise<void> {
+  async commitIdempotencyKey(key: string, merchantId: string, responseCode: number, responseBody: unknown, endpoint?: string): Promise<void> {
     await this.prisma.idempotencyKey.updateMany({
-      where: { key, merchantId },
+      where: {
+        key,
+        merchantId,
+        ...(endpoint ? { endpoint } : {}),
+      },
       data: {
         status: 'COMMITTED',
         responseCode,
@@ -793,9 +1020,14 @@ export class PrismaDatabase implements DatabasePort {
     });
   }
 
-  async releaseIdempotencyKey(key: string, merchantId: string): Promise<void> {
+  async releaseIdempotencyKey(key: string, merchantId: string, endpoint?: string): Promise<void> {
     await this.prisma.idempotencyKey.deleteMany({
-      where: { key, merchantId, status: 'IN_PROGRESS' },
+      where: {
+        key,
+        merchantId,
+        ...(endpoint ? { endpoint } : {}),
+        status: 'IN_PROGRESS',
+      },
     });
   }
 
@@ -861,7 +1093,7 @@ export class PrismaDatabase implements DatabasePort {
     });
   }
 
-  // ── Audit Ledger (Merkle Hash Chain) ─────────────────────────────────────
+  // ── Audit Ledger (Merkle Hash Chain with Postgres Locking) ───────────────
 
   async appendAuditEvent(data: {
     organizationId?: string;
@@ -876,6 +1108,17 @@ export class PrismaDatabase implements DatabasePort {
     metadata?: Record<string, unknown>;
   }): Promise<AuditEventRecord> {
     return this.prisma.$transaction(async (tx) => {
+      if (data.merchantId) {
+        try {
+          await tx.$executeRawUnsafe(
+            `SELECT pg_advisory_xact_lock(hashtext('audit_' || $1))`,
+            data.merchantId
+          );
+        } catch {
+          // Advisory lock ignore on non-postgres
+        }
+      }
+
       const latest = await tx.auditEvent.findFirst({
         where: data.merchantId ? { merchantId: data.merchantId } : undefined,
         orderBy: { createdAt: 'desc' },
@@ -952,27 +1195,31 @@ export class PrismaDatabase implements DatabasePort {
       }
       expectedPrev = e.currentHash;
     }
+
     return { valid: true, totalEvents: events.length };
   }
 
-  // ── Messages, Suppressions & Orders ──────────────────────────────────────
+  // ── Messages, Suppressions & E-Commerce ──────────────────────────────────
 
   async logMessage(log: MessageLog): Promise<MessageLog> {
     const created = await this.prisma.messageLog.create({
       data: {
         id: log.id,
-        cartEventId: log.cartEventId,
+        cartEventId: log.cartEventId || log.cartId,
         merchantId: log.merchantId,
         channel: log.channel as any,
         direction: log.direction as any,
         content: log.content,
-        tokensUsed: log.tokensUsed,
-        latencyMs: log.latencyMs,
-        deliveryStatus: log.deliveryStatus as any,
-        externalMessageId: log.externalMessageId,
+        deliveryStatus: (log.deliveryStatus || log.status || 'SENT') as any,
+        createdAt: log.createdAt ? new Date(log.createdAt) : (log.sentAt ? new Date(log.sentAt) : new Date()),
       },
     });
-    return created as unknown as MessageLog;
+    return {
+      ...log,
+      id: created.id,
+      createdAt: created.createdAt,
+      deliveryStatus: created.deliveryStatus as any,
+    };
   }
 
   async listMessageLogs(merchantId?: string): Promise<MessageLog[]> {
@@ -980,43 +1227,57 @@ export class PrismaDatabase implements DatabasePort {
       where: merchantId ? { merchantId } : undefined,
       orderBy: { createdAt: 'desc' },
     });
-    return list as unknown as MessageLog[];
+    return list.map((l) => ({
+      id: l.id,
+      cartEventId: l.cartEventId || undefined,
+      cartId: l.cartEventId || undefined,
+      merchantId: l.merchantId,
+      channel: l.channel as any,
+      direction: l.direction as any,
+      content: l.content,
+      deliveryStatus: l.deliveryStatus as any,
+      status: l.deliveryStatus as any,
+      createdAt: l.createdAt,
+      sentAt: l.createdAt,
+    }));
   }
 
   async addSuppression(entry: SuppressionEntry): Promise<SuppressionEntry> {
+    const optDate = entry.optedOutAt ? new Date(entry.optedOutAt) : (entry.suppressedAt ? new Date(entry.suppressedAt) : new Date());
     await this.prisma.suppressionList.upsert({
       where: {
         merchantId_identifier: {
-          merchantId: 'merchant_default_01',
-          identifier: entry.identifier.toLowerCase().trim(),
+          merchantId: entry.merchantId || 'default',
+          identifier: entry.identifier,
         },
       },
       create: {
-        merchantId: 'merchant_default_01',
-        identifier: entry.identifier.toLowerCase().trim(),
+        id: entry.id,
+        merchantId: entry.merchantId || 'default',
+        identifier: entry.identifier,
         type: entry.type as any,
-        reason: entry.reason || 'USER_UNSUBSCRIBE',
+        reason: entry.reason as any,
+        optedOutAt: optDate,
       },
       update: {
-        type: entry.type as any,
-        reason: entry.reason || 'USER_UNSUBSCRIBE',
+        reason: entry.reason as any,
+        optedOutAt: optDate,
       },
     });
     return entry;
   }
 
   async isSuppressed(identifier: string, type: 'PHONE' | 'EMAIL'): Promise<boolean> {
-    const found = await this.prisma.suppressionList.findFirst({
-      where: {
-        identifier: identifier.toLowerCase().trim(),
-        type: type as any,
-      },
+    const count = await this.prisma.suppressionList.count({
+      where: { identifier, type: type as any },
     });
-    return !!found;
+    return count > 0;
   }
 
   async getSuppressionList(): Promise<SuppressionEntry[]> {
-    const list = await this.prisma.suppressionList.findMany();
+    const list = await this.prisma.suppressionList.findMany({
+      orderBy: { optedOutAt: 'desc' },
+    });
     return list.map((s) => ({
       id: s.id,
       merchantId: s.merchantId,
@@ -1024,18 +1285,23 @@ export class PrismaDatabase implements DatabasePort {
       type: s.type as any,
       reason: s.reason as any,
       optedOutAt: s.optedOutAt,
+      suppressedAt: s.optedOutAt.toISOString(),
     }));
   }
 
   async removeSuppression(identifier: string): Promise<boolean> {
-    const res = await this.prisma.suppressionList.deleteMany({
-      where: { identifier: identifier.toLowerCase().trim() },
-    });
-    return res.count > 0;
+    try {
+      await this.prisma.suppressionList.deleteMany({
+        where: { identifier },
+      });
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   async upsertOrder(order: OrderRecord): Promise<OrderRecord> {
-    const upserted = await this.prisma.order.upsert({
+    await this.prisma.order.upsert({
       where: { shopifyOrderId: order.shopifyOrderId },
       create: {
         id: order.id,
@@ -1047,29 +1313,119 @@ export class PrismaDatabase implements DatabasePort {
         customerName: order.customerName,
         currency: order.currency,
         totalPrice: order.totalPrice,
+        financialStatus: order.financialStatus,
+        fulfillmentStatus: order.fulfillmentStatus,
         items: order.items as any,
-        financialStatus: order.financialStatus as any,
-        fulfillmentStatus: order.fulfillmentStatus as any,
       },
       update: {
-        customerEmail: order.customerEmail,
-        customerPhone: order.customerPhone,
-        customerName: order.customerName,
-        currency: order.currency,
-        totalPrice: order.totalPrice,
+        financialStatus: order.financialStatus,
+        fulfillmentStatus: order.fulfillmentStatus,
         items: order.items as any,
-        financialStatus: order.financialStatus as any,
-        fulfillmentStatus: order.fulfillmentStatus as any,
       },
     });
-    return upserted as unknown as OrderRecord;
+    return order;
+  }
+
+  async createOrUpdateOrder(order: OrderRecord): Promise<OrderRecord> {
+    return this.upsertOrder(order);
   }
 
   async getOrder(id: string, merchantId?: string): Promise<OrderRecord | null> {
     const o = await this.prisma.order.findFirst({
       where: { id, ...(merchantId ? { merchantId } : {}) },
+      include: { fulfillments: true, returns: true },
     });
-    return o as unknown as OrderRecord | null;
+    if (!o) return null;
+    return {
+      id: o.id,
+      merchantId: o.merchantId,
+      shopifyOrderId: o.shopifyOrderId,
+      orderNumber: o.orderNumber,
+      customerEmail: o.customerEmail || undefined,
+      customerPhone: o.customerPhone || undefined,
+      customerName: o.customerName || undefined,
+      currency: o.currency,
+      totalPrice: o.totalPrice,
+      financialStatus: o.financialStatus,
+      fulfillmentStatus: o.fulfillmentStatus,
+      items: o.items as any,
+      createdAt: o.createdAt,
+      updatedAt: o.updatedAt,
+    };
+  }
+
+  async getOrderByShopifyId(shopifyOrderId: string): Promise<OrderRecord | null> {
+    const o = await this.prisma.order.findUnique({ where: { shopifyOrderId } });
+    if (!o) return null;
+    return {
+      id: o.id,
+      merchantId: o.merchantId,
+      shopifyOrderId: o.shopifyOrderId,
+      orderNumber: o.orderNumber,
+      customerEmail: o.customerEmail || undefined,
+      customerPhone: o.customerPhone || undefined,
+      customerName: o.customerName || undefined,
+      currency: o.currency,
+      totalPrice: o.totalPrice,
+      financialStatus: o.financialStatus,
+      fulfillmentStatus: o.fulfillmentStatus,
+      items: o.items as any,
+      createdAt: o.createdAt,
+      updatedAt: o.updatedAt,
+    };
+  }
+
+  async getOrderByOrderNumber(merchantId: string, orderNumber: string): Promise<OrderRecord | null> {
+    const o = await this.prisma.order.findFirst({
+      where: { merchantId, orderNumber },
+    });
+    if (!o) return null;
+    return {
+      id: o.id,
+      merchantId: o.merchantId,
+      shopifyOrderId: o.shopifyOrderId,
+      orderNumber: o.orderNumber,
+      customerEmail: o.customerEmail || undefined,
+      customerPhone: o.customerPhone || undefined,
+      customerName: o.customerName || undefined,
+      currency: o.currency,
+      totalPrice: o.totalPrice,
+      financialStatus: o.financialStatus,
+      fulfillmentStatus: o.fulfillmentStatus,
+      items: o.items as any,
+      createdAt: o.createdAt,
+      updatedAt: o.updatedAt,
+    };
+  }
+
+  async findOrdersByCustomer(merchantId: string, identifier: string): Promise<OrderRecord[]> {
+    const clean = identifier.trim();
+    const list = await this.prisma.order.findMany({
+      where: {
+        merchantId,
+        OR: [
+          { customerEmail: { equals: clean, mode: 'insensitive' } },
+          { customerPhone: { contains: clean } },
+          { customerName: { contains: clean, mode: 'insensitive' } },
+        ],
+      },
+    });
+    return list.map((o) => ({
+      id: o.id,
+      merchantId: o.merchantId,
+      shopifyOrderId: o.shopifyOrderId,
+      orderNumber: o.orderNumber,
+      customerEmail: o.customerEmail || undefined,
+      customerPhone: o.customerPhone || undefined,
+      customerName: o.customerName || undefined,
+      currency: o.currency,
+      totalPrice: o.totalPrice,
+      financialStatus: o.financialStatus,
+      fulfillmentStatus: o.fulfillmentStatus,
+      items: o.items as any,
+      createdAt: o.createdAt,
+      updatedAt: o.updatedAt,
+    }));
   }
 
   async listOrders(merchantId?: string): Promise<OrderRecord[]> {
@@ -1077,67 +1433,223 @@ export class PrismaDatabase implements DatabasePort {
       where: merchantId ? { merchantId } : undefined,
       orderBy: { createdAt: 'desc' },
     });
-    return list as unknown as OrderRecord[];
+    return list.map((o) => ({
+      id: o.id,
+      merchantId: o.merchantId,
+      shopifyOrderId: o.shopifyOrderId,
+      orderNumber: o.orderNumber,
+      customerEmail: o.customerEmail || undefined,
+      customerPhone: o.customerPhone || undefined,
+      customerName: o.customerName || undefined,
+      currency: o.currency,
+      totalPrice: o.totalPrice,
+      financialStatus: o.financialStatus,
+      fulfillmentStatus: o.fulfillmentStatus,
+      items: o.items as any,
+      createdAt: o.createdAt,
+      updatedAt: o.updatedAt,
+    }));
+  }
+
+    async listFulfillments(merchantId?: string): Promise<FulfillmentRecord[]> {
+    const list = await this.prisma.fulfillment.findMany({
+      where: merchantId ? { merchantId } : undefined,
+      orderBy: { createdAt: 'desc' },
+    });
+    return list.map((f) => ({
+      id: f.id,
+      orderId: f.orderId,
+      merchantId: f.merchantId,
+      shopifyFulfillmentId: f.shopifyFulfillmentId,
+      status: f.status as any,
+      trackingCompany: f.trackingCompany || undefined,
+      trackingNumber: f.trackingNumber || undefined,
+      trackingUrl: f.trackingUrl || undefined,
+      estimatedDeliveryAt: f.estimatedDeliveryAt,
+      shippedAt: f.shippedAt,
+      deliveredAt: f.deliveredAt,
+      latestLocation: f.latestLocation,
+      createdAt: f.createdAt,
+      updatedAt: f.updatedAt,
+    }));
   }
 
   async upsertFulfillment(fulfillment: FulfillmentRecord): Promise<FulfillmentRecord> {
-    const upserted = await this.prisma.fulfillment.upsert({
+    await this.prisma.fulfillment.upsert({
       where: { shopifyFulfillmentId: fulfillment.shopifyFulfillmentId },
       create: {
         id: fulfillment.id,
         orderId: fulfillment.orderId,
         merchantId: fulfillment.merchantId,
         shopifyFulfillmentId: fulfillment.shopifyFulfillmentId,
+        status: fulfillment.status,
         trackingCompany: fulfillment.trackingCompany,
         trackingNumber: fulfillment.trackingNumber,
         trackingUrl: fulfillment.trackingUrl,
-        status: fulfillment.status as any,
         estimatedDeliveryAt: fulfillment.estimatedDeliveryAt ? new Date(fulfillment.estimatedDeliveryAt) : null,
+        deliveredAt: fulfillment.deliveredAt ? new Date(fulfillment.deliveredAt) : null,
       },
       update: {
+        status: fulfillment.status,
         trackingCompany: fulfillment.trackingCompany,
         trackingNumber: fulfillment.trackingNumber,
         trackingUrl: fulfillment.trackingUrl,
-        status: fulfillment.status as any,
         estimatedDeliveryAt: fulfillment.estimatedDeliveryAt ? new Date(fulfillment.estimatedDeliveryAt) : null,
+        deliveredAt: fulfillment.deliveredAt ? new Date(fulfillment.deliveredAt) : null,
       },
     });
-    return upserted as unknown as FulfillmentRecord;
+    return fulfillment;
   }
 
-  async listFulfillments(merchantId?: string): Promise<FulfillmentRecord[]> {
-    const list = await this.prisma.fulfillment.findMany({
-      where: merchantId ? { merchantId } : undefined,
-      orderBy: { createdAt: 'desc' },
+  async createOrUpdateFulfillment(fulfillment: FulfillmentRecord): Promise<FulfillmentRecord> {
+    return this.upsertFulfillment(fulfillment);
+  }
+
+  async getFulfillment(id: string): Promise<FulfillmentRecord | null> {
+    const f = await this.prisma.fulfillment.findUnique({ where: { id } });
+    if (!f) return null;
+    return {
+      id: f.id,
+      orderId: f.orderId,
+      merchantId: f.merchantId,
+      shopifyFulfillmentId: f.shopifyFulfillmentId,
+      status: f.status,
+      trackingCompany: f.trackingCompany || undefined,
+      trackingNumber: f.trackingNumber || undefined,
+      trackingUrl: f.trackingUrl || undefined,
+      estimatedDeliveryAt: f.estimatedDeliveryAt,
+      shippedAt: f.shippedAt,
+      deliveredAt: f.deliveredAt,
+      latestLocation: f.latestLocation,
+      createdAt: f.createdAt,
+      updatedAt: f.updatedAt,
+    };
+  }
+
+  async getFulfillmentByShopifyId(shopifyFulfillmentId: string): Promise<FulfillmentRecord | null> {
+    const f = await this.prisma.fulfillment.findUnique({ where: { shopifyFulfillmentId } });
+    if (!f) return null;
+    return {
+      id: f.id,
+      orderId: f.orderId,
+      merchantId: f.merchantId,
+      shopifyFulfillmentId: f.shopifyFulfillmentId,
+      status: f.status,
+      trackingCompany: f.trackingCompany || undefined,
+      trackingNumber: f.trackingNumber || undefined,
+      trackingUrl: f.trackingUrl || undefined,
+      estimatedDeliveryAt: f.estimatedDeliveryAt,
+      shippedAt: f.shippedAt,
+      deliveredAt: f.deliveredAt,
+      latestLocation: f.latestLocation,
+      createdAt: f.createdAt,
+      updatedAt: f.updatedAt,
+    };
+  }
+
+  async getFulfillmentsByOrderId(orderId: string): Promise<FulfillmentRecord[]> {
+    const list = await this.prisma.fulfillment.findMany({ where: { orderId } });
+    return list.map((f) => ({
+      id: f.id,
+      orderId: f.orderId,
+      merchantId: f.merchantId,
+      shopifyFulfillmentId: f.shopifyFulfillmentId,
+      status: f.status,
+      trackingCompany: f.trackingCompany || undefined,
+      trackingNumber: f.trackingNumber || undefined,
+      trackingUrl: f.trackingUrl || undefined,
+      estimatedDeliveryAt: f.estimatedDeliveryAt,
+      shippedAt: f.shippedAt,
+      deliveredAt: f.deliveredAt,
+      latestLocation: f.latestLocation,
+      createdAt: f.createdAt,
+      updatedAt: f.updatedAt,
+    }));
+  }
+
+  async findFulfillmentByTracking(merchantId: string, trackingNumber: string): Promise<FulfillmentRecord | null> {
+    const f = await this.prisma.fulfillment.findFirst({
+      where: {
+        merchantId,
+        trackingNumber,
+      },
     });
-    return list as unknown as FulfillmentRecord[];
+    if (!f) return null;
+    return {
+      id: f.id,
+      orderId: f.orderId,
+      merchantId: f.merchantId,
+      shopifyFulfillmentId: f.shopifyFulfillmentId,
+      status: f.status,
+      trackingCompany: f.trackingCompany || undefined,
+      trackingNumber: f.trackingNumber || undefined,
+      trackingUrl: f.trackingUrl || undefined,
+      estimatedDeliveryAt: f.estimatedDeliveryAt,
+      shippedAt: f.shippedAt,
+      deliveredAt: f.deliveredAt,
+      latestLocation: f.latestLocation,
+      createdAt: f.createdAt,
+      updatedAt: f.updatedAt,
+    };
   }
 
-  async upsertReturn(returnRecord: ReturnRecord): Promise<ReturnRecord> {
-    const upserted = await this.prisma.return.upsert({
-      where: { id: returnRecord.id },
+  async upsertReturn(ret: ReturnRecord): Promise<ReturnRecord> {
+    await this.prisma.return.upsert({
+      where: { id: ret.id },
       create: {
-        id: returnRecord.id,
-        orderId: returnRecord.orderId,
-        merchantId: returnRecord.merchantId,
-        shopifyReturnId: returnRecord.shopifyReturnId,
-        reason: returnRecord.reason as any,
-        status: returnRecord.status as any,
-        refundAmount: returnRecord.refundAmount,
-        currency: returnRecord.currency,
-        notes: returnRecord.notes,
-        returnTrackingNumber: returnRecord.returnTrackingNumber,
+        id: ret.id,
+        orderId: ret.orderId,
+        merchantId: ret.merchantId,
+        shopifyReturnId: ret.shopifyReturnId,
+        status: ret.status,
+        reason: ret.reason,
+        refundAmount: ret.refundAmount,
+        currency: ret.currency || 'INR',
       },
       update: {
-        reason: returnRecord.reason as any,
-        status: returnRecord.status as any,
-        refundAmount: returnRecord.refundAmount,
-        currency: returnRecord.currency,
-        notes: returnRecord.notes,
-        returnTrackingNumber: returnRecord.returnTrackingNumber,
+        status: ret.status,
+        reason: ret.reason,
+        refundAmount: ret.refundAmount,
       },
     });
-    return upserted as unknown as ReturnRecord;
+    return ret;
+  }
+
+  async createOrUpdateReturn(ret: ReturnRecord): Promise<ReturnRecord> {
+    return this.upsertReturn(ret);
+  }
+
+  async getReturn(id: string): Promise<ReturnRecord | null> {
+    const r = await this.prisma.return.findUnique({ where: { id } });
+    if (!r) return null;
+    return {
+      id: r.id,
+      orderId: r.orderId,
+      merchantId: r.merchantId,
+      shopifyReturnId: r.shopifyReturnId || undefined,
+      reason: r.reason,
+      status: r.status,
+      refundAmount: r.refundAmount || undefined,
+      currency: r.currency,
+      createdAt: r.createdAt,
+      updatedAt: r.updatedAt,
+    };
+  }
+
+  async getReturnsByOrderId(orderId: string): Promise<ReturnRecord[]> {
+    const list = await this.prisma.return.findMany({ where: { orderId } });
+    return list.map((r) => ({
+      id: r.id,
+      orderId: r.orderId,
+      merchantId: r.merchantId,
+      shopifyReturnId: r.shopifyReturnId || undefined,
+      reason: r.reason,
+      status: r.status,
+      refundAmount: r.refundAmount || undefined,
+      currency: r.currency,
+      createdAt: r.createdAt,
+      updatedAt: r.updatedAt,
+    }));
   }
 
   async listReturns(merchantId?: string): Promise<ReturnRecord[]> {
@@ -1145,23 +1657,34 @@ export class PrismaDatabase implements DatabasePort {
       where: merchantId ? { merchantId } : undefined,
       orderBy: { createdAt: 'desc' },
     });
-    return list as unknown as ReturnRecord[];
+    return list.map((r) => ({
+      id: r.id,
+      orderId: r.orderId,
+      merchantId: r.merchantId,
+      shopifyReturnId: r.shopifyReturnId || undefined,
+      reason: r.reason,
+      status: r.status,
+      refundAmount: r.refundAmount || undefined,
+      currency: r.currency,
+      createdAt: r.createdAt,
+      updatedAt: r.updatedAt,
+    }));
   }
 
   async logSecurityIncident(incident: SecurityIncident): Promise<SecurityIncident> {
-    const created = await this.prisma.securityIncident.create({
+    await this.prisma.securityIncident.create({
       data: {
         id: incident.id,
-        cartToken: incident.cartToken,
         merchantId: incident.merchantId,
         attackType: incident.attackType,
         flaggedPatterns: incident.flaggedPatterns,
         rawInput: incident.rawInput,
         normalizedInput: incident.normalizedInput,
         riskScore: incident.riskScore,
+        createdAt: new Date(incident.createdAt),
       },
     });
-    return created as unknown as SecurityIncident;
+    return incident;
   }
 
   async listSecurityIncidents(merchantId?: string): Promise<SecurityIncident[]> {
@@ -1169,44 +1692,35 @@ export class PrismaDatabase implements DatabasePort {
       where: merchantId ? { merchantId } : undefined,
       orderBy: { createdAt: 'desc' },
     });
-    return list as unknown as SecurityIncident[];
+    return list.map((i) => ({
+      id: i.id,
+      merchantId: i.merchantId || undefined,
+      attackType: i.attackType,
+      flaggedPatterns: i.flaggedPatterns,
+      rawInput: i.rawInput,
+      normalizedInput: i.normalizedInput,
+      riskScore: i.riskScore,
+      createdAt: i.createdAt,
+    }));
   }
 
-  async pruneRecordsOlderThan(retentionDays = 30): Promise<{ prunedCarts: number; prunedLogs: number }> {
-    const cutoff = new Date(Date.now() - retentionDays * 24 * 60 * 60 * 1000);
-    const [cartsRes, logsRes] = await this.prisma.$transaction([
-      this.prisma.cartEvent.deleteMany({ where: { createdAt: { lt: cutoff } } }),
-      this.prisma.messageLog.deleteMany({ where: { createdAt: { lt: cutoff } } }),
-    ]);
-    return { prunedCarts: cartsRes.count, prunedLogs: logsRes.count };
-  }
+  // ── Compatibility & Omni-Lifecycle Helpers ───────────────────────────────
 
-  // ── Compatibility & Omni-Lifecycle Helpers ─────────────────────────────────
+  private _takeoverLocks = new Map<string, number>();
 
-  private takeoverLocks = new Map<string, number>();
-
-
-  getAdminTakeoverRemainingMs(cartId: string): number {
-    const expiresAt = this.takeoverLocks.get(cartId);
-    if (!expiresAt) return 0;
-    return Math.max(0, expiresAt - Date.now());
-  }
-
-
-
-  setAdminTakeover(cartId: string, durationMs = 3600000): void {
-    this.takeoverLocks.set(cartId, Date.now() + durationMs);
+  setAdminTakeover(cartId: string, durationMs = 15 * 60 * 1000): void {
+    this._takeoverLocks.set(cartId, Date.now() + durationMs);
   }
 
   removeAdminTakeover(cartId: string): void {
-    this.takeoverLocks.delete(cartId);
+    this._takeoverLocks.delete(cartId);
   }
 
   isAdminTakenOver(cartId: string): boolean {
-    const expiresAt = this.takeoverLocks.get(cartId);
-    if (!expiresAt) return false;
-    if (expiresAt < Date.now()) {
-      this.takeoverLocks.delete(cartId);
+    const expiry = this._takeoverLocks.get(cartId);
+    if (!expiry) return false;
+    if (Date.now() > expiry) {
+      this._takeoverLocks.delete(cartId);
       return false;
     }
     return true;
@@ -1216,125 +1730,83 @@ export class PrismaDatabase implements DatabasePort {
     return this.isAdminTakenOver(cartId);
   }
 
+  getAdminTakeoverRemainingMs(cartId: string): number {
+    const expiry = this._takeoverLocks.get(cartId);
+    if (!expiry) return 0;
+    const remaining = expiry - Date.now();
+    if (remaining <= 0) {
+      this._takeoverLocks.delete(cartId);
+      return 0;
+    }
+    return remaining;
+  }
+
   generateOutboxIdempotencyKey(shopDomain: string, cartToken: string, timestamp: number | string | Date): string {
-    const ts = typeof timestamp === 'object' && timestamp instanceof Date ? timestamp.getTime() : timestamp;
-    return crypto
-      .createHash('sha256')
-      .update(`${shopDomain}:${cartToken}:${ts}`)
-      .digest('hex');
+    const ts = timestamp instanceof Date ? timestamp.toISOString() : String(timestamp);
+    return crypto.createHash('sha256').update(`${shopDomain}:${cartToken}:${ts}`).digest('hex');
   }
 
   async createCartWithOutbox(
     cartData: Omit<CartEvent, 'id' | 'createdAt' | 'updatedAt'>,
     customOutbox?: Partial<OutboxEventRecord>
   ): Promise<{ cart: CartEvent; outbox: OutboxEventRecord }> {
-    const cart = await this.upsertCartEvent({
-      id: `cart_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      ...cartData,
+    return this.prisma.$transaction(async (tx) => {
+      const cart = await tx.cartEvent.create({
+        data: {
+          cartToken: cartData.cartToken,
+          merchantId: cartData.merchantId,
+          customerPhone: cartData.customerPhone,
+          customerEmail: cartData.customerEmail,
+          customerName: cartData.customerName,
+          currency: cartData.currency,
+          totalPrice: cartData.totalPrice,
+          totalAmountMinor: cartData.totalAmountMinor !== undefined ? BigInt(cartData.totalAmountMinor) : BigInt(Math.round((cartData.totalPrice || 0) * 100)),
+          items: cartData.items as any,
+          status: cartData.status as any,
+          abandonmentType: cartData.abandonmentType as any,
+          recoveryStage: cartData.recoveryStage as any,
+          checkoutUrl: cartData.checkoutUrl,
+          suggestedDiscountCode: cartData.suggestedDiscountCode,
+        },
+      });
+
+      const idempotencyKey =
+        customOutbox?.idempotencyKey ||
+        this.generateOutboxIdempotencyKey(cartData.merchantId, cartData.cartToken, Date.now());
+
+      const outbox = await tx.outboxEvent.create({
+        data: {
+          merchantId: cartData.merchantId,
+          aggregateType: 'CART',
+          aggregateId: cart.id,
+          eventType: customOutbox?.eventType || 'CART_ABANDONED',
+          payload: (customOutbox?.payload || { cartId: cart.id, cartToken: cart.cartToken }) as any,
+          idempotencyKey,
+          status: 'PENDING',
+        },
+      });
+
+      return {
+        cart: cart as unknown as CartEvent,
+        outbox: {
+          ...outbox,
+          status: outbox.status as any,
+          payload: outbox.payload as Record<string, unknown>,
+        },
+      };
     });
-
-    const merchant = await this.getMerchant(cart.merchantId);
-    const shopDomain = merchant?.shopDomain || merchant?.storeUrl || 'store.myshopify.com';
-    const idempotencyKey = customOutbox?.idempotencyKey || this.generateOutboxIdempotencyKey(shopDomain, cart.cartToken, new Date());
-
-    const outbox = await this.createOutboxEvent({
-      merchantId: cart.merchantId,
-      aggregateType: 'CartEvent',
-      aggregateId: cart.id,
-      eventType: customOutbox?.eventType || 'CART_ABANDONED',
-      payload: (customOutbox?.payload as Record<string, unknown>) || {
-        cartToken: cart.cartToken,
-        merchantId: cart.merchantId,
-        totalPrice: cart.totalPrice,
-        currency: cart.currency,
-        abandonmentType: cart.abandonmentType,
-      },
-      idempotencyKey,
-    });
-
-    return { cart, outbox };
   }
 
-  async createOrUpdateOrder(order: OrderRecord): Promise<OrderRecord> {
-    return this.upsertOrder(order);
+  async pruneRecordsOlderThan(retentionDays = 90): Promise<{ prunedCarts: number; prunedLogs: number }> {
+    const cutoff = new Date(Date.now() - retentionDays * 24 * 60 * 60 * 1000);
+    const [c, l] = await Promise.all([
+      this.prisma.cartEvent.deleteMany({
+        where: { createdAt: { lt: cutoff }, status: { in: ['RECOVERED', 'EXPIRED'] } },
+      }),
+      this.prisma.messageLog.deleteMany({
+        where: { createdAt: { lt: cutoff } },
+      }),
+    ]);
+    return { prunedCarts: c.count, prunedLogs: l.count };
   }
-
-  async getOrderByShopifyId(shopifyOrderId: string): Promise<OrderRecord | null> {
-    const orders = await this.listOrders();
-    return orders.find((o) => o.shopifyOrderId === shopifyOrderId) || null;
-  }
-
-  async getOrderByOrderNumber(merchantId: string, orderNumber: string): Promise<OrderRecord | null> {
-    const orders = await this.listOrders(merchantId);
-    const normalized = orderNumber.replace(/^#/, '').trim().toLowerCase();
-    return (
-      orders.find(
-        (o) =>
-          o.merchantId === merchantId &&
-          (o.orderNumber.replace(/^#/, '').trim().toLowerCase() === normalized || o.shopifyOrderId === orderNumber)
-      ) || null
-    );
-  }
-
-  async findOrdersByCustomer(merchantId: string, identifier: string): Promise<OrderRecord[]> {
-    const orders = await this.listOrders(merchantId);
-    const cleanId = identifier.trim().toLowerCase();
-    return orders.filter(
-      (o) =>
-        o.merchantId === merchantId &&
-        ((o.customerPhone && (o.customerPhone === identifier || o.customerPhone.includes(cleanId.slice(-10)))) ||
-          (o.customerEmail && o.customerEmail.toLowerCase() === cleanId) ||
-          o.orderNumber.toLowerCase() === cleanId ||
-          o.shopifyOrderId === identifier)
-    );
-  }
-
-  async createOrUpdateFulfillment(fulfillment: FulfillmentRecord): Promise<FulfillmentRecord> {
-    return this.upsertFulfillment(fulfillment);
-  }
-
-  async getFulfillment(id: string): Promise<FulfillmentRecord | null> {
-    const fulfillments = await this.listFulfillments();
-    return fulfillments.find((f) => f.id === id) || null;
-  }
-
-  async getFulfillmentByShopifyId(shopifyFulfillmentId: string): Promise<FulfillmentRecord | null> {
-    const fulfillments = await this.listFulfillments();
-    return fulfillments.find((f) => f.shopifyFulfillmentId === shopifyFulfillmentId) || null;
-  }
-
-  async getFulfillmentsByOrderId(orderId: string): Promise<FulfillmentRecord[]> {
-    const fulfillments = await this.listFulfillments();
-    return fulfillments.filter((f) => f.orderId === orderId);
-  }
-
-  async findFulfillmentByTracking(merchantId: string, trackingNumber: string): Promise<FulfillmentRecord | null> {
-    const fulfillments = await this.listFulfillments(merchantId);
-    const cleanTracking = trackingNumber.trim().toLowerCase();
-    return (
-      fulfillments.find(
-        (f) =>
-          f.merchantId === merchantId &&
-          f.trackingNumber &&
-          f.trackingNumber.trim().toLowerCase() === cleanTracking
-      ) || null
-    );
-  }
-
-  async createOrUpdateReturn(ret: ReturnRecord): Promise<ReturnRecord> {
-    return this.upsertReturn(ret);
-  }
-
-  async getReturn(id: string): Promise<ReturnRecord | null> {
-    const returns = await this.listReturns();
-    return returns.find((r) => r.id === id) || null;
-  }
-
-  async getReturnsByOrderId(orderId: string): Promise<ReturnRecord[]> {
-    const returns = await this.listReturns();
-    return returns.filter((r) => r.orderId === orderId);
-  }
-
 }

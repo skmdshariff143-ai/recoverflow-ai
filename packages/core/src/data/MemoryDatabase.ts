@@ -34,6 +34,9 @@ import type {
   IdempotencyKeyRecord,
   WebhookEventRecord,
   AuditEventRecord,
+  CreateRecoveryCaseAndEnqueueParams,
+  IngestRazorpayWebhookParams,
+  SearchRecoveryCasesParams,
 } from './DatabasePort';
 import { seedDemoDataset } from '../seed-data';
 
@@ -124,7 +127,7 @@ export class MemoryDatabase implements DatabasePort {
   }
 
   async close(): Promise<void> {
-    // No-op for in-memory
+    // In-memory no-op
   }
 
   // ── Identity & Tenancy ───────────────────────────────────────────────────
@@ -208,16 +211,16 @@ export class MemoryDatabase implements DatabasePort {
     userAgent?: string;
   }): Promise<SessionRecord> {
     const session: SessionRecord = {
-      id: `sess_${crypto.randomBytes(8).toString('hex')}`,
+      id: `sess_${crypto.randomBytes(6).toString('hex')}`,
       userId: data.userId,
       tokenHash: data.tokenHash,
       organizationId: data.organizationId,
       activeMerchantId: data.activeMerchantId,
       role: data.role,
       isRevoked: false,
+      expiresAt: data.expiresAt,
       ipAddress: data.ipAddress,
       userAgent: data.userAgent,
-      expiresAt: data.expiresAt,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -230,24 +233,23 @@ export class MemoryDatabase implements DatabasePort {
   }
 
   async revokeSession(sessionId: string, reason: string): Promise<void> {
-    for (const s of this.sessions.values()) {
-      if (s.id === sessionId) {
-        s.isRevoked = true;
-        s.revokedAt = new Date();
-        s.revocationReason = reason;
-        s.updatedAt = new Date();
+    for (const session of this.sessions.values()) {
+      if (session.id === sessionId) {
+        session.isRevoked = true;
+        session.revokedAt = new Date();
+        session.revocationReason = reason;
+        break;
       }
     }
   }
 
   async revokeAllUserSessions(userId: string, reason: string): Promise<number> {
     let count = 0;
-    for (const s of this.sessions.values()) {
-      if (s.userId === userId && !s.isRevoked) {
-        s.isRevoked = true;
-        s.revokedAt = new Date();
-        s.revocationReason = reason;
-        s.updatedAt = new Date();
+    for (const session of this.sessions.values()) {
+      if (session.userId === userId && !session.isRevoked) {
+        session.isRevoked = true;
+        session.revokedAt = new Date();
+        session.revocationReason = reason;
         count++;
       }
     }
@@ -257,13 +259,17 @@ export class MemoryDatabase implements DatabasePort {
   async isSessionRevoked(tokenHash: string): Promise<boolean> {
     const s = this.sessions.get(tokenHash);
     if (!s) return false;
-    return s.isRevoked || new Date(s.expiresAt).getTime() < Date.now();
+    const expiresAt = typeof s.expiresAt === 'string' ? new Date(s.expiresAt) : s.expiresAt;
+    return s.isRevoked || expiresAt.getTime() < Date.now();
   }
 
   // ── Merchants ────────────────────────────────────────────────────────────
 
-  async getMerchant(id: string, _orgId?: string): Promise<Merchant | null> {
-    return this.merchants.get(id) || null;
+  async getMerchant(id: string, organizationId?: string): Promise<Merchant | null> {
+    const m = this.merchants.get(id);
+    if (!m) return null;
+    if (organizationId && m.organizationId && m.organizationId !== organizationId) return null;
+    return m;
   }
 
   async getMerchantById(id: string): Promise<Merchant | null> {
@@ -273,8 +279,10 @@ export class MemoryDatabase implements DatabasePort {
   async getMerchantByStoreUrl(storeUrl: string): Promise<Merchant | null> {
     const cleanUrl = storeUrl.toLowerCase().replace(/^https?:\/\//, '').replace(/\/$/, '');
     for (const m of this.merchants.values()) {
-      const mClean = m.storeUrl.toLowerCase().replace(/^https?:\/\//, '').replace(/\/$/, '');
-      if (mClean === cleanUrl || (m.shopDomain && m.shopDomain.toLowerCase() === cleanUrl)) {
+      if (
+        m.storeUrl?.toLowerCase().includes(cleanUrl) ||
+        m.shopDomain?.toLowerCase() === cleanUrl
+      ) {
         return m;
       }
     }
@@ -284,30 +292,28 @@ export class MemoryDatabase implements DatabasePort {
   async getMerchantByShopDomain(shopDomain: string): Promise<Merchant | null> {
     const clean = shopDomain.toLowerCase().trim();
     for (const m of this.merchants.values()) {
-      if (m.shopDomain && m.shopDomain.toLowerCase() === clean) {
-        return m;
-      }
-      if (m.storeUrl.toLowerCase().includes(clean)) {
+      if (m.shopDomain?.toLowerCase() === clean || m.storeUrl?.toLowerCase().includes(clean)) {
         return m;
       }
     }
     return null;
   }
 
-  async listMerchants(_orgId?: string): Promise<Merchant[]> {
-    return Array.from(this.merchants.values());
-  }
-
-  async upsertMerchant(merchant: Merchant): Promise<Merchant> {
-    this.merchants.set(merchant.id, {
-      ...merchant,
-      updatedAt: new Date(),
-    });
-    return merchant;
+  async listMerchants(organizationId?: string): Promise<Merchant[]> {
+    const list = Array.from(this.merchants.values());
+    if (organizationId) {
+      return list.filter((m) => m.organizationId === organizationId);
+    }
+    return list;
   }
 
   async createOrUpdateMerchant(merchant: Merchant): Promise<Merchant> {
     return this.upsertMerchant(merchant);
+  }
+
+  async upsertMerchant(merchant: Merchant): Promise<Merchant> {
+    this.merchants.set(merchant.id, { ...merchant });
+    return merchant;
   }
 
   async updateMerchantTone(
@@ -316,7 +322,7 @@ export class MemoryDatabase implements DatabasePort {
   ): Promise<Merchant | null> {
     const m = this.merchants.get(id);
     if (!m) return null;
-    const updated = { ...m, ...updates, updatedAt: new Date() };
+    const updated = { ...m, ...updates };
     this.merchants.set(id, updated);
     return updated;
   }
@@ -334,41 +340,46 @@ export class MemoryDatabase implements DatabasePort {
     return this.getCartById(id, merchantId);
   }
 
-  async getCartByToken(cartToken: string, merchantId?: string): Promise<CartEvent | null> {
-    for (const c of this.cartEvents.values()) {
-      if (c.cartToken === cartToken && (!merchantId || c.merchantId === merchantId)) {
-        return c;
+  async getCartByToken(token: string, merchantId?: string): Promise<CartEvent | null> {
+    for (const cart of this.cartEvents.values()) {
+      if (cart.cartToken === token) {
+        if (merchantId && cart.merchantId !== merchantId) return null;
+        return cart;
       }
     }
     return null;
   }
 
   async findCartByCustomerOrToken(identifier: string, merchantId?: string): Promise<CartEvent | null> {
-    const clean = identifier.toLowerCase().trim();
-    for (const c of this.cartEvents.values()) {
-      if (merchantId && c.merchantId !== merchantId) continue;
-      if (c.cartToken.toLowerCase() === clean) return c;
-      if (c.customerEmail && c.customerEmail.toLowerCase() === clean) return c;
-      if (c.customerPhone && c.customerPhone.includes(clean)) return c;
+    const clean = identifier.trim().toLowerCase();
+    for (const cart of this.cartEvents.values()) {
+      if (merchantId && cart.merchantId !== merchantId) continue;
+      if (
+        cart.cartToken.toLowerCase() === clean ||
+        cart.customerEmail?.toLowerCase() === clean ||
+        cart.customerPhone?.includes(clean)
+      ) {
+        return cart;
+      }
     }
     return null;
   }
 
   async upsertCartEvent(cart: CartEvent): Promise<CartEvent> {
     const merchant = this.merchants.get(cart.merchantId);
-    let finalCart = { ...cart };
+    let processedCart = { ...cart };
 
-    if (merchant && merchant.dataTier === 'EPHEMERAL') {
-      finalCart = {
-        ...finalCart,
-        customerEmail: hashPii(finalCart.customerEmail),
-        customerPhone: hashPii(finalCart.customerPhone),
-        customerName: finalCart.customerName ? '[ANONYMIZED_SHOPPER]' : undefined,
+    if (merchant?.dataTier === 'EPHEMERAL') {
+      processedCart = {
+        ...processedCart,
+        customerEmail: hashPii(cart.customerEmail),
+        customerPhone: hashPii(cart.customerPhone),
+        customerName: '[ANONYMIZED_SHOPPER]',
       };
     }
 
-    this.cartEvents.set(finalCart.id, finalCart);
-    return finalCart;
+    this.cartEvents.set(cart.id, processedCart);
+    return processedCart;
   }
 
   async updateCartStatus(
@@ -379,21 +390,22 @@ export class MemoryDatabase implements DatabasePort {
   ): Promise<CartEvent | null> {
     const cart = this.cartEvents.get(id);
     if (!cart) return null;
-    cart.status = status;
-    if (stage) cart.recoveryStage = stage;
-    if (discountCode !== undefined) cart.suggestedDiscountCode = discountCode;
-    if (status === 'RECOVERED') cart.recoveredAt = new Date();
-    cart.updatedAt = new Date();
-    this.cartEvents.set(id, cart);
-    return cart;
+    const updated: CartEvent = {
+      ...cart,
+      status,
+      ...(stage ? { recoveryStage: stage } : {}),
+      ...(discountCode !== undefined ? { suggestedDiscountCode: discountCode || undefined } : {}),
+      ...(status === 'RECOVERED' ? { recoveredAt: new Date().toISOString() } : {}),
+      updatedAt: new Date().toISOString(),
+    };
+    this.cartEvents.set(id, updated);
+    return updated;
   }
 
   async listCartEvents(merchantId?: string): Promise<CartEvent[]> {
     const list = Array.from(this.cartEvents.values());
-    if (merchantId) {
-      return list.filter((c) => c.merchantId === merchantId);
-    }
-    return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    if (merchantId) return list.filter((c) => c.merchantId === merchantId);
+    return list;
   }
 
   async getCartEventsByMerchant(merchantId: string): Promise<CartEvent[]> {
@@ -412,11 +424,11 @@ export class MemoryDatabase implements DatabasePort {
     customerId?: string;
     orderReference?: string;
   }): Promise<PaymentRecord> {
-    const payment: PaymentRecord = {
+    const p: PaymentRecord = {
       id: `pay_${crypto.randomBytes(6).toString('hex')}`,
       merchantId: data.merchantId,
       externalPaymentId: data.externalPaymentId,
-      amountPaise: data.amountPaise,
+      amountPaise: Number(data.amountPaise),
       currency: data.currency,
       status: data.status || 'FAILED',
       gateway: data.gateway || 'RAZORPAY',
@@ -425,8 +437,8 @@ export class MemoryDatabase implements DatabasePort {
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-    this.payments.set(payment.id, payment);
-    return payment;
+    this.payments.set(p.id, p);
+    return p;
   }
 
   async getPayment(id: string, merchantId?: string): Promise<PaymentRecord | null> {
@@ -438,7 +450,8 @@ export class MemoryDatabase implements DatabasePort {
 
   async getPaymentByExternalId(externalPaymentId: string, merchantId?: string): Promise<PaymentRecord | null> {
     for (const p of this.payments.values()) {
-      if (p.externalPaymentId === externalPaymentId && (!merchantId || p.merchantId === merchantId)) {
+      if (p.externalPaymentId === externalPaymentId) {
+        if (merchantId && p.merchantId !== merchantId) return null;
         return p;
       }
     }
@@ -452,47 +465,142 @@ export class MemoryDatabase implements DatabasePort {
     recoveryProbBps?: number;
     expectedValuePaise?: bigint | number;
   }): Promise<RecoveryCaseRecord> {
-    const recCase: RecoveryCaseRecord = {
+    const rc: RecoveryCaseRecord = {
       id: `rc_${crypto.randomBytes(6).toString('hex')}`,
       merchantId: data.merchantId,
       paymentId: data.paymentId,
       customerId: data.customerId,
-      status: 'DETECTED',
+      status: 'OPEN',
       attemptCount: 0,
       maxAttempts: 3,
       recoveryProbBps: data.recoveryProbBps || 0,
-      expectedValuePaise: data.expectedValuePaise || 0,
+      expectedValuePaise: Number(data.expectedValuePaise || 0),
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-    this.recoveryCases.set(recCase.id, recCase);
-    return recCase;
+    this.recoveryCases.set(rc.id, rc);
+    return rc;
   }
 
   async getRecoveryCase(id: string, merchantId?: string): Promise<RecoveryCaseRecord | null> {
-    const c = this.recoveryCases.get(id);
-    if (!c) return null;
-    if (merchantId && c.merchantId !== merchantId) return null;
-    return c;
+    const rc = this.recoveryCases.get(id);
+    if (!rc) return null;
+    if (merchantId && rc.merchantId !== merchantId) return null;
+    return rc;
   }
 
   async updateRecoveryCase(id: string, updates: Partial<RecoveryCaseRecord>, merchantId?: string): Promise<RecoveryCaseRecord | null> {
-    const c = this.recoveryCases.get(id);
-    if (!c) return null;
-    if (merchantId && c.merchantId !== merchantId) return null;
-    const updated = { ...c, ...updates, updatedAt: new Date() };
+    const rc = this.recoveryCases.get(id);
+    if (!rc) return null;
+    if (merchantId && rc.merchantId !== merchantId) return null;
+    const updated: RecoveryCaseRecord = {
+      ...rc,
+      ...updates,
+      expectedValuePaise: updates.expectedValuePaise !== undefined ? Number(updates.expectedValuePaise) : rc.expectedValuePaise,
+      updatedAt: new Date(),
+    };
     this.recoveryCases.set(id, updated);
     return updated;
   }
 
   async listRecoveryCases(params: { merchantId: string; status?: string; limit?: number; offset?: number }): Promise<RecoveryCaseRecord[]> {
-    let list = Array.from(this.recoveryCases.values()).filter((c) => c.merchantId === params.merchantId);
+    let list = Array.from(this.recoveryCases.values()).filter((rc) => rc.merchantId === params.merchantId);
     if (params.status) {
-      list = list.filter((c) => c.status === params.status);
+      list = list.filter((rc) => rc.status === params.status);
     }
     const offset = params.offset || 0;
     const limit = params.limit || 50;
     return list.slice(offset, offset + limit);
+  }
+
+  async searchRecoveryCases(params: SearchRecoveryCasesParams): Promise<{ items: RecoveryCaseRecord[]; total: number }> {
+    let list = Array.from(this.recoveryCases.values()).filter((rc) => rc.merchantId === params.merchantId);
+    if (params.status) {
+      list = list.filter((rc) => rc.status === params.status);
+    }
+    if (params.minExpectedValuePaise) {
+      const min = Number(params.minExpectedValuePaise);
+      list = list.filter((rc) => Number(rc.expectedValuePaise) >= min);
+    }
+    if (params.search) {
+      const q = params.search.toLowerCase();
+      list = list.filter((rc) =>
+        rc.id.toLowerCase().includes(q) ||
+        rc.paymentId.toLowerCase().includes(q) ||
+        rc.customerId?.toLowerCase().includes(q)
+      );
+    }
+    const total = list.length;
+    const offset = params.offset || 0;
+    const limit = params.limit || 50;
+    return {
+      items: list.slice(offset, offset + limit),
+      total,
+    };
+  }
+
+  // ── Unit of Work Atomic Transactions ─────────────────────────────────────
+
+  async createRecoveryCaseAndEnqueue(params: CreateRecoveryCaseAndEnqueueParams): Promise<{
+    payment: PaymentRecord;
+    recoveryCase: RecoveryCaseRecord;
+    outbox: OutboxEventRecord;
+  }> {
+    const payment = await this.createPayment(params.payment);
+    const recoveryCase = await this.createRecoveryCase({
+      ...params.recoveryCase,
+      merchantId: params.payment.merchantId,
+      paymentId: payment.id,
+    });
+    const outbox = await this.createOutboxEvent({
+      merchantId: params.payment.merchantId,
+      aggregateType: 'RECOVERY_CASE',
+      aggregateId: recoveryCase.id,
+      eventType: params.outbox.eventType,
+      payload: { ...params.outbox.payload, recoveryCaseId: recoveryCase.id, paymentId: payment.id },
+      idempotencyKey: params.outbox.idempotencyKey,
+    });
+    return { payment, recoveryCase, outbox };
+  }
+
+  async ingestRazorpayWebhookTransaction(params: IngestRazorpayWebhookParams): Promise<{
+    webhook: WebhookEventRecord;
+    payment?: PaymentRecord;
+    recoveryCase?: RecoveryCaseRecord;
+    outbox?: OutboxEventRecord;
+  }> {
+    const webhook = await this.createWebhookEvent({
+      ...params.webhookEvent,
+      signatureValid: params.webhookEvent.signatureValid,
+    });
+    await this.markWebhookEventProcessed(webhook.id, 'PROCESSED');
+
+    let payment: PaymentRecord | undefined;
+    let recoveryCase: RecoveryCaseRecord | undefined;
+    let outbox: OutboxEventRecord | undefined;
+
+    if (params.payment) {
+      payment = await this.createPayment(params.payment);
+      if (params.recoveryCase) {
+        recoveryCase = await this.createRecoveryCase({
+          ...params.recoveryCase,
+          merchantId: params.payment.merchantId,
+          paymentId: payment.id,
+        });
+        if (params.outbox) {
+          outbox = await this.createOutboxEvent({
+            merchantId: params.payment.merchantId,
+            aggregateType: 'RECOVERY_CASE',
+            aggregateId: recoveryCase.id,
+            eventType: params.outbox.eventType,
+            payload: { ...params.outbox.payload, recoveryCaseId: recoveryCase.id, paymentId: payment.id },
+            idempotencyKey: params.outbox.idempotencyKey,
+          });
+        }
+      }
+    }
+
+    return { webhook, payment, recoveryCase, outbox };
   }
 
   async createRecoveryDecision(data: {
@@ -510,7 +618,7 @@ export class MemoryDatabase implements DatabasePort {
       recoveryCaseId: data.recoveryCaseId,
       recommendedAction: data.recommendedAction,
       probRecoveryBps: data.probRecoveryBps,
-      expectedValuePaise: data.expectedValuePaise,
+      expectedValuePaise: Number(data.expectedValuePaise),
       featuresSnapshot: data.featuresSnapshot,
       aiAdvisoryAnalysis: data.aiAdvisoryAnalysis,
       isHaltedBySafety: data.isHaltedBySafety || false,
@@ -529,18 +637,18 @@ export class MemoryDatabase implements DatabasePort {
     status?: string;
     providerResponse?: Record<string, unknown>;
   }): Promise<RecoveryAttemptRecord> {
-    const attempt: RecoveryAttemptRecord = {
+    const att: RecoveryAttemptRecord = {
       id: `att_${crypto.randomBytes(6).toString('hex')}`,
       recoveryCaseId: data.recoveryCaseId,
       attemptNumber: data.attemptNumber,
       channel: data.channel,
-      dispatchedAt: new Date(),
       status: data.status || 'PENDING',
+      dispatchedAt: new Date(),
       providerResponse: data.providerResponse,
       createdAt: new Date(),
     };
-    this.recoveryAttempts.set(attempt.id, attempt);
-    return attempt;
+    this.recoveryAttempts.set(att.id, att);
+    return att;
   }
 
   async createRecoveryOutcome(data: {
@@ -550,18 +658,18 @@ export class MemoryDatabase implements DatabasePort {
     feeAmountPaise?: bigint | number;
     observedVia: string;
   }): Promise<RecoveryOutcomeRecord> {
-    const outcome: RecoveryOutcomeRecord = {
+    const out: RecoveryOutcomeRecord = {
       id: `out_${crypto.randomBytes(6).toString('hex')}`,
       recoveryCaseId: data.recoveryCaseId,
       isRecovered: data.isRecovered,
-      recoveredAmountPaise: data.recoveredAmountPaise,
-      feeAmountPaise: data.feeAmountPaise || 0,
+      recoveredAmountPaise: Number(data.recoveredAmountPaise),
+      feeAmountPaise: Number(data.feeAmountPaise || 0),
       observedVia: data.observedVia,
       verifiedAt: new Date(),
       createdAt: new Date(),
     };
-    this.recoveryOutcomes.set(outcome.id, outcome);
-    return outcome;
+    this.recoveryOutcomes.set(out.id, out);
+    return out;
   }
 
   // ── Transactional Outbox ─────────────────────────────────────────────────
@@ -574,8 +682,8 @@ export class MemoryDatabase implements DatabasePort {
     payload: Record<string, unknown>;
     idempotencyKey: string;
   }): Promise<OutboxEventRecord> {
-    const event: OutboxEventRecord = {
-      id: `evt_out_${crypto.randomBytes(8).toString('hex')}`,
+    const evt: OutboxEventRecord = {
+      id: `obx_${crypto.randomBytes(6).toString('hex')}`,
       merchantId: data.merchantId,
       aggregateType: data.aggregateType,
       aggregateId: data.aggregateId,
@@ -584,85 +692,90 @@ export class MemoryDatabase implements DatabasePort {
       idempotencyKey: data.idempotencyKey,
       status: 'PENDING',
       attemptCount: 0,
+      retryCount: 0,
       maxAttempts: 5,
       availableAt: new Date(),
       createdAt: new Date(),
       updatedAt: new Date(),
+      processedAt: null,
     };
-    this.outboxEvents.set(event.id, event);
-    return event;
+    this.outboxEvents.set(evt.id, evt);
+    return evt;
   }
 
-  async getPendingOutboxEvents(batchSize = 50, merchantId?: string): Promise<OutboxEventRecord[]> {
+  async getPendingOutboxEvents(batchSize = 20, merchantId?: string): Promise<OutboxEventRecord[]> {
     const now = Date.now();
-    const pending = Array.from(this.outboxEvents.values())
-      .filter((e) => {
-        if (merchantId && e.merchantId !== merchantId) return false;
-        return e.status === 'PENDING' && new Date(e.availableAt).getTime() <= now;
-      })
-      .slice(0, batchSize);
-    return pending;
+    let list = Array.from(this.outboxEvents.values())
+      .filter((e) => e.status === 'PENDING' && new Date(e.availableAt).getTime() <= now);
+    if (merchantId) {
+      list = list.filter((e) => e.merchantId === merchantId);
+    }
+    return list.slice(0, batchSize);
   }
 
   async claimOutboxEvents(workerId: string, batchSize = 20, lockTtlMs = 30000): Promise<OutboxEventRecord[]> {
     const now = Date.now();
-    const claimed: OutboxEventRecord[] = [];
+    const expiredCutoff = now - lockTtlMs;
+    const candidates = Array.from(this.outboxEvents.values())
+      .filter((e) => {
+        if (e.status === 'PENDING' && new Date(e.availableAt).getTime() <= now) return true;
+        if (e.status === 'PROCESSING' && e.lockedAt && new Date(e.lockedAt).getTime() <= expiredCutoff) return true;
+        return false;
+      })
+      .slice(0, batchSize);
 
-    for (const e of this.outboxEvents.values()) {
-      if (claimed.length >= batchSize) break;
-      const isAvailable = e.status === 'PENDING' && new Date(e.availableAt).getTime() <= now;
-      const isExpiredLock = e.status === 'PROCESSING' && e.lockedAt && now - new Date(e.lockedAt).getTime() > lockTtlMs;
-
-      if (isAvailable || isExpiredLock) {
-        e.status = 'PROCESSING';
-        e.lockedAt = new Date(now);
-        e.lockedBy = workerId;
-        e.attemptCount += 1;
-        e.updatedAt = new Date(now);
-        claimed.push({ ...e });
-      }
+    for (const c of candidates) {
+      c.status = 'PROCESSING';
+      c.lockedBy = workerId;
+      c.lockedAt = new Date();
+      c.attemptCount += 1;
+      c.updatedAt = new Date();
     }
-    return claimed;
+    return candidates;
   }
 
   async markOutboxEventProcessing(id: string, workerId?: string): Promise<void> {
-    const e = this.outboxEvents.get(id);
-    if (e) {
-      e.status = 'PROCESSING';
-      e.lockedAt = new Date();
-      if (workerId) e.lockedBy = workerId;
-      e.updatedAt = new Date();
-    }
+    const evt = this.outboxEvents.get(id);
+    if (!evt) return;
+    evt.status = 'PROCESSING';
+    evt.lockedAt = new Date();
+    if (workerId) evt.lockedBy = workerId;
   }
 
-  async markOutboxEventPublished(id: string): Promise<void> {
-    const e = this.outboxEvents.get(id);
-    if (e) {
-      e.status = 'PUBLISHED';
-      e.publishedAt = new Date();
-      (e as any).processedAt = new Date();
-      e.lockedBy = null;
-      e.lockedAt = null;
-      e.updatedAt = new Date();
-    }
+  async markOutboxEventPublished(id: string, workerId?: string): Promise<boolean> {
+    const evt = this.outboxEvents.get(id);
+    if (!evt) return false;
+    if (workerId && evt.lockedBy && evt.lockedBy !== workerId) return false;
+    evt.status = 'PUBLISHED';
+    evt.publishedAt = new Date();
+    evt.processedAt = new Date();
+    evt.lockedBy = null;
+    evt.lockedAt = null;
+    return true;
   }
 
-  async markOutboxEventFailed(id: string, error?: string, retryDelayMs = 5000): Promise<void> {
-    const e = this.outboxEvents.get(id);
-    if (e) {
-      e.attemptCount = (e.attemptCount || (e as any).retryCount || 0) + 1;
-      (e as any).retryCount = e.attemptCount;
-      e.lastError = error || 'Processing failed';
-      e.lockedBy = null;
-      e.lockedAt = null;
-      if (e.attemptCount >= e.maxAttempts) {
-        e.status = 'FAILED';
-      } else {
-        e.status = 'PENDING';
-        e.availableAt = new Date(Date.now() + retryDelayMs);
-      }
-      e.updatedAt = new Date();
-    }
+  async markOutboxEventFailed(id: string, error: string, retryDelayMs = 5000, workerId?: string): Promise<boolean> {
+    const evt = this.outboxEvents.get(id);
+    if (!evt) return false;
+    if (workerId && evt.lockedBy && evt.lockedBy !== workerId) return false;
+    evt.retryCount = (evt.retryCount || 0) + 1;
+    evt.attemptCount = (evt.attemptCount || 0) + 1;
+    const shouldFail = (evt.attemptCount >= evt.maxAttempts) || (evt.retryCount >= evt.maxAttempts);
+    evt.lastError = error;
+    evt.lockedBy = null;
+    evt.lockedAt = null;
+    evt.status = shouldFail ? 'FAILED' : 'PENDING';
+    evt.availableAt = shouldFail ? evt.availableAt : new Date(Date.now() + retryDelayMs);
+    return true;
+  }
+
+  async extendOutboxLease(id: string, workerId: string, _extendMs = 30000): Promise<boolean> {
+    const evt = this.outboxEvents.get(id);
+    if (!evt) return false;
+    if (evt.lockedBy !== workerId || evt.status !== 'PROCESSING') return false;
+    evt.lockedAt = new Date();
+    evt.updatedAt = new Date();
+    return true;
   }
 
   // ── Idempotency Store ────────────────────────────────────────────────────
@@ -674,67 +787,77 @@ export class MemoryDatabase implements DatabasePort {
     requestHash?: string;
     ttlMs?: number;
   }): Promise<{ acquired: boolean; existingResponse?: { code: number; body: unknown }; isConflict?: boolean }> {
+    const compositeKey = `${params.merchantId}:${params.endpoint}:${params.key}`;
+    const existing = this.idempotencyKeys.get(compositeKey);
     const now = Date.now();
     const ttl = params.ttlMs || 24 * 60 * 60 * 1000;
-    const existing = this.idempotencyKeys.get(params.key);
+    const expiresAt = new Date(now + ttl);
 
     if (existing) {
-      // Check if expired
-      if (new Date(existing.expiresAt).getTime() <= now) {
-        this.idempotencyKeys.delete(params.key);
-      } else {
-        // Check hash conflict
-        if (params.requestHash && existing.requestHash && params.requestHash !== existing.requestHash) {
-          return { acquired: false, isConflict: true };
-        }
-
-        if (existing.status === 'COMMITTED' && existing.responseCode !== null && existing.responseCode !== undefined) {
-          return {
-            acquired: false,
-            existingResponse: {
-              code: existing.responseCode,
-              body: existing.responseBody,
-            },
-          };
-        }
-
-        // Check if currently locked
-        if (existing.status === 'IN_PROGRESS' && existing.lockedUntil && new Date(existing.lockedUntil).getTime() > now) {
-          return { acquired: false };
-        }
+      const exp = new Date(existing.expiresAt).getTime();
+      if (exp <= now) {
+        existing.status = 'IN_PROGRESS';
+        existing.lockedUntil = new Date(now + 30000);
+        existing.requestHash = params.requestHash;
+        existing.expiresAt = expiresAt;
+        return { acquired: true };
       }
+
+      if (params.requestHash && existing.requestHash && params.requestHash !== existing.requestHash) {
+        return { acquired: false, isConflict: true };
+      }
+
+      if (existing.status === 'COMMITTED' && existing.responseCode !== null) {
+        return {
+          acquired: false,
+          existingResponse: {
+            code: existing.responseCode!,
+            body: existing.responseBody,
+          },
+        };
+      }
+
+      if (existing.status === 'IN_PROGRESS' && existing.lockedUntil && new Date(existing.lockedUntil).getTime() > now) {
+        return { acquired: false };
+      }
+
+      existing.status = 'IN_PROGRESS';
+      existing.lockedUntil = new Date(now + 30000);
+      existing.version += 1;
+      return { acquired: true };
     }
 
-    // Acquire lock
-    const record: IdempotencyKeyRecord = {
+    const rec: IdempotencyKeyRecord = {
       key: params.key,
       merchantId: params.merchantId,
       endpoint: params.endpoint,
       requestHash: params.requestHash,
       status: 'IN_PROGRESS',
-      lockedUntil: new Date(now + 30000), // 30s lock
+      lockedUntil: new Date(now + 30000),
       version: 1,
-      createdAt: new Date(now),
-      expiresAt: new Date(now + ttl),
+      createdAt: new Date(),
+      expiresAt,
     };
-    this.idempotencyKeys.set(params.key, record);
+    this.idempotencyKeys.set(compositeKey, rec);
     return { acquired: true };
   }
 
-  async commitIdempotencyKey(key: string, merchantId: string, responseCode: number, responseBody: unknown): Promise<void> {
-    const existing = this.idempotencyKeys.get(key);
-    if (existing && existing.merchantId === merchantId) {
-      existing.status = 'COMMITTED';
-      existing.responseCode = responseCode;
-      existing.responseBody = responseBody;
-      existing.lockedUntil = null;
+  async commitIdempotencyKey(key: string, merchantId: string, responseCode: number, responseBody: unknown, endpoint = ''): Promise<void> {
+    for (const [, rec] of this.idempotencyKeys.entries()) {
+      if (rec.key === key && rec.merchantId === merchantId && (!endpoint || rec.endpoint === endpoint)) {
+        rec.status = 'COMMITTED';
+        rec.responseCode = responseCode;
+        rec.responseBody = responseBody;
+        rec.lockedUntil = null;
+      }
     }
   }
 
-  async releaseIdempotencyKey(key: string, merchantId: string): Promise<void> {
-    const existing = this.idempotencyKeys.get(key);
-    if (existing && existing.merchantId === merchantId && existing.status === 'IN_PROGRESS') {
-      this.idempotencyKeys.delete(key);
+  async releaseIdempotencyKey(key: string, merchantId: string, endpoint = ''): Promise<void> {
+    for (const [compositeKey, rec] of this.idempotencyKeys.entries()) {
+      if (rec.key === key && rec.merchantId === merchantId && (!endpoint || rec.endpoint === endpoint)) {
+        this.idempotencyKeys.delete(compositeKey);
+      }
     }
   }
 
@@ -752,8 +875,8 @@ export class MemoryDatabase implements DatabasePort {
     rawPayload: Record<string, unknown>;
     signatureValid?: boolean;
   }): Promise<WebhookEventRecord> {
-    const event: WebhookEventRecord = {
-      id: `wh_${crypto.randomBytes(8).toString('hex')}`,
+    const evt: WebhookEventRecord = {
+      id: `whk_${crypto.randomBytes(6).toString('hex')}`,
       merchantId: data.merchantId,
       provider: data.provider,
       source: data.source || data.provider,
@@ -768,26 +891,25 @@ export class MemoryDatabase implements DatabasePort {
       attemptCount: 0,
       receivedAt: new Date(),
     };
-    this.webhookEvents.set(event.id, event);
-    return event;
+    this.webhookEvents.set(evt.id, evt);
+    return evt;
   }
 
   async getWebhookEvent(provider: string, providerEventId: string): Promise<WebhookEventRecord | null> {
-    for (const e of this.webhookEvents.values()) {
-      if (e.provider === provider && (e.providerEventId === providerEventId || e.idempotencyKey === providerEventId)) {
-        return e;
+    for (const evt of this.webhookEvents.values()) {
+      if (evt.provider === provider && (evt.providerEventId === providerEventId || evt.idempotencyKey === providerEventId)) {
+        return evt;
       }
     }
     return null;
   }
 
   async markWebhookEventProcessed(id: string, status: 'PROCESSED' | 'FAILED', error?: string): Promise<void> {
-    const e = this.webhookEvents.get(id);
-    if (e) {
-      e.status = status;
-      e.processedAt = new Date();
-      if (error) e.errorMessage = error;
-    }
+    const evt = this.webhookEvents.get(id);
+    if (!evt) return;
+    evt.status = status;
+    evt.processedAt = new Date();
+    evt.errorMessage = error;
   }
 
   // ── Audit Ledger (Merkle Hash Chain) ─────────────────────────────────────
@@ -804,16 +926,15 @@ export class MemoryDatabase implements DatabasePort {
     payloadHash: string;
     metadata?: Record<string, unknown>;
   }): Promise<AuditEventRecord> {
-    const latest = await this.getLatestAuditEvent(data.merchantId);
+    const latest = await this.getLatestAuditEvent(data.merchantId || undefined);
     const previousHash = latest ? latest.currentHash : '0'.repeat(64);
-
     const currentHash = crypto
       .createHash('sha256')
       .update(`${previousHash}:${data.actorType}:${data.action}:${data.entityId}:${data.payloadHash}`)
       .digest('hex');
 
-    const audit: AuditEventRecord = {
-      id: `aud_${crypto.randomBytes(8).toString('hex')}`,
+    const created: AuditEventRecord = {
+      id: `aud_${crypto.randomBytes(6).toString('hex')}`,
       organizationId: data.organizationId,
       merchantId: data.merchantId,
       userId: data.userId,
@@ -828,25 +949,27 @@ export class MemoryDatabase implements DatabasePort {
       metadata: data.metadata,
       createdAt: new Date(),
     };
-
-    this.auditEvents.set(audit.id, audit);
-    return audit;
+    this.auditEvents.set(created.id, created);
+    return created;
   }
 
   async getLatestAuditEvent(merchantId?: string): Promise<AuditEventRecord | null> {
-    const list = Array.from(this.auditEvents.values());
-    const filtered = merchantId ? list.filter((a) => a.merchantId === merchantId) : list;
-    if (filtered.length === 0) return null;
-    return filtered[filtered.length - 1];
+    let latest: AuditEventRecord | null = null;
+    for (const evt of this.auditEvents.values()) {
+      if (merchantId && evt.merchantId !== merchantId) continue;
+      if (!latest || new Date(evt.createdAt).getTime() > new Date(latest.createdAt).getTime()) {
+        latest = evt;
+      }
+    }
+    return latest;
   }
 
   async listAuditEvents(params: { merchantId?: string; entityType?: string; entityId?: string; limit?: number }): Promise<AuditEventRecord[]> {
     let list = Array.from(this.auditEvents.values());
-    if (params.merchantId) list = list.filter((a) => a.merchantId === params.merchantId);
-    if (params.entityType) list = list.filter((a) => a.entityType === params.entityType);
-    if (params.entityId) list = list.filter((a) => a.entityId === params.entityId);
-    const limit = params.limit || 100;
-    return list.slice(-limit);
+    if (params.merchantId) list = list.filter((e) => e.merchantId === params.merchantId);
+    if (params.entityType) list = list.filter((e) => e.entityType === params.entityType);
+    if (params.entityId) list = list.filter((e) => e.entityId === params.entityId);
+    return list.slice(0, params.limit || 100);
   }
 
   async verifyAuditChain(merchantId?: string): Promise<{ valid: boolean; totalEvents: number; brokenAtId?: string }> {
@@ -871,30 +994,27 @@ export class MemoryDatabase implements DatabasePort {
     return { valid: true, totalEvents: events.length };
   }
 
-  // ── Messages, Suppressions, Orders, Fulfillments, Returns ─────────────────
+  // ── Messages, Suppressions & E-Commerce ──────────────────────────────────
 
   async logMessage(log: MessageLog): Promise<MessageLog> {
-    this.messageLogs.set(log.id, log);
+    this.messageLogs.set(log.id, { ...log });
     return log;
   }
 
   async listMessageLogs(merchantId?: string): Promise<MessageLog[]> {
     const list = Array.from(this.messageLogs.values());
-    if (merchantId) {
-      return list.filter((l) => l.merchantId === merchantId);
-    }
-    return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    if (merchantId) return list.filter((l) => l.merchantId === merchantId);
+    return list;
   }
 
   async addSuppression(entry: SuppressionEntry): Promise<SuppressionEntry> {
-    const key = `${entry.type}:${entry.identifier.toLowerCase().trim()}`;
-    this.suppressions.set(key, entry);
+    this.suppressions.set(entry.identifier, { ...entry });
     return entry;
   }
 
   async isSuppressed(identifier: string, type: 'PHONE' | 'EMAIL'): Promise<boolean> {
-    const key = `${type}:${identifier.toLowerCase().trim()}`;
-    return this.suppressions.has(key);
+    const s = this.suppressions.get(identifier);
+    return !!(s && s.type === type);
   }
 
   async getSuppressionList(): Promise<SuppressionEntry[]> {
@@ -902,16 +1022,16 @@ export class MemoryDatabase implements DatabasePort {
   }
 
   async removeSuppression(identifier: string): Promise<boolean> {
-    const phoneKey = `PHONE:${identifier.toLowerCase().trim()}`;
-    const emailKey = `EMAIL:${identifier.toLowerCase().trim()}`;
-    const deletedPhone = this.suppressions.delete(phoneKey);
-    const deletedEmail = this.suppressions.delete(emailKey);
-    return deletedPhone || deletedEmail;
+    return this.suppressions.delete(identifier);
   }
 
   async upsertOrder(order: OrderRecord): Promise<OrderRecord> {
-    this.orders.set(order.id, { ...order, updatedAt: new Date() });
+    this.orders.set(order.id, { ...order });
     return order;
+  }
+
+  async createOrUpdateOrder(order: OrderRecord): Promise<OrderRecord> {
+    return this.upsertOrder(order);
   }
 
   async getOrder(id: string, merchantId?: string): Promise<OrderRecord | null> {
@@ -921,198 +1041,51 @@ export class MemoryDatabase implements DatabasePort {
     return o;
   }
 
-  async listOrders(merchantId?: string): Promise<OrderRecord[]> {
-    const list = Array.from(this.orders.values());
-    if (merchantId) {
-      return list.filter((o) => o.merchantId === merchantId);
-    }
-    return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }
-
-  async upsertFulfillment(fulfillment: FulfillmentRecord): Promise<FulfillmentRecord> {
-    this.fulfillments.set(fulfillment.id, { ...fulfillment, updatedAt: new Date() });
-    return fulfillment;
-  }
-
-  async listFulfillments(merchantId?: string): Promise<FulfillmentRecord[]> {
-    const list = Array.from(this.fulfillments.values());
-    if (merchantId) {
-      return list.filter((f) => f.merchantId === merchantId);
-    }
-    return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }
-
-  async upsertReturn(returnRecord: ReturnRecord): Promise<ReturnRecord> {
-    this.returns.set(returnRecord.id, { ...returnRecord, updatedAt: new Date() });
-    return returnRecord;
-  }
-
-  async listReturns(merchantId?: string): Promise<ReturnRecord[]> {
-    const list = Array.from(this.returns.values());
-    if (merchantId) {
-      return list.filter((r) => r.merchantId === merchantId);
-    }
-    return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }
-
-  async logSecurityIncident(incident: SecurityIncident): Promise<SecurityIncident> {
-    this.securityIncidents.set(incident.id, incident);
-    return incident;
-  }
-
-  async listSecurityIncidents(merchantId?: string): Promise<SecurityIncident[]> {
-    const list = Array.from(this.securityIncidents.values());
-    if (merchantId) {
-      return list.filter((i) => i.merchantId === merchantId);
-    }
-    return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }
-
-  async pruneRecordsOlderThan(retentionDays = 30): Promise<{ prunedCarts: number; prunedLogs: number }> {
-    const cutoff = Date.now() - retentionDays * 24 * 60 * 60 * 1000;
-    let prunedCarts = 0;
-    let prunedLogs = 0;
-
-    for (const [id, cart] of this.cartEvents.entries()) {
-      if (new Date(cart.createdAt).getTime() < cutoff) {
-        this.cartEvents.delete(id);
-        prunedCarts++;
-      }
-    }
-
-    for (const [id, log] of this.messageLogs.entries()) {
-      if (new Date(log.createdAt).getTime() < cutoff) {
-        this.messageLogs.delete(id);
-        prunedLogs++;
-      }
-    }
-
-    return { prunedCarts, prunedLogs };
-  }
-
-  // ── Compatibility & Omni-Lifecycle Helpers ─────────────────────────────────
-
-
-  getAdminTakeoverRemainingMs(cartId: string): number {
-    const expiresAt = this.takeoverLocks.get(cartId);
-    if (!expiresAt) return 0;
-    return Math.max(0, expiresAt - Date.now());
-  }
-
-
-
-  setAdminTakeover(cartId: string, durationMs = 3600000): void {
-    this.takeoverLocks.set(cartId, Date.now() + durationMs);
-  }
-
-  removeAdminTakeover(cartId: string): void {
-    this.takeoverLocks.delete(cartId);
-  }
-
-  isAdminTakenOver(cartId: string): boolean {
-    const expiresAt = this.takeoverLocks.get(cartId);
-    if (!expiresAt) return false;
-    if (expiresAt < Date.now()) {
-      this.takeoverLocks.delete(cartId);
-      return false;
-    }
-    return true;
-  }
-
-  isAdminTakeover(cartId: string): boolean {
-    return this.isAdminTakenOver(cartId);
-  }
-
-  generateOutboxIdempotencyKey(shopDomain: string, cartToken: string, timestamp: number | string | Date): string {
-    const ts = typeof timestamp === 'object' && timestamp instanceof Date ? timestamp.getTime() : timestamp;
-    return crypto
-      .createHash('sha256')
-      .update(`${shopDomain}:${cartToken}:${ts}`)
-      .digest('hex');
-  }
-
-  async createCartWithOutbox(
-    cartData: Omit<CartEvent, 'id' | 'createdAt' | 'updatedAt'>,
-    customOutbox?: Partial<OutboxEventRecord>
-  ): Promise<{ cart: CartEvent; outbox: OutboxEventRecord }> {
-    const id = `cart_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
-    const now = new Date();
-
-    const cart: CartEvent = {
-      id,
-      createdAt: now,
-      updatedAt: now,
-      ...cartData,
-    };
-    await this.upsertCartEvent(cart);
-
-    const merchant = this.merchants.get(cart.merchantId);
-    const shopDomain = merchant?.shopDomain || merchant?.storeUrl || 'store.myshopify.com';
-    const idempotencyKey = customOutbox?.idempotencyKey || this.generateOutboxIdempotencyKey(shopDomain, cart.cartToken, now.getTime());
-
-    const outboxId = `outbox_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
-    const outbox: OutboxEventRecord = {
-      id: outboxId,
-      merchantId: cart.merchantId,
-      aggregateType: 'CartEvent',
-      aggregateId: cart.id,
-      eventType: customOutbox?.eventType || 'CART_ABANDONED',
-      payload: customOutbox?.payload || {
-        cartToken: cart.cartToken,
-        merchantId: cart.merchantId,
-        totalPrice: cart.totalPrice,
-        currency: cart.currency,
-        abandonmentType: cart.abandonmentType,
-      },
-      idempotencyKey,
-      status: 'PENDING',
-      attemptCount: 0,
-      maxAttempts: 5,
-      availableAt: now,
-      lockedAt: null,
-      lockedBy: null,
-      lastError: null,
-      createdAt: now,
-      updatedAt: now,
-      ...customOutbox,
-    };
-    this.outboxEvents.set(outboxId, outbox);
-
-    return { cart, outbox };
-  }
-
-  async createOrUpdateOrder(order: OrderRecord): Promise<OrderRecord> {
-    return this.upsertOrder(order);
-  }
-
   async getOrderByShopifyId(shopifyOrderId: string): Promise<OrderRecord | null> {
-    const list = Array.from(this.orders.values());
-    return list.find((o) => o.shopifyOrderId === shopifyOrderId) || null;
+    for (const o of this.orders.values()) {
+      if (o.shopifyOrderId === shopifyOrderId) return o;
+    }
+    return null;
   }
 
   async getOrderByOrderNumber(merchantId: string, orderNumber: string): Promise<OrderRecord | null> {
-    const list = Array.from(this.orders.values());
-    const normalized = orderNumber.replace(/^#/, '').trim().toLowerCase();
-    return (
-      list.find(
-        (o) =>
-          o.merchantId === merchantId &&
-          (o.orderNumber.replace(/^#/, '').trim().toLowerCase() === normalized || o.shopifyOrderId === orderNumber)
-      ) || null
-    );
+    for (const o of this.orders.values()) {
+      if (o.merchantId === merchantId && o.orderNumber === orderNumber) return o;
+    }
+    return null;
   }
 
   async findOrdersByCustomer(merchantId: string, identifier: string): Promise<OrderRecord[]> {
+    const clean = identifier.trim().toLowerCase();
+    const list: OrderRecord[] = [];
+    for (const o of this.orders.values()) {
+      if (o.merchantId !== merchantId) continue;
+      if (
+        o.customerEmail?.toLowerCase() === clean ||
+        o.customerPhone?.includes(clean) ||
+        o.customerName?.toLowerCase().includes(clean)
+      ) {
+        list.push(o);
+      }
+    }
+    return list;
+  }
+
+  async listOrders(merchantId?: string): Promise<OrderRecord[]> {
     const list = Array.from(this.orders.values());
-    const cleanId = identifier.trim().toLowerCase();
-    return list.filter(
-      (o) =>
-        o.merchantId === merchantId &&
-        ((o.customerPhone && (o.customerPhone === identifier || o.customerPhone.includes(cleanId.slice(-10)))) ||
-          (o.customerEmail && o.customerEmail.toLowerCase() === cleanId) ||
-          o.orderNumber.toLowerCase() === cleanId ||
-          o.shopifyOrderId === identifier)
-    );
+    if (merchantId) return list.filter((o) => o.merchantId === merchantId);
+    return list;
+  }
+
+    async listFulfillments(merchantId?: string): Promise<FulfillmentRecord[]> {
+    const list = Array.from(this.fulfillments.values());
+    if (merchantId) return list.filter((f) => f.merchantId === merchantId);
+    return list;
+  }
+
+  async upsertFulfillment(fulfillment: FulfillmentRecord): Promise<FulfillmentRecord> {
+    this.fulfillments.set(fulfillment.id, { ...fulfillment });
+    return fulfillment;
   }
 
   async createOrUpdateFulfillment(fulfillment: FulfillmentRecord): Promise<FulfillmentRecord> {
@@ -1124,26 +1097,33 @@ export class MemoryDatabase implements DatabasePort {
   }
 
   async getFulfillmentByShopifyId(shopifyFulfillmentId: string): Promise<FulfillmentRecord | null> {
-    const list = Array.from(this.fulfillments.values());
-    return list.find((f) => f.shopifyFulfillmentId === shopifyFulfillmentId) || null;
+    for (const f of this.fulfillments.values()) {
+      if (f.shopifyFulfillmentId === shopifyFulfillmentId) return f;
+    }
+    return null;
   }
 
   async getFulfillmentsByOrderId(orderId: string): Promise<FulfillmentRecord[]> {
-    const list = Array.from(this.fulfillments.values());
-    return list.filter((f) => f.orderId === orderId);
+    return Array.from(this.fulfillments.values()).filter((f) => f.orderId === orderId);
   }
 
   async findFulfillmentByTracking(merchantId: string, trackingNumber: string): Promise<FulfillmentRecord | null> {
-    const list = Array.from(this.fulfillments.values());
-    const cleanTracking = trackingNumber.trim().toLowerCase();
-    return (
-      list.find(
-        (f) =>
-          f.merchantId === merchantId &&
-          f.trackingNumber &&
-          f.trackingNumber.trim().toLowerCase() === cleanTracking
-      ) || null
+    const orderIds = new Set(
+      Array.from(this.orders.values())
+        .filter((o) => o.merchantId === merchantId)
+        .map((o) => o.id)
     );
+    for (const f of this.fulfillments.values()) {
+      if (orderIds.has(f.orderId) && f.trackingNumber === trackingNumber) {
+        return f;
+      }
+    }
+    return null;
+  }
+
+  async upsertReturn(ret: ReturnRecord): Promise<ReturnRecord> {
+    this.returns.set(ret.id, { ...ret });
+    return ret;
   }
 
   async createOrUpdateReturn(ret: ReturnRecord): Promise<ReturnRecord> {
@@ -1155,10 +1135,130 @@ export class MemoryDatabase implements DatabasePort {
   }
 
   async getReturnsByOrderId(orderId: string): Promise<ReturnRecord[]> {
-    const list = Array.from(this.returns.values());
-    return list.filter((r) => r.orderId === orderId);
+    return Array.from(this.returns.values()).filter((r) => r.orderId === orderId);
   }
 
-}
+  async listReturns(merchantId?: string): Promise<ReturnRecord[]> {
+    if (merchantId) {
+      const orderIds = new Set(
+        Array.from(this.orders.values())
+          .filter((o) => o.merchantId === merchantId)
+          .map((o) => o.id)
+      );
+      return Array.from(this.returns.values()).filter((r) => orderIds.has(r.orderId));
+    }
+    return Array.from(this.returns.values());
+  }
 
-export const InMemoryDatabase = MemoryDatabase;
+  async logSecurityIncident(incident: SecurityIncident): Promise<SecurityIncident> {
+    this.securityIncidents.set(incident.id, { ...incident });
+    return incident;
+  }
+
+  async listSecurityIncidents(merchantId?: string): Promise<SecurityIncident[]> {
+    const list = Array.from(this.securityIncidents.values());
+    if (merchantId) return list.filter((i) => i.merchantId === merchantId);
+    return list;
+  }
+
+  // ── Compatibility & Omni-Lifecycle Helpers ───────────────────────────────
+
+  setAdminTakeover(cartId: string, durationMs = 15 * 60 * 1000): void {
+    this.takeoverLocks.set(cartId, Date.now() + durationMs);
+  }
+
+  removeAdminTakeover(cartId: string): void {
+    this.takeoverLocks.delete(cartId);
+  }
+
+  isAdminTakenOver(cartId: string): boolean {
+    const expiry = this.takeoverLocks.get(cartId);
+    if (!expiry) return false;
+    if (Date.now() > expiry) {
+      this.takeoverLocks.delete(cartId);
+      return false;
+    }
+    return true;
+  }
+
+  isAdminTakeover(cartId: string): boolean {
+    return this.isAdminTakenOver(cartId);
+  }
+
+  getAdminTakeoverRemainingMs(cartId: string): number {
+    const expiry = this.takeoverLocks.get(cartId);
+    if (!expiry) return 0;
+    const remaining = expiry - Date.now();
+    if (remaining <= 0) {
+      this.takeoverLocks.delete(cartId);
+      return 0;
+    }
+    return remaining;
+  }
+
+  generateOutboxIdempotencyKey(shopDomain: string, cartToken: string, timestamp: number | string | Date): string {
+    const ts = timestamp instanceof Date ? timestamp.toISOString() : String(timestamp);
+    return crypto.createHash('sha256').update(`${shopDomain}:${cartToken}:${ts}`).digest('hex');
+  }
+
+  async createCartWithOutbox(
+    cartData: Omit<CartEvent, 'id' | 'createdAt' | 'updatedAt'>,
+    customOutbox?: Partial<OutboxEventRecord>
+  ): Promise<{ cart: CartEvent; outbox: OutboxEventRecord }> {
+    const cart: CartEvent = {
+      ...cartData,
+      id: `cart_${crypto.randomBytes(6).toString('hex')}`,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    this.cartEvents.set(cart.id, cart);
+
+    const idempotencyKey =
+      customOutbox?.idempotencyKey ||
+      this.generateOutboxIdempotencyKey(cartData.merchantId, cartData.cartToken, Date.now());
+
+    const outbox: OutboxEventRecord = {
+      id: `obx_${crypto.randomBytes(6).toString('hex')}`,
+      merchantId: cartData.merchantId,
+      aggregateType: 'CART',
+      aggregateId: cart.id,
+      eventType: customOutbox?.eventType || 'CART_ABANDONED',
+      payload: customOutbox?.payload || { cartId: cart.id, cartToken: cart.cartToken },
+      idempotencyKey,
+      status: 'PENDING',
+      attemptCount: 0,
+      maxAttempts: 5,
+      availableAt: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.outboxEvents.set(outbox.id, outbox);
+
+    return { cart, outbox };
+  }
+
+  async pruneRecordsOlderThan(retentionDays = 90): Promise<{ prunedCarts: number; prunedLogs: number }> {
+    const cutoff = Date.now() - retentionDays * 24 * 60 * 60 * 1000;
+    let prunedCarts = 0;
+    let prunedLogs = 0;
+
+    for (const [id, cart] of this.cartEvents.entries()) {
+      if (
+        (cart.status === 'RECOVERED' || cart.status === 'EXPIRED') &&
+        new Date(cart.createdAt).getTime() < cutoff
+      ) {
+        this.cartEvents.delete(id);
+        prunedCarts++;
+      }
+    }
+
+    for (const [id, log] of this.messageLogs.entries()) {
+      if (log.sentAt && new Date(log.sentAt).getTime() < cutoff) {
+        this.messageLogs.delete(id);
+        prunedLogs++;
+      }
+    }
+
+    return { prunedCarts, prunedLogs };
+  }
+}

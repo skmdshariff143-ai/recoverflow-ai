@@ -445,6 +445,7 @@ model IdempotencyKey {
   createdAt    DateTime  @default(now())
   expiresAt    DateTime
 
+  @@unique([merchantId, endpoint, key])
   @@index([merchantId, expiresAt])
   @@index([status, lockedUntil])
 }
@@ -572,7 +573,8 @@ model CartEvent {
   customerEmail         String?
   customerName          String?
   currency              String          @default("USD")
-  totalPrice            Float
+  totalPrice            Float           @default(0)
+  totalAmountMinor      BigInt          @default(0)
   items                 Json
   status                CartStatus      @default(ABANDONED)
   abandonmentType       AbandonmentType @default(CHECKOUT_STEP)

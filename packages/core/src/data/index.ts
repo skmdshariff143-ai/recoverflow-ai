@@ -1,5 +1,9 @@
+/**
+ * RecoverFlow AI — Data Access Layer Exports
+ */
+
 export * from './DatabasePort';
-export * from './MemoryDatabase';
 export * from './PrismaDatabase';
+export * from './MemoryDatabase';
 export * from './databaseFactory';
-export * from './benchmarkLoader';
+export * from './postgresTestHarness';

@@ -3,7 +3,6 @@ import crypto from 'crypto';
 import {
   db,
   type Merchant,
-  type PaymentRecord,
   type RecoveryCaseRecord,
   type OutboxEventRecord,
   type WebhookEventRecord,
@@ -32,7 +31,7 @@ describe('RecoverFlow AI — End-to-End Durable Recovery Pipeline & Zero-Duplica
   });
 
   it('executes full atomic pipeline: payment failure -> webhook -> outbox -> worker execution -> audit chain -> duplicate webhook replay prevention', async () => {
-    const paymentId = 'pay_rzp_durable_7719';
+    const _paymentId = 'pay_rzp_durable_7719';
     const amountPaise = 149900; // ₹1,499.00
     const currency = 'INR';
 
@@ -64,7 +63,7 @@ describe('RecoverFlow AI — End-to-End Durable Recovery Pipeline & Zero-Duplica
       },
     };
     const webhookPayloadString = JSON.stringify(webhookPayload);
-    const webhookSignature = crypto
+    const _webhookSignature = crypto
       .createHmac('sha256', TEST_MERCHANT.webhookSecret)
       .update(webhookPayloadString)
       .digest('hex');

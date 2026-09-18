@@ -14,10 +14,6 @@ import type {
   SuppressionEntry,
   CartStatus,
   RecoveryStage,
-  AbandonmentType,
-  MessageChannel,
-  MessageDirection,
-  DeliveryStatus,
   OrderRecord,
   FulfillmentRecord,
   ReturnRecord,
@@ -94,6 +90,8 @@ export interface RecoveryCaseRecord {
   customerId?: string | null;
   status: string;
   attemptCount: number;
+  retryCount?: number;
+  processedAt?: Date | string | null;
   maxAttempts: number;
   recoveryProbBps: number;
   expectedValuePaise: bigint | number;
@@ -142,8 +140,6 @@ export interface RecoveryOutcomeRecord {
 
 // ── Outbox, Idempotency & Webhook Types ───────────────────────────────────
 
-// OutboxStatus imported from types.ts
-
 export interface OutboxEventRecord {
   id: string;
   merchantId?: string | null;
@@ -154,6 +150,8 @@ export interface OutboxEventRecord {
   idempotencyKey: string;
   status: OutboxStatus;
   attemptCount: number;
+  retryCount?: number;
+  processedAt?: Date | string | null;
   maxAttempts: number;
   availableAt: Date | string;
   lockedAt?: Date | string | null;
@@ -167,6 +165,7 @@ export interface OutboxEventRecord {
 export type IdempotencyStatus = 'NEW' | 'IN_PROGRESS' | 'COMMITTED' | 'CONFLICT' | 'FAILED';
 
 export interface IdempotencyKeyRecord {
+  id?: string;
   key: string;
   merchantId: string;
   endpoint: string;
@@ -217,6 +216,75 @@ export interface AuditEventRecord {
   createdAt: Date | string;
 }
 
+// ── Composite Transaction Inputs ─────────────────────────────────────────
+
+export interface CreateRecoveryCaseAndEnqueueParams {
+  payment: {
+    merchantId: string;
+    externalPaymentId: string;
+    amountPaise: bigint | number;
+    currency: string;
+    status?: string;
+    gateway?: string;
+    customerId?: string;
+    orderReference?: string;
+  };
+  recoveryCase: {
+    customerId?: string;
+    recoveryProbBps?: number;
+    expectedValuePaise?: bigint | number;
+  };
+  outbox: {
+    eventType: string;
+    payload: Record<string, unknown>;
+    idempotencyKey: string;
+  };
+}
+
+export interface IngestRazorpayWebhookParams {
+  webhookEvent: {
+    merchantId?: string;
+    provider: string;
+    source?: string;
+    eventType: string;
+    providerEventId?: string;
+    externalId?: string;
+    idempotencyKey: string;
+    payloadHash?: string;
+    rawPayload: Record<string, unknown>;
+    signatureValid: boolean;
+  };
+  payment?: {
+    merchantId: string;
+    externalPaymentId: string;
+    amountPaise: bigint | number;
+    currency: string;
+    status?: string;
+    gateway?: string;
+    customerId?: string;
+    orderReference?: string;
+  };
+  recoveryCase?: {
+    customerId?: string;
+    recoveryProbBps?: number;
+    expectedValuePaise?: bigint | number;
+  };
+  outbox?: {
+    eventType: string;
+    payload: Record<string, unknown>;
+    idempotencyKey: string;
+  };
+}
+
+export interface SearchRecoveryCasesParams {
+  merchantId: string;
+  status?: string;
+  minExpectedValuePaise?: number | bigint;
+  search?: string;
+  limit?: number;
+  offset?: number;
+}
+
 // ── Database Port Interface ──────────────────────────────────────────────
 
 export interface DatabasePort {
@@ -224,7 +292,6 @@ export interface DatabasePort {
   seedDefaults?(): void;
   createOrUpdateMerchant(merchant: Merchant): Promise<Merchant>;
   getAdminTakeoverRemainingMs?(cartId: string): number;
-
 
   // Compatibility & Omni-Lifecycle Helpers
   setAdminTakeover(cartId: string, durationMs?: number): void;
@@ -329,6 +396,20 @@ export interface DatabasePort {
   getRecoveryCase(id: string, merchantId?: string): Promise<RecoveryCaseRecord | null>;
   updateRecoveryCase(id: string, updates: Partial<RecoveryCaseRecord>, merchantId?: string): Promise<RecoveryCaseRecord | null>;
   listRecoveryCases(params: { merchantId: string; status?: string; limit?: number; offset?: number }): Promise<RecoveryCaseRecord[]>;
+  searchRecoveryCases(params: SearchRecoveryCasesParams): Promise<{ items: RecoveryCaseRecord[]; total: number }>;
+
+  // Unit-of-Work Atomic Transaction Methods
+  createRecoveryCaseAndEnqueue(params: CreateRecoveryCaseAndEnqueueParams): Promise<{
+    payment: PaymentRecord;
+    recoveryCase: RecoveryCaseRecord;
+    outbox: OutboxEventRecord;
+  }>;
+  ingestRazorpayWebhookTransaction(params: IngestRazorpayWebhookParams): Promise<{
+    webhook: WebhookEventRecord;
+    payment?: PaymentRecord;
+    recoveryCase?: RecoveryCaseRecord;
+    outbox?: OutboxEventRecord;
+  }>;
 
   createRecoveryDecision(data: {
     recoveryCaseId: string;
@@ -364,11 +445,12 @@ export interface DatabasePort {
     payload: Record<string, unknown>;
     idempotencyKey: string;
   }): Promise<OutboxEventRecord>;
-  getPendingOutboxEvents(batchSize: number): Promise<OutboxEventRecord[]>;
-  claimOutboxEvents(workerId: string, batchSize: number, lockTtlMs?: number): Promise<OutboxEventRecord[]>;
+  getPendingOutboxEvents(batchSize: number, merchantId?: string): Promise<OutboxEventRecord[]>;
+  claimOutboxEvents(workerId: string, batchSize?: number, lockTtlMs?: number): Promise<OutboxEventRecord[]>;
   markOutboxEventProcessing(id: string, workerId?: string): Promise<void>;
-  markOutboxEventPublished(id: string): Promise<void>;
-  markOutboxEventFailed(id: string, error: string, retryDelayMs?: number): Promise<void>;
+  markOutboxEventPublished(id: string, workerId?: string): Promise<boolean>;
+  markOutboxEventFailed(id: string, error: string, retryDelayMs?: number, workerId?: string): Promise<boolean>;
+  extendOutboxLease(id: string, workerId: string, extendMs?: number): Promise<boolean>;
 
   // Idempotency Store
   acquireIdempotencyKey(params: {
@@ -378,8 +460,8 @@ export interface DatabasePort {
     requestHash?: string;
     ttlMs?: number;
   }): Promise<{ acquired: boolean; existingResponse?: { code: number; body: unknown }; isConflict?: boolean }>;
-  commitIdempotencyKey(key: string, merchantId: string, responseCode: number, responseBody: unknown): Promise<void>;
-  releaseIdempotencyKey(key: string, merchantId: string): Promise<void>;
+  commitIdempotencyKey(key: string, merchantId: string, responseCode: number, responseBody: unknown, endpoint?: string): Promise<void>;
+  releaseIdempotencyKey(key: string, merchantId: string, endpoint?: string): Promise<void>;
 
   // Webhook Events
   createWebhookEvent(data: {

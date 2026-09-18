@@ -1,4 +1,6 @@
+import http from 'http';
 import crypto from 'crypto';
+import Redis from 'ioredis';
 import { Worker, type Job } from 'bullmq';
 import { db, getRuntimeMode, StartupConfigurationError } from '@recoverflow/core';
 import { QUEUE_NAMES, globalRecoveryQueue, type CartJobData, type FallbackJobData } from './queue';
@@ -49,6 +51,7 @@ export const globalMetaPacer = new MetaRateLimitPacer();
 export interface WorkerRuntimeCoordinator {
   workerId: string;
   workers: Worker[];
+  healthServer?: http.Server;
   isClosed: boolean;
   close: () => Promise<void>;
 }
@@ -61,7 +64,7 @@ export function startDistributedWorkers(connectionUrl?: string): Worker[] {
   const mode = getRuntimeMode();
 
   if (!redisUrl) {
-    if (mode === 'LIVE' || mode === 'SANDBOX') {
+    if (mode === 'LIVE' || mode === 'SANDBOX' || process.env.NODE_ENV === 'production') {
       throw new StartupConfigurationError(
         `REDIS_URL is required in '${mode}' mode. Production queue workers cannot fall back to in-memory queues.`
       );
@@ -119,12 +122,65 @@ export function startDistributedWorkers(connectionUrl?: string): Worker[] {
 }
 
 /**
+ * Starts an HTTP health server on port 4000 (or HEALTH_PORT) for Kubernetes / Docker / ECS probes.
+ */
+export function startHealthServer(port = Number(process.env.HEALTH_PORT || 4000), redisUrl?: string): http.Server {
+  const server = http.createServer(async (req, res) => {
+    const url = req.url?.split('?')[0];
+
+    if (req.method === 'GET' && url === '/live') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ status: 'live', uptime: process.uptime() }));
+      return;
+    }
+
+    if (req.method === 'GET' && url === '/ready') {
+      try {
+        const dbOk = await db.ping();
+        if (!dbOk) {
+          throw new Error('Database ping failed');
+        }
+
+        const rUrl = redisUrl || process.env.REDIS_URL;
+        if (rUrl) {
+          const client = new Redis(rUrl, { connectTimeout: 3000, maxRetriesPerRequest: 1, lazyConnect: true });
+          await client.connect();
+          const pong = await client.ping();
+          await client.quit();
+          if (pong !== 'PONG') {
+            throw new Error(`Redis ping returned unexpected: ${pong}`);
+          }
+        }
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ status: 'ready', db: 'ok', redis: rUrl ? 'ok' : 'in-memory' }));
+      } catch (err: unknown) {
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ status: 'unready', error: err instanceof Error ? err.message : String(err) }));
+      }
+      return;
+    }
+
+    res.writeHead(404, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Not Found' }));
+  });
+
+  server.listen(port, () => {
+    console.log(`[Worker Health Server] Listening on port ${port} (/live, /ready)`);
+  });
+
+  return server;
+}
+
+/**
  * Unified Worker Runtime Coordinator for production daemons and integration test harnesses.
  */
 export async function startWorkerRuntime(options?: {
   workerId?: string;
   redisUrl?: string;
   enablePruner?: boolean;
+  enableHealthServer?: boolean;
+  healthPort?: number;
 }): Promise<WorkerRuntimeCoordinator> {
   const workerId = options?.workerId || `worker_${crypto.randomBytes(6).toString('hex')}`;
   const workers = startDistributedWorkers(options?.redisUrl);
@@ -137,11 +193,17 @@ export async function startWorkerRuntime(options?: {
     prunerTimer = startDataRetentionPruner(3600 * 1000);
   }
 
+  let healthServer: http.Server | undefined;
+  if (options?.enableHealthServer !== false && process.env.NODE_ENV !== 'test') {
+    healthServer = startHealthServer(options?.healthPort, options?.redisUrl);
+  }
+
   let isClosed = false;
 
   const coordinator: WorkerRuntimeCoordinator = {
     workerId,
     workers,
+    healthServer,
     isClosed: false,
     close: async () => {
       if (isClosed) return;
@@ -159,26 +221,18 @@ export async function startWorkerRuntime(options?: {
         await Promise.all(workers.map((w) => w.close()));
       }
 
-      // 4. Close queues
+      // 4. Close health server
+      if (healthServer) {
+        await new Promise<void>((resolve) => healthServer!.close(() => resolve()));
+      }
+
+      // 5. Close queues
       await globalRecoveryQueue.close();
 
-      // 5. Close DB
+      // 6. Close DB
       await db.close();
     },
   };
 
   return coordinator;
-}
-
-// Automatically start if executed as standalone script
-if (process.argv[1] && process.argv[1].includes('worker')) {
-  startWorkerRuntime().then((runtime) => {
-    const shutdown = async (sig: string) => {
-      console.log(`\n[Worker Runtime] Shutting down on ${sig}...`);
-      await runtime.close();
-      process.exit(0);
-    };
-    process.on('SIGTERM', () => shutdown('SIGTERM'));
-    process.on('SIGINT', () => shutdown('SIGINT'));
-  });
 }

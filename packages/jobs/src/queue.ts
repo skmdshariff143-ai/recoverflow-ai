@@ -1,8 +1,6 @@
 import { Queue, type ConnectionOptions } from 'bullmq';
 import { 
   db, 
-  getRuntimeMode, 
-  StartupConfigurationError, 
   globalSuppressionService, 
   checkShopifyInventoryAvailability,
   createShopifySingleUseDiscount,

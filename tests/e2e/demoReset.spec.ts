@@ -3,6 +3,10 @@ import { test, expect } from '@playwright/test';
 test.describe('PayBack AI — One-Command Demo Reset (Task 6)', () => {
 
   test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem('payback_spotlight_dismissed_v1', 'true');
+      localStorage.setItem('payback_guide_completed_v1', 'true');
+    });
     await page.goto('/');
     await page.waitForSelector('header');
   });

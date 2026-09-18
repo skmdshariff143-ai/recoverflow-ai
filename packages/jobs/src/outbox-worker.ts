@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { db, type OutboxEventRecord } from '@recoverflow/core';
+import { db } from '@recoverflow/core';
 import { globalRecoveryQueue } from './queue';
 
 export interface OutboxWorkerConfig {
