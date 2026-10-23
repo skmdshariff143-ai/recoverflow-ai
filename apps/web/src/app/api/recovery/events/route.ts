@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db, globalSuppressionService } from '@recoverflow/core';
+import { z } from 'zod';
+
+const UpdateMerchantToneSchema = z.object({
+  brandVoiceCasualVsFormal: z.number().min(0).max(1).optional(),
+  brandVoiceUrgencyVsGentle: z.number().min(0).max(1).optional(),
+  discountCeilingPercentage: z.number().min(0).max(100).optional(),
+  brandToneGuidelines: z.string().trim().max(1000).optional(),
+});
 
 export async function GET() {
   try {
@@ -43,7 +51,17 @@ export async function GET() {
     const emailSent = messages.filter((m) => m.channel === 'EMAIL' && m.direction === 'OUTBOUND').length;
 
     return NextResponse.json({
-      merchant,
+      source: 'DEMO',
+      merchant: {
+        id: merchant.id,
+        storeName: merchant.storeName,
+        storeUrl: merchant.storeUrl,
+        brandToneGuidelines: merchant.brandToneGuidelines,
+        brandVoiceCasualVsFormal: merchant.brandVoiceCasualVsFormal,
+        brandVoiceUrgencyVsGentle: merchant.brandVoiceUrgencyVsGentle,
+        discountCeilingPercentage: merchant.discountCeilingPercentage,
+        minMarginPercentage: merchant.minMarginPercentage,
+      },
       carts,
       messages,
       suppressions,
@@ -78,7 +96,17 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
+    const rawBody = await req.json().catch(() => ({}));
+    const validated = UpdateMerchantToneSchema.safeParse(rawBody);
+
+    if (!validated.success) {
+      return NextResponse.json(
+        { error: 'Invalid merchant tone payload', issues: validated.error.issues },
+        { status: 400 }
+      );
+    }
+
+    const body = validated.data;
     const updated = await db.updateMerchantTone('merchant_default_01', {
       brandVoiceCasualVsFormal: body.brandVoiceCasualVsFormal,
       brandVoiceUrgencyVsGentle: body.brandVoiceUrgencyVsGentle,
@@ -86,7 +114,7 @@ export async function POST(req: NextRequest) {
       brandToneGuidelines: body.brandToneGuidelines,
     });
 
-    return NextResponse.json({ success: true, merchant: updated });
+    return NextResponse.json({ success: Boolean(updated), source: 'DEMO' });
   } catch {
     return NextResponse.json({ error: 'Failed to update merchant settings' }, { status: 500 });
   }

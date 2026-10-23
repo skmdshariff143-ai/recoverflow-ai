@@ -6,30 +6,33 @@ import { Header } from '../components/Header';
 import { MetricsOverview } from '../components/MetricsOverview';
 import { CalibrationVisualizer } from '../components/CalibrationVisualizer';
 import { RankedQueueTable } from '../components/RankedQueueTable';
-import { PaymentDrilldownModal } from '../components/PaymentDrilldownModal';
-import { LiveRecoveryRunner } from '../components/LiveRecoveryRunner';
-import { EvaluationLab } from '../components/EvaluationLab';
-import { RecoveryIntelligence } from '../components/RecoveryIntelligence';
-import { PromiseToPayTracker } from '../components/PromiseToPayTracker';
-import { AuditTrailExplorer } from '../components/AuditTrailExplorer';
-import { MethodologyGuide } from '../components/MethodologyGuide';
-import { JudgeModeModal } from '../components/JudgeModeModal';
-import { CommandPalette } from '../components/CommandPalette';
+import dynamic from 'next/dynamic';
 import { StickySummaryBar } from '../components/StickySummaryBar';
-import { BlindBotReplayModal } from '../components/BlindBotReplayModal';
-import { JudgeCheatSheetModal } from '../components/JudgeCheatSheetModal';
 import { FirstTimeVisitorSpotlight } from '../components/FirstTimeVisitorSpotlight';
-import { GuideMeTourModal } from '../components/GuideMeTourModal';
-import { AutonomousControlRoom } from '../components/AutonomousControlRoom';
-import { RazorpaySubscriptionsDashboard } from '../components/RazorpaySubscriptionsDashboard';
-import { LiveRecoveryStream } from '../components/LiveRecoveryStream';
-import { ConversionAnalytics } from '../components/ConversionAnalytics';
-import { BrandToneCalibrationStudio } from '../components/BrandToneCalibrationStudio';
-import { LiveChatMonitor } from '../components/LiveChatMonitor';
-import { CartsExplorer } from '../components/CartsExplorer';
+
+// Next.js Code-Splitting: Lazy load heavy interactive modals and non-default tabs
+const PaymentDrilldownModal = dynamic(() => import('../components/PaymentDrilldownModal').then((m) => m.PaymentDrilldownModal), { ssr: false });
+const LiveRecoveryRunner = dynamic(() => import('../components/LiveRecoveryRunner').then((m) => m.LiveRecoveryRunner), { ssr: false });
+const EvaluationLab = dynamic(() => import('../components/EvaluationLab').then((m) => m.EvaluationLab), { ssr: false });
+const RecoveryIntelligence = dynamic(() => import('../components/RecoveryIntelligence').then((m) => m.RecoveryIntelligence), { ssr: false });
+const PromiseToPayTracker = dynamic(() => import('../components/PromiseToPayTracker').then((m) => m.PromiseToPayTracker), { ssr: false });
+const AuditTrailExplorer = dynamic(() => import('../components/AuditTrailExplorer').then((m) => m.AuditTrailExplorer), { ssr: false });
+const MethodologyGuide = dynamic(() => import('../components/MethodologyGuide').then((m) => m.MethodologyGuide), { ssr: false });
+const JudgeModeModal = dynamic(() => import('../components/JudgeModeModal').then((m) => m.JudgeModeModal), { ssr: false });
+const CommandPalette = dynamic(() => import('../components/CommandPalette').then((m) => m.CommandPalette), { ssr: false });
+const BlindBotReplayModal = dynamic(() => import('../components/BlindBotReplayModal').then((m) => m.BlindBotReplayModal), { ssr: false });
+const JudgeCheatSheetModal = dynamic(() => import('../components/JudgeCheatSheetModal').then((m) => m.JudgeCheatSheetModal), { ssr: false });
+const GuideMeTourModal = dynamic(() => import('../components/GuideMeTourModal').then((m) => m.GuideMeTourModal), { ssr: false });
+const AutonomousControlRoom = dynamic(() => import('../components/AutonomousControlRoom').then((m) => m.AutonomousControlRoom), { ssr: false });
+const RazorpaySubscriptionsDashboard = dynamic(() => import('../components/RazorpaySubscriptionsDashboard').then((m) => m.RazorpaySubscriptionsDashboard), { ssr: false });
+const LiveRecoveryStream = dynamic(() => import('../components/LiveRecoveryStream').then((m) => m.LiveRecoveryStream), { ssr: false });
+const ConversionAnalytics = dynamic(() => import('../components/ConversionAnalytics').then((m) => m.ConversionAnalytics), { ssr: false });
+const BrandToneCalibrationStudio = dynamic(() => import('../components/BrandToneCalibrationStudio').then((m) => m.BrandToneCalibrationStudio), { ssr: false });
+const LiveChatMonitor = dynamic(() => import('../components/LiveChatMonitor').then((m) => m.LiveChatMonitor), { ssr: false });
+const CartsExplorer = dynamic(() => import('../components/CartsExplorer').then((m) => m.CartsExplorer), { ssr: false });
 import type { CartEvent, Merchant, MessageLog, SuppressionEntry, DashboardTab, DataProvenanceSource } from '@recoverflow/core';
 
-export default function Home() {
+export default function BenchmarkLab() {
   const [isJudgeModeOpen, setIsJudgeModeOpen] = useState<boolean>(false);
   const [isReplayModalOpen, setIsReplayModalOpen] = useState<boolean>(false);
   const [isCheatSheetOpen, setIsCheatSheetOpen] = useState<boolean>(false);
@@ -117,6 +120,22 @@ export default function Home() {
     return () => {
       ignore = true;
     };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const timer = setTimeout(() => {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('tour') === '1' || params.get('tour') === 'true') {
+          setIsGuideTourOpen(true);
+        } else if (params.get('judge') === '1' || params.get('judge') === 'true') {
+          setIsCheatSheetOpen(true);
+        } else if (params.get('tamper') === '1' || params.get('tamper') === 'true') {
+          setIsReplayModalOpen(true);
+        }
+      }, 0);
+      return () => clearTimeout(timer);
+    }
   }, []);
 
   const [resetToast, setResetToast] = useState<string | null>(null);

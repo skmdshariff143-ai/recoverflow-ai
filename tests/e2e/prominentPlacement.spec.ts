@@ -7,7 +7,7 @@ test.describe('PayBack AI — Prominent Placement of Trust Score & Sound Toggle'
   });
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/demo');
     await page.waitForSelector('header');
   });
 

@@ -1,9 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'node:crypto';
 import { db } from '@recoverflow/core';
+import { enforceRateLimit, enforceRouteAuth } from '@/lib/apiGuards';
 
 export async function POST(req: NextRequest) {
   try {
+    const rateLimitRes = await enforceRateLimit(req, 5, 60000);
+    if (rateLimitRes) return rateLimitRes;
+
+    const authRes = await enforceRouteAuth(req, {
+      allowDemoSimulation: true,
+      requiresLiveCredentials: process.env.RECOVERFLOW_RUNTIME_MODE !== 'DEMO',
+    });
+    if (authRes) return authRes;
+
     const merchantId = req.headers.get('x-merchant-id') || 'merchant_default_01';
     let merchant = await db.getMerchant(merchantId);
 

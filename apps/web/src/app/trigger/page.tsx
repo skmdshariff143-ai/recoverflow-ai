@@ -149,7 +149,7 @@ export default function JudgeTriggerPage() {
           </div>
 
           <Link
-            href="/"
+            href="/demo"
             className="flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300 font-medium px-2 py-1 rounded-md bg-indigo-950/60 border border-indigo-800/60 transition"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
@@ -168,6 +168,9 @@ export default function JudgeTriggerPage() {
         {/* Feedback Alert */}
         {responseMsg && (
           <div
+            id="trigger-feedback-alert"
+            role="alert"
+            aria-live="polite"
             data-testid="trigger-response-alert"
             className={`p-4 rounded-xl border text-xs space-y-1.5 animate-in fade-in slide-in-from-top-2 duration-200 ${
               responseMsg.type === 'success'
@@ -307,10 +310,17 @@ export default function JudgeTriggerPage() {
 
             {/* Custom Subscription / Payment ID Input */}
             <div className="pt-1">
+              <label htmlFor="custom-subscription-input" className="sr-only">
+                Custom Subscription or Payment ID
+              </label>
               <input
+                id="custom-subscription-input"
                 type="text"
                 value={customSubscriptionId}
                 onChange={(e) => setCustomSubscriptionId(e.target.value)}
+                maxLength={64}
+                aria-invalid={responseMsg?.type === 'error'}
+                aria-describedby={responseMsg?.type === 'error' ? 'trigger-feedback-alert' : undefined}
                 placeholder="Or type custom ID (e.g. sub_TXW1raR9Uus3ch)"
                 className="w-full px-3 py-1.5 text-xs font-mono bg-slate-950 border border-slate-800 rounded-lg text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500"
               />
@@ -319,13 +329,15 @@ export default function JudgeTriggerPage() {
 
           {/* Optional Judge Name */}
           <div className="space-y-1">
-            <label className="block text-[11px] font-semibold text-slate-400">
+            <label htmlFor="judge-name-input" className="block text-[11px] font-semibold text-slate-400">
               3. Your Name / Judge Identifier (Optional)
             </label>
             <input
+              id="judge-name-input"
               type="text"
               value={judgeName}
               onChange={(e) => setJudgeName(e.target.value)}
+              maxLength={100}
               placeholder="e.g. Judge Priya / Staff Reviewer"
               className="w-full px-3 py-2 text-xs bg-slate-950 border border-slate-800 rounded-lg text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500"
             />

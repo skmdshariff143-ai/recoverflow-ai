@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { diagnoseGatewayErrorWithGemini } from '@recoverflow/agents';
+import { enforceRateLimit } from '@/lib/apiGuards';
 import { z } from 'zod';
 
 const RequestSchema = z.object({
@@ -8,6 +9,9 @@ const RequestSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
+    const rateLimitRes = await enforceRateLimit(req, 20, 60000);
+    if (rateLimitRes) return rateLimitRes;
+
     const body = await req.json();
     const validated = RequestSchema.safeParse(body);
 

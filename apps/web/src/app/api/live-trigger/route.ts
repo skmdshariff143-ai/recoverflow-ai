@@ -8,83 +8,86 @@
  *
  * Invariants:
  * 1. Strictly rate-limited (max 15 triggers per minute per client).
- * 2. Generates canonical Razorpay webhook payload structure.
- * 3. Enforces minor unit paise representation.
- * 4. Appends to liveWebhookStore for instantaneous reflection in the Command Center queue.
+ * 2. Authenticated for live credentials, demo-safe simulated execution allowed.
+ * 3. Zod-validated trigger inputs.
+ * 4. Minor unit paise representation.
+ * 5. Appends to liveWebhookStore for instantaneous reflection in the Command Center queue.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { checkRateLimit } from '@recoverflow/core';
+import { enforceRateLimit, enforceRouteAuth } from '@/lib/apiGuards';
 import { liveWebhookStore } from '@recoverflow/core';
 import {
   mapRazorpayWebhookToFailedPayment,
   type RazorpayWebhookPayload,
 } from '@recoverflow/core';
+import { z } from 'zod';
+
+const LiveTriggerSchema = z.object({
+  category: z.string().max(100).optional(),
+  amountPaise: z.number().int().positive().max(100000000).optional(),
+  amountRupees: z.number().positive().max(1000000).optional(),
+  judgeNote: z.string().max(255).optional(),
+  subscriptionId: z.string().max(100).optional(),
+  paymentId: z.string().max(100).optional(),
+  method: z.string().max(50).optional(),
+});
 
 export async function POST(req: NextRequest) {
   try {
     // 1. Rate Limiting Check
-    const forwardedFor = req.headers.get('x-forwarded-for') || '127.0.0.1';
-    const clientIp = forwardedFor.split(',')[0].trim();
-    const rateLimit = checkRateLimit(clientIp, 15, 60000);
+    const rateLimitRes = await enforceRateLimit(req, 15, 60000);
+    if (rateLimitRes) return rateLimitRes;
 
-    if (!rateLimit.allowed) {
+    // 2. Auth Guard
+    const authRes = await enforceRouteAuth(req, {
+      allowDemoSimulation: true,
+      requiresLiveCredentials: process.env.RECOVERFLOW_RUNTIME_MODE !== 'DEMO',
+    });
+    if (authRes) return authRes;
+
+    // 3. Parse & Validate Trigger Parameters
+    let bodyRaw: unknown = {};
+    try {
+      bodyRaw = await req.json();
+    } catch {
+      bodyRaw = {};
+    }
+
+    const validated = LiveTriggerSchema.safeParse(bodyRaw);
+    if (!validated.success) {
       return NextResponse.json(
-        {
-          error: 'Rate limit exceeded for demo live-trigger.',
-          message: `Maximum 15 triggers per minute allowed. Please wait ${rateLimit.resetInSeconds}s before triggering again.`,
-          retryAfterSeconds: rateLimit.resetInSeconds,
-        },
-        {
-          status: 429,
-          headers: {
-            'Retry-After': String(rateLimit.resetInSeconds),
-            'X-RateLimit-Limit': '15',
-            'X-RateLimit-Remaining': '0',
-          },
-        },
+        { error: 'Invalid live-trigger payload', issues: validated.error.issues },
+        { status: 400 }
       );
     }
 
-    // 2. Parse Trigger Parameters
-    let body: Record<string, unknown> = {};
-    try {
-      body = await req.json();
-    } catch {
-      // Use defaults if empty body
-      body = {};
-    }
+    const body = validated.data;
+    const category = body.category || 'bank_downtime';
 
-    const category = typeof body.category === 'string' && body.category
-      ? body.category
-      : 'bank_downtime';
-    
     // Amount in paise (default ₹2,499 = 249900 paise)
-    let amountPaise = typeof body.amountPaise === 'number' && body.amountPaise > 0
+    let amountPaise = body.amountPaise && body.amountPaise > 0
       ? Math.floor(body.amountPaise)
       : 249900;
 
-    if (typeof body.amountRupees === 'number' && body.amountRupees > 0) {
+    if (body.amountRupees && body.amountRupees > 0) {
       amountPaise = Math.floor(body.amountRupees * 100);
     }
 
-    const judgeNote = typeof body.judgeNote === 'string' && body.judgeNote.trim()
+    const judgeNote = body.judgeNote && body.judgeNote.trim()
       ? body.judgeNote.trim()
       : 'Judge Live Demo Injection';
 
-    const rawId = typeof body.subscriptionId === 'string' && body.subscriptionId.trim()
+    const rawId = body.subscriptionId && body.subscriptionId.trim()
       ? body.subscriptionId.trim()
-      : typeof body.paymentId === 'string' && body.paymentId.trim()
+      : body.paymentId && body.paymentId.trim()
       ? body.paymentId.trim()
       : `pay_judge_${Math.random().toString(36).slice(2, 8)}`;
 
     const isSubscription = rawId.startsWith('sub_');
+    const method = body.method || 'upi';
 
-    const method = typeof body.method === 'string' && body.method
-      ? body.method
-      : 'upi';
-
-    // 3. Construct Canonical Razorpay Webhook Payload
+    // 4. Construct Canonical Razorpay Webhook Payload
     const nowSec = Math.floor(Date.now() / 1000);
     const eventName = isSubscription
       ? (category === 'invalid_mandate' ? 'subscription.halted' : category === 'customer_cancellation' ? 'subscription.cancelled' : 'subscription.halted')
@@ -149,7 +152,7 @@ export async function POST(req: NextRequest) {
           },
         };
 
-    // 4. Map & Ingest into Live Webhook Store
+    // 5. Map & Ingest into Live Webhook Store
     const failedPayment = mapRazorpayWebhookToFailedPayment(webhookPayload);
     liveWebhookStore.addEvent(failedPayment);
 
@@ -158,7 +161,6 @@ export async function POST(req: NextRequest) {
       message: 'Live test payment failure event successfully ingested!',
       payment: failedPayment,
       totalLiveEvents: liveWebhookStore.getCount(),
-      rateLimitRemaining: rateLimit.remaining,
       timestamp: new Date().toISOString(),
     });
   } catch (err) {

@@ -4,7 +4,7 @@ import { resolve } from 'path';
 
 test.describe('PayBack AI — Multi-Viewport & Screenshot Verification', () => {
   test.beforeAll(() => {
-    mkdirSync(resolve(process.cwd(), 'docs/screenshots'), { recursive: true });
+    mkdirSync(resolve(process.cwd(), 'test-results/benchmark-screenshots'), { recursive: true });
   });
 
   const VIEWPORTS = [
@@ -17,7 +17,7 @@ test.describe('PayBack AI — Multi-Viewport & Screenshot Verification', () => {
 
   test('verifies sticky header behavior during real incremental scroll without duplication', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
-    await page.goto('/');
+    await page.goto('/demo');
     await page.waitForSelector('header');
 
     // Switch to Evaluation Lab tab (long scrollable page)
@@ -43,7 +43,7 @@ test.describe('PayBack AI — Multi-Viewport & Screenshot Verification', () => {
   for (const vp of VIEWPORTS) {
     test(`renders responsive layout cleanly on ${vp.name} (${vp.width}x${vp.height})`, async ({ page }) => {
       await page.setViewportSize({ width: vp.width, height: vp.height });
-      await page.goto('/');
+      await page.goto('/demo');
 
       // Verify core elements exist without fatal overflow
       await page.waitForSelector('header');
@@ -60,14 +60,14 @@ test.describe('PayBack AI — Multi-Viewport & Screenshot Verification', () => {
         };
 
         // 1. Dashboard overview
-        await captureCleanFullPage('docs/screenshots/01-dashboard-overview.png');
+        await captureCleanFullPage('test-results/benchmark-screenshots/01-dashboard-overview.png');
 
         // 2. Drilldown modal (viewport screenshot)
         const firstRow = page.locator('[data-testid="queue-row"]').first();
         await firstRow.click();
         await page.waitForTimeout(400);
         await page.screenshot({
-          path: 'docs/screenshots/02-explainable-drilldown.png',
+          path: 'test-results/benchmark-screenshots/02-explainable-drilldown.png',
         });
         await page.locator('button[aria-label="Close modal"]').click();
         await page.waitForTimeout(300);
@@ -75,27 +75,27 @@ test.describe('PayBack AI — Multi-Viewport & Screenshot Verification', () => {
         // 3. Evaluation Lab
         await page.getByRole('button', { name: /Evaluation Lab/i }).click();
         await page.waitForTimeout(400);
-        await captureCleanFullPage('docs/screenshots/03-evaluation-lab.png');
+        await captureCleanFullPage('test-results/benchmark-screenshots/03-evaluation-lab.png');
 
         // 4. Audit Trail & Ledger
         await page.getByRole('button', { name: /Audit Trail/i }).click();
         await page.waitForTimeout(400);
-        await captureCleanFullPage('docs/screenshots/04-audit-trail-ledger.png');
+        await captureCleanFullPage('test-results/benchmark-screenshots/04-audit-trail-ledger.png');
 
         // 5. Live Recovery Runner
         await page.getByRole('button', { name: /Live Recovery Runner/i }).click();
         await page.waitForTimeout(400);
-        await captureCleanFullPage('docs/screenshots/05-live-runner.png');
+        await captureCleanFullPage('test-results/benchmark-screenshots/05-live-runner.png');
 
         // 6. Methodology & Guide
         await page.getByRole('button', { name: /Methodology/i }).click();
         await page.waitForTimeout(400);
-        await captureCleanFullPage('docs/screenshots/05-methodology-guide.png');
+        await captureCleanFullPage('test-results/benchmark-screenshots/05-methodology-guide.png');
 
         // 7. Promise-to-Pay Tracker
         await page.getByRole('button', { name: /Promise-to-Pay/i }).click();
         await page.waitForTimeout(400);
-        await captureCleanFullPage('docs/screenshots/06-promise-to-pay.png');
+        await captureCleanFullPage('test-results/benchmark-screenshots/06-promise-to-pay.png');
       }
     });
   }

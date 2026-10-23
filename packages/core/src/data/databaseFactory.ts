@@ -18,7 +18,9 @@ export class StartupConfigurationError extends Error {
   }
 }
 
-let databaseSingleton: DatabasePort | null = null;
+// Next.js can load the API and server-component bundles independently. Keep the
+// in-process adapter shared across those bundles (and development hot reloads).
+const databaseState = globalThis as unknown as { recoverflowDatabase?: DatabasePort; recoverflowDatabaseMode?: RuntimeMode };
 
 /**
  * Resolves the active runtime mode.
@@ -29,6 +31,7 @@ export function getRuntimeMode(): RuntimeMode {
   if (envMode === 'LIVE' || envMode === 'SANDBOX' || envMode === 'DEMO' || envMode === 'TEST') {
     return envMode as RuntimeMode;
   }
+  if (envMode) throw new StartupConfigurationError(`Unknown RECOVERFLOW_RUNTIME_MODE '${envMode}'. Use DEMO, SANDBOX, LIVE, or TEST.`);
   if (process.env.NODE_ENV === 'test') {
     return 'TEST';
   }
@@ -40,8 +43,8 @@ export function getRuntimeMode(): RuntimeMode {
  * Throws StartupConfigurationError in SANDBOX / LIVE modes if DATABASE_URL is missing.
  */
 export function getDatabase(options?: { mode?: RuntimeMode; forceNew?: boolean }): DatabasePort {
-  if (databaseSingleton && !options?.forceNew && !options?.mode) {
-    return databaseSingleton;
+  if (databaseState.recoverflowDatabase && databaseState.recoverflowDatabaseMode === getRuntimeMode() && !options?.forceNew && !options?.mode) {
+    return databaseState.recoverflowDatabase;
   }
 
   const mode = options?.mode || getRuntimeMode();
@@ -54,19 +57,19 @@ export function getDatabase(options?: { mode?: RuntimeMode; forceNew?: boolean }
       );
     }
     const instance = new PrismaDatabase();
-    if (!options?.forceNew) databaseSingleton = instance;
+    if (!options?.forceNew) { databaseState.recoverflowDatabase = instance; databaseState.recoverflowDatabaseMode = mode; }
     return instance;
   }
 
   // DEMO or TEST mode
   if (mode === 'TEST' && databaseUrl && process.env.RECOVERFLOW_FORCE_PRISMA === 'true') {
     const instance = new PrismaDatabase();
-    if (!options?.forceNew) databaseSingleton = instance;
+    if (!options?.forceNew) { databaseState.recoverflowDatabase = instance; databaseState.recoverflowDatabaseMode = mode; }
     return instance;
   }
 
   const instance = new MemoryDatabase();
-  if (!options?.forceNew) databaseSingleton = instance;
+  if (!options?.forceNew) { databaseState.recoverflowDatabase = instance; databaseState.recoverflowDatabaseMode = mode; }
   return instance;
 }
 
@@ -74,5 +77,6 @@ export function getDatabase(options?: { mode?: RuntimeMode; forceNew?: boolean }
  * Reset singleton (useful for isolated integration and unit test setups).
  */
 export function resetDatabaseSingleton(): void {
-  databaseSingleton = null;
+  delete databaseState.recoverflowDatabase;
+  delete databaseState.recoverflowDatabaseMode;
 }

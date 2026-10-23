@@ -1,11 +1,20 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { subscriptionStore } from '@recoverflow/core';
 import { liveWebhookStore } from '@recoverflow/core';
 import { mapRazorpayWebhookToFailedPayment, type RazorpayWebhookPayload } from '@recoverflow/core';
+import { enforceRateLimit, enforceRouteAuth } from '@/lib/apiGuards';
 
 export async function POST(req: NextRequest) {
   try {
+    const rateLimitRes = await enforceRateLimit(req, 15, 60000);
+    if (rateLimitRes) return rateLimitRes;
+
     const body = await req.json().catch(() => ({}));
+    const authRes = await enforceRouteAuth(req, {
+      allowDemoSimulation: true,
+      requiresLiveCredentials: Boolean(body.useLiveCredentials || process.env.RECOVERFLOW_RUNTIME_MODE !== 'DEMO'),
+    });
+    if (authRes) return authRes;
     const subscriptionId = typeof body.subscriptionId === 'string' && body.subscriptionId
       ? body.subscriptionId
       : 'sub_TXW1raR9Uus3ch';

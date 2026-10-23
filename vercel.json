@@ -1,6 +1,9 @@
 {
   "framework": "nextjs",
-  "installCommand": "npm install",
+  "installCommand": "npm ci",
   "buildCommand": "npx prisma generate --schema=packages/core/prisma/schema.prisma && npm run build --workspace=@recoverflow/web",
-  "outputDirectory": "apps/web/.next"
+  "outputDirectory": "apps/web/.next",
+  "env": {
+    "RECOVERFLOW_RUNTIME_MODE": "DEMO"
+  }
 }

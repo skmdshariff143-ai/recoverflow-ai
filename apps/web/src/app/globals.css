@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+@layer components {
+  .rf-panel { @apply rounded-2xl border border-slate-800/80 bg-slate-900/45; }
+  .rf-button { @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-emerald-400 px-4 py-2 text-sm font-semibold text-slate-950 transition-colors hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-50; }
+  .rf-button-secondary { @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-medium text-slate-200 transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50; }
+  .rf-input { @apply min-h-10 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500; }
+}
+
 @layer base {
   html, body {
     max-width: 100vw;
@@ -9,6 +16,14 @@
     background-color: #09090b;
     color: #f4f4f5;
   }
+  button, a, input, select, textarea { @apply outline-offset-4; }
+  :focus-visible { outline: 2px solid #34d399; }
+  button:not(:disabled), select { cursor: pointer; }
+  dialog::backdrop { background: rgb(2 6 23 / 80%); backdrop-filter: blur(5px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }
 
 /* Custom scrollbar */

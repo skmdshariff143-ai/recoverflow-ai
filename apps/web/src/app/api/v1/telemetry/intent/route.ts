@@ -1,14 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// In-memory pre-abandonment session intent store (cartToken -> intent snapshots)
-const intentSessions = new Map<string, {
+export function maskEmail(email: string): string {
+  if (!email || !email.includes('@')) return '***';
+  const [user, domain] = email.split('@');
+  if (user.length <= 2) return `${user[0]}***@${domain}`;
+  return `${user[0]}***${user[user.length - 1]}@${domain}`;
+}
+
+export function maskPhone(phone: string): string {
+  if (!phone) return '***';
+  const clean = phone.trim();
+  if (clean.length <= 4) return '****';
+  return `${clean.slice(0, 3)}****${clean.slice(-2)}`;
+}
+
+export interface IntentSession {
   cartToken: string;
   shopDomain: string;
   events: Array<{ eventType: string; velocityVector?: unknown; timestamp: number }>;
   linkedIdentity: { email?: string; phone?: string };
   preDropRisk: 'HIGH' | 'MED' | 'LOW';
   lastSeenAt: number;
-}>();
+}
+
+export function redactTelemetrySession(session: IntentSession | null | undefined) {
+  if (!session) return null;
+  return {
+    ...session,
+    linkedIdentity: {
+      email: session.linkedIdentity?.email ? maskEmail(session.linkedIdentity.email) : undefined,
+      phone: session.linkedIdentity?.phone ? maskPhone(session.linkedIdentity.phone) : undefined,
+    },
+  };
+}
+
+// In-memory pre-abandonment session intent store (cartToken -> intent snapshots)
+const intentSessions = new Map<string, IntentSession>();
 
 export async function POST(req: NextRequest) {
   try {
@@ -39,14 +66,14 @@ export async function POST(req: NextRequest) {
       timestamp: Date.now(),
     });
 
-    // Identity Graph Linking: bind early captured email/phone to cart session
+    // Identity Graph Linking: bind early captured email/phone to cart session with redacted logs
     if (customerEmail && !session.linkedIdentity.email) {
       session.linkedIdentity.email = customerEmail;
-      console.log(`[Identity Graph] Linked email ${customerEmail} to anonymous cart ${cartToken}`);
+      console.log(`[Identity Graph] Linked email ${maskEmail(customerEmail)} to anonymous cart ${cartToken}`);
     }
     if (customerPhone && !session.linkedIdentity.phone) {
       session.linkedIdentity.phone = customerPhone;
-      console.log(`[Identity Graph] Linked phone ${customerPhone} to anonymous cart ${cartToken}`);
+      console.log(`[Identity Graph] Linked phone ${maskPhone(customerPhone)} to anonymous cart ${cartToken}`);
     }
 
     // Risk Assessment
@@ -85,11 +112,11 @@ export async function GET(req: NextRequest) {
 
   if (cartToken) {
     const session = intentSessions.get(cartToken);
-    return NextResponse.json({ session: session || null });
+    return NextResponse.json({ session: redactTelemetrySession(session || null) });
   }
 
   return NextResponse.json({
     activeSessionsCount: intentSessions.size,
-    recentSessions: Array.from(intentSessions.values()).slice(-10),
+    recentSessions: Array.from(intentSessions.values()).slice(-10).map(redactTelemetrySession),
   });
 }

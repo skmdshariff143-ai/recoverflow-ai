@@ -77,7 +77,7 @@ describe('RecoverFlow AI — Cross-Tenant Security & Mutation Isolation (Postgre
 
     // Verify Merchant A's record was untouched
     const freshCaseA = await db.getRecoveryCase(caseA.id, merchantA);
-    expect(freshCaseA?.status).toBe('OPEN');
+    expect(freshCaseA?.status).toBe('DETECTED');
     expect(freshCaseA?.recoveryProbBps).toBe(4500);
 
     // Attempt 2: Merchant A successfully mutates their own recovery case

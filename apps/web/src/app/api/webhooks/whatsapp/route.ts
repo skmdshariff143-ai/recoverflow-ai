@@ -15,7 +15,13 @@ export async function GET(req: NextRequest) {
   const token = searchParams.get('hub.verify_token');
   const challenge = searchParams.get('hub.challenge');
 
-  const expectedToken = process.env.WHATSAPP_VERIFY_TOKEN || 'recoverflow_verify_secret';
+  const expectedToken = process.env.WHATSAPP_VERIFY_TOKEN;
+
+  // Fail closed: Webhook verification MUST fail if verify token is unconfigured
+  if (!expectedToken) {
+    console.error('[WhatsApp Webhook] WHATSAPP_VERIFY_TOKEN is unset. Failing closed.');
+    return new Response('Forbidden: Webhook verify token unconfigured', { status: 403 });
+  }
 
   if (mode === 'subscribe' && token === expectedToken) {
     return new Response(challenge || '', { status: 200 });

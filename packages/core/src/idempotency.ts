@@ -35,7 +35,7 @@ export class AtomicTransactionalIdempotencyStore<T = unknown> {
 
   public reserve(key: string, payload: unknown, lockTtlMs?: number): IdempotencyReservation<T> {
     const payloadHash = this.hashPayload(payload);
-    const ttl = lockTtlMs || this.config.defaultTtlMs || 30000;
+    const ttl = lockTtlMs ?? this.config.executionTimeoutMs ?? this.config.defaultTtlMs ?? 5000;
     const now = Date.now();
     const existing = this.store.get(key);
 
@@ -43,7 +43,7 @@ export class AtomicTransactionalIdempotencyStore<T = unknown> {
       if (existing.payloadHash !== payloadHash) {
         return {
           status: 'CONFLICT',
-          message: `Payload hash mismatch on key ${key}`,
+          message: 'Payload mismatch: idempotency key reused with a different request payload hash.',
         };
       }
 
@@ -78,15 +78,18 @@ export class AtomicTransactionalIdempotencyStore<T = unknown> {
     return { status: 'ACQUIRED', version: 1 };
   }
 
-  public commit(key: string, payload: unknown, result: T, _version?: number): void {
+  public commit(key: string, payload: unknown, result: T, version?: number): void {
     const payloadHash = this.hashPayload(payload);
     const existing = this.store.get(key);
+    if (!existing || existing.payloadHash !== payloadHash || existing.status !== 'IN_PROGRESS' || existing.lockedUntil <= Date.now() || (version !== undefined && existing.version !== version)) {
+      throw new Error('Idempotency reservation is missing, expired, or no longer owned by this execution.');
+    }
     this.store.set(key, {
       payloadHash,
       status: 'COMMITTED',
       result,
       lockedUntil: 0,
-      version: (existing?.version || 1) + 1,
+      version: existing.version,
     });
   }
 

@@ -1,5 +1,6 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { subscriptionStore, type TestSubscription } from '@recoverflow/core';
+import { enforceRateLimit, enforceRouteAuth } from '@/lib/apiGuards';
 
 export async function GET() {
   const subs = subscriptionStore.getSubscriptions();
@@ -22,9 +23,18 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    const rateLimitRes = await enforceRateLimit(req, 10, 60000);
+    if (rateLimitRes) return rateLimitRes;
+
     const body = await req.json().catch(() => ({}));
     const keyId = process.env.RAZORPAY_KEY_ID;
     const keySecret = process.env.RAZORPAY_KEY_SECRET;
+
+    const authRes = await enforceRouteAuth(req, {
+      allowDemoSimulation: true,
+      requiresLiveCredentials: Boolean(body.useLiveCredentials || (keyId && process.env.RECOVERFLOW_RUNTIME_MODE !== 'DEMO')),
+    });
+    if (authRes) return authRes;
 
     const planName = typeof body.planName === 'string' && body.planName ? body.planName : 'Custom SaaS Plan';
     const amountRupees = typeof body.amountRupees === 'number' && body.amountRupees > 0 ? body.amountRupees : 2499;

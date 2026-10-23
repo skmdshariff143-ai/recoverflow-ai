@@ -1,4 +1,4 @@
-﻿import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { AtomicTransactionalIdempotencyStore } from '@recoverflow/core';
 
 describe('Transactional Idempotency Store — Concurrency & Atomic Reservation Tests', () => {
@@ -85,4 +85,15 @@ describe('Transactional Idempotency Store — Concurrency & Atomic Reservation T
       expect(res2.version).toBe(2);
     }
   });
-});
+  it('rejects a stale worker commit after a lease is acquired by a new execution', () => {
+    vi.useFakeTimers();
+    try {
+      const payload = { paymentId: 'version-fenced' };
+      const first = store.reserve('fenced', payload);
+      vi.advanceTimersByTime(201);
+      const second = store.reserve('fenced', payload);
+      expect(() => store.commit('fenced', payload, { recovered: true, amount: 10 }, first.version)).toThrow(/no longer owned/);
+      store.commit('fenced', payload, { recovered: false, amount: 0 }, second.version);
+      expect(store.reserve('fenced', payload).result).toEqual({ recovered: false, amount: 0 });
+    } finally { vi.useRealTimers(); }
+  });});

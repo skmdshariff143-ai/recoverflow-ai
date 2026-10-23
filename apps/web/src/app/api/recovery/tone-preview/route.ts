@@ -1,20 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { runRecoveryAgent } from '@recoverflow/agents';
-import { db, type AbandonmentType } from '@recoverflow/core';
+import { db, type AbandonmentType, type CartItem } from '@recoverflow/core';
 import { buildResponsiveCartEmailHtml } from '@recoverflow/jobs';
+import { z } from 'zod';
+
+const TonePreviewSchema = z.object({
+  brandVoiceCasualVsFormal: z.number().min(0).max(1).optional(),
+  brandVoiceUrgencyVsGentle: z.number().min(0).max(1).optional(),
+  discountCeilingPercentage: z.number().min(0).max(100).optional(),
+  brandToneGuidelines: z.string().trim().max(1000).optional(),
+  dropOffReason: z.string().trim().max(100).optional(),
+});
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
+    const rawBody = await req.json().catch(() => ({}));
+    const validated = TonePreviewSchema.safeParse(rawBody);
+
+    if (!validated.success) {
+      return NextResponse.json(
+        { error: 'Invalid tone preview parameters', issues: validated.error.issues },
+        { status: 400 }
+      );
+    }
+
+    const body = validated.data;
     const merchant = await db.getMerchant('merchant_default_01');
 
     const brandVoiceCasualVsFormal = body.brandVoiceCasualVsFormal ?? 0.5;
     const brandVoiceUrgencyVsGentle = body.brandVoiceUrgencyVsGentle ?? 0.5;
     const discountCeilingPercentage = body.discountCeilingPercentage ?? 15.0;
     const guidelines = body.brandToneGuidelines || merchant?.brandToneGuidelines || 'Polite, clear, and reassuring.';
-    const dropOffReason: AbandonmentType = body.dropOffReason || 'CHECKOUT_STEP';
+    const dropOffReason: AbandonmentType = (body.dropOffReason as AbandonmentType) || 'CHECKOUT_STEP';
 
-    const sampleItems = [
+    const sampleItems: CartItem[] = [
       {
         id: 'sample_preview_01',
         title: 'Minimalist Italian Leather Tote',
@@ -51,8 +70,8 @@ export async function POST(req: NextRequest) {
       items: sampleItems,
       totalPrice: 260.0,
       currency: 'USD',
-      checkoutUrl,
       discountCode: recoveryOutput.suggestedDiscountCode,
+      checkoutUrl,
       messageBody: recoveryOutput.messageBody,
     });
 
@@ -60,6 +79,9 @@ export async function POST(req: NextRequest) {
       success: true,
       recoveryOutput,
       emailHtmlPreview,
+      guidelinesUsed: guidelines,
+      discountOffered: recoveryOutput.suggestedDiscountCode ? discountCeilingPercentage : 0,
+      offerCode: recoveryOutput.suggestedDiscountCode,
     });
   } catch (err: unknown) {
     console.error('Tone preview error:', err);

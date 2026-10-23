@@ -320,7 +320,7 @@ export async function dispatchVipVoiceRescue(params: {
   }
 
   // Simulated mode if missing live Twilio credentials or test account
-  if (!accountSid || !authToken || accountSid.startsWith('AC_test') || authToken === 'test_token') {
+  if (((process.env.RECOVERFLOW_RUNTIME_MODE || (process.env.NODE_ENV === 'test' ? 'TEST' : 'DEMO')).toUpperCase() === 'DEMO') || !accountSid || !authToken || accountSid.startsWith('AC_test') || authToken === 'test_token') {
     return {
       success: true,
       callSid: `CA_mock_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`,

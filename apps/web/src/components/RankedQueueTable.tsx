@@ -7,7 +7,7 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   Search,
   Filter,
@@ -65,6 +65,7 @@ export function RankedQueueTable({
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(25);
   const [focusedIndex, setFocusedIndex] = useState<number>(0);
+  const rowRefs = useRef<Array<HTMLTableRowElement | null>>([]);
 
   const totalPages = Math.ceil(items.length / pageSize) || 1;
   const paginatedItems = items.slice((currentPage - 1) * pageSize, currentPage * pageSize);
@@ -80,16 +81,23 @@ export function RankedQueueTable({
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     const targetTag = (e.target as HTMLElement)?.tagName?.toLowerCase();
-    if (targetTag === 'input' || targetTag === 'select') return;
+    if (['input', 'select', 'button', 'a', 'textarea'].includes(targetTag)) return;
 
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setFocusedIndex((prev) => Math.min(prev + 1, Math.max(0, paginatedItems.length - 1)));
+      e.stopPropagation();
+      const next = Math.min(focusedIndex + 1, Math.max(0, paginatedItems.length - 1));
+      setFocusedIndex(next);
+      rowRefs.current[next]?.focus();
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      setFocusedIndex((prev) => Math.max(prev - 1, 0));
+      e.stopPropagation();
+      const next = Math.max(focusedIndex - 1, 0);
+      setFocusedIndex(next);
+      rowRefs.current[next]?.focus();
     } else if (e.key === 'Enter') {
       e.preventDefault();
+      e.stopPropagation();
       if (paginatedItems[focusedIndex]) {
         onSelectPayment(paginatedItems[focusedIndex].payment.payment_id);
       }
@@ -431,6 +439,7 @@ export function RankedQueueTable({
                     key={item.payment.payment_id}
                     data-testid="queue-row"
                     data-focused={isFocused}
+                    ref={(element) => { rowRefs.current[idx] = element; }}
                     tabIndex={0}
                     onFocus={() => setFocusedIndex(idx)}
                     onClick={() => onSelectPayment(item.payment.payment_id)}

@@ -38,6 +38,8 @@ import type {
   CreateRecoveryCaseAndEnqueueParams,
   IngestRazorpayWebhookParams,
   SearchRecoveryCasesParams,
+  CaseReviewInput,
+  CaseReviewResult,
 } from './DatabasePort';
 
 export class PrismaDatabase implements DatabasePort {
@@ -105,9 +107,9 @@ export class PrismaDatabase implements DatabasePort {
     return this.prisma.user.findUnique({ where: { email } });
   }
 
-  async createUser(data: { email: string; name?: string }): Promise<UserRecord> {
+  async createUser(data: { email: string; name?: string; passwordHash?: string }): Promise<UserRecord> {
     return this.prisma.user.create({
-      data: { email: data.email, name: data.name },
+      data: { email: data.email, name: data.name, passwordHash: data.passwordHash },
     });
   }
 
@@ -417,7 +419,7 @@ export class PrismaDatabase implements DatabasePort {
         orderReference: data.orderReference,
       },
     });
-    return { ...p, amountPaise: Number(p.amountPaise) };
+    return { ...p, amountPaise: p.amountPaise };
   }
 
   async getPayment(id: string, merchantId?: string): Promise<PaymentRecord | null> {
@@ -425,7 +427,7 @@ export class PrismaDatabase implements DatabasePort {
       where: { id, ...(merchantId ? { merchantId } : {}) },
     });
     if (!p) return null;
-    return { ...p, amountPaise: Number(p.amountPaise) };
+    return { ...p, amountPaise: p.amountPaise };
   }
 
   async getPaymentByExternalId(externalPaymentId: string, merchantId?: string): Promise<PaymentRecord | null> {
@@ -433,7 +435,7 @@ export class PrismaDatabase implements DatabasePort {
       where: { externalPaymentId, ...(merchantId ? { merchantId } : {}) },
     });
     if (!p) return null;
-    return { ...p, amountPaise: Number(p.amountPaise) };
+    return { ...p, amountPaise: p.amountPaise };
   }
 
   async createRecoveryCase(data: {
@@ -452,7 +454,7 @@ export class PrismaDatabase implements DatabasePort {
         expectedValuePaise: BigInt(data.expectedValuePaise || 0),
       },
     });
-    return { ...rc, expectedValuePaise: Number(rc.expectedValuePaise) };
+    return { ...rc, expectedValuePaise: rc.expectedValuePaise };
   }
 
   async getRecoveryCase(id: string, merchantId?: string): Promise<RecoveryCaseRecord | null> {
@@ -460,7 +462,7 @@ export class PrismaDatabase implements DatabasePort {
       where: { id, ...(merchantId ? { merchantId } : {}) },
     });
     if (!rc) return null;
-    return { ...rc, expectedValuePaise: Number(rc.expectedValuePaise) };
+    return { ...rc, expectedValuePaise: rc.expectedValuePaise };
   }
 
   async updateRecoveryCase(
@@ -490,13 +492,13 @@ export class PrismaDatabase implements DatabasePort {
       where: { id },
       data: data as any,
     });
-    return { ...rc, expectedValuePaise: Number(rc.expectedValuePaise) };
+    return { ...rc, expectedValuePaise: rc.expectedValuePaise };
   }
 
   async adminGetRecoveryCaseById(id: string): Promise<RecoveryCaseRecord | null> {
     const rc = await this.prisma.recoveryCase.findUnique({ where: { id } });
     if (!rc) return null;
-    return { ...rc, expectedValuePaise: Number(rc.expectedValuePaise) };
+    return { ...rc, expectedValuePaise: rc.expectedValuePaise };
   }
 
   async listRecoveryCases(params: { merchantId: string; status?: string; limit?: number; offset?: number }): Promise<RecoveryCaseRecord[]> {
@@ -509,13 +511,14 @@ export class PrismaDatabase implements DatabasePort {
       take: params.limit || 50,
       orderBy: { createdAt: 'desc' },
     });
-    return list.map((rc) => ({ ...rc, expectedValuePaise: Number(rc.expectedValuePaise) }));
+    return list.map((rc) => ({ ...rc, expectedValuePaise: rc.expectedValuePaise }));
   }
 
   async searchRecoveryCases(params: SearchRecoveryCasesParams): Promise<{ items: RecoveryCaseRecord[]; total: number }> {
     const where: Record<string, any> = {
       merchantId: params.merchantId,
       ...(params.status ? { status: params.status } : {}),
+      ...(params.activeOnly ? { NOT: { status: { in: ['RECOVERED', 'STOPPED'] } } } : {}),
       ...(params.minExpectedValuePaise ? { expectedValuePaise: { gte: BigInt(params.minExpectedValuePaise) } } : {}),
     };
 
@@ -523,6 +526,7 @@ export class PrismaDatabase implements DatabasePort {
       where.OR = [
         { customerId: { contains: params.search, mode: 'insensitive' } },
         { paymentId: { contains: params.search, mode: 'insensitive' } },
+        { payment: { externalPaymentId: { contains: params.search, mode: 'insensitive' } } },
         { id: { contains: params.search, mode: 'insensitive' } },
       ];
     }
@@ -533,17 +537,40 @@ export class PrismaDatabase implements DatabasePort {
         where,
         skip: params.offset || 0,
         take: params.limit || 50,
-        orderBy: { createdAt: 'desc' },
+        orderBy: params.sortBy === 'expectedValuePaise' ? [{ payment: { currency: 'asc' } }, { expectedValuePaise: 'desc' }, { id: 'asc' }] : [{ createdAt: 'desc' }, { id: 'asc' }],
       }),
     ]);
 
     return {
-      items: list.map((rc) => ({ ...rc, expectedValuePaise: Number(rc.expectedValuePaise) })),
+      items: list.map((rc) => ({ ...rc, expectedValuePaise: rc.expectedValuePaise })),
       total,
     };
   }
 
   // ── Unit of Work Atomic Transactions ─────────────────────────────────────
+
+  async reviewRecoveryCase(input: CaseReviewInput): Promise<CaseReviewResult> {
+    return this.prisma.$transaction(async (tx) => {
+      // Serialize reviews and audit appends for this tenant in one transaction.
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${'audit_' + input.merchantId}))`;
+      await tx.$queryRaw`SELECT id FROM "RecoveryCase" WHERE id = ${input.caseId} AND "merchantId" = ${input.merchantId} FOR UPDATE`;
+      const record = await tx.recoveryCase.findFirst({ where: { id: input.caseId, merchantId: input.merchantId }, include: { payment: true, approvals: true } });
+      if (!record) return { outcome: 'not_found' };
+      if (record.approvals.some((review) => review.reviewerId === input.userId && review.status !== 'PENDING')) return { outcome: 'already_reviewed', status: record.status };
+      if (record.status !== 'APPROVAL_REQUIRED') return { outcome: 'not_pending', status: record.status };
+      const approvals = record.approvals.filter((review) => review.status === 'APPROVED').length + (input.action === 'approve' ? 1 : 0);
+      const status = input.action === 'reject' ? 'STOPPED' : approvals >= 2 ? 'ELIGIBILITY_CHECKED' : 'APPROVAL_REQUIRED';
+      await tx.approvalRequest.create({ data: { recoveryCaseId: record.id, reviewerId: input.userId, status: input.action === 'approve' ? 'APPROVED' : 'REJECTED', amountPaise: record.payment.amountPaise, reason: input.reason, reviewedAt: new Date() } });
+      await tx.recoveryCase.update({ where: { id: record.id }, data: { status } });
+      const latest = await tx.auditEvent.findFirst({ where: { merchantId: input.merchantId }, orderBy: { createdAt: 'desc' } });
+      const previousHash = latest?.currentHash || '0'.repeat(64);
+      const action = `REVIEW_${input.action.toUpperCase()}`;
+      const payloadHash = crypto.createHash('sha256').update(JSON.stringify(input)).digest('hex');
+      const currentHash = crypto.createHash('sha256').update(`${previousHash}:HUMAN:${action}:${record.id}:${payloadHash}`).digest('hex');
+      await tx.auditEvent.create({ data: { merchantId: input.merchantId, userId: input.userId, actorType: 'HUMAN', action, entityType: 'RECOVERY_CASE', entityId: record.id, previousHash, payloadHash, currentHash, metadata: { reason: input.reason, approvals, status }, createdAt: new Date(Math.max(Date.now(), (latest?.createdAt.getTime() || 0) + 1)) } });
+      return { outcome: 'recorded', status, approvals };
+    });
+  }
 
   async createRecoveryCaseAndEnqueue(params: CreateRecoveryCaseAndEnqueueParams): Promise<{
     payment: PaymentRecord;
@@ -587,8 +614,8 @@ export class PrismaDatabase implements DatabasePort {
       });
 
       return {
-        payment: { ...p, amountPaise: Number(p.amountPaise) },
-        recoveryCase: { ...rc, expectedValuePaise: Number(rc.expectedValuePaise) },
+        payment: { ...p, amountPaise: p.amountPaise },
+        recoveryCase: { ...rc, expectedValuePaise: rc.expectedValuePaise },
         outbox: { ...out, status: out.status as any, payload: out.payload as Record<string, unknown> },
       };
     });
@@ -672,7 +699,7 @@ export class PrismaDatabase implements DatabasePort {
             orderReference: params.payment.orderReference,
           },
         });
-        payment = { ...p, amountPaise: Number(p.amountPaise) };
+        payment = { ...p, amountPaise: p.amountPaise };
 
         if (params.recoveryCase) {
           const rc = await tx.recoveryCase.create({
@@ -684,7 +711,7 @@ export class PrismaDatabase implements DatabasePort {
               expectedValuePaise: BigInt(params.recoveryCase.expectedValuePaise || 0),
             },
           });
-          recoveryCase = { ...rc, expectedValuePaise: Number(rc.expectedValuePaise) };
+          recoveryCase = { ...rc, expectedValuePaise: rc.expectedValuePaise };
 
           if (params.outbox) {
             const out = await tx.outboxEvent.create({
@@ -736,7 +763,7 @@ export class PrismaDatabase implements DatabasePort {
     });
     return {
       ...dec,
-      expectedValuePaise: Number(dec.expectedValuePaise),
+      expectedValuePaise: dec.expectedValuePaise,
       featuresSnapshot: dec.featuresSnapshot as Record<string, unknown>,
     };
   }
@@ -781,8 +808,8 @@ export class PrismaDatabase implements DatabasePort {
     });
     return {
       ...out,
-      recoveredAmountPaise: Number(out.recoveredAmountPaise),
-      feeAmountPaise: Number(out.feeAmountPaise),
+      recoveredAmountPaise: out.recoveredAmountPaise,
+      feeAmountPaise: out.feeAmountPaise,
     };
   }
 
@@ -1170,14 +1197,10 @@ export class PrismaDatabase implements DatabasePort {
   }): Promise<AuditEventRecord> {
     return this.prisma.$transaction(async (tx) => {
       if (data.merchantId) {
-        try {
           await tx.$executeRawUnsafe(
             `SELECT pg_advisory_xact_lock(hashtext('audit_' || $1))`,
             data.merchantId
           );
-        } catch {
-          // Advisory lock ignore on non-postgres
-        }
       }
 
       const latest = await tx.auditEvent.findFirst({
@@ -1205,6 +1228,7 @@ export class PrismaDatabase implements DatabasePort {
           payloadHash: data.payloadHash,
           currentHash,
           metadata: data.metadata as any,
+          createdAt: new Date(Math.max(Date.now(), (latest?.createdAt.getTime() || 0) + 1)),
         },
       });
 
@@ -1224,7 +1248,7 @@ export class PrismaDatabase implements DatabasePort {
     return { ...evt, metadata: evt.metadata as Record<string, unknown> | null };
   }
 
-  async listAuditEvents(params: { merchantId?: string; entityType?: string; entityId?: string; limit?: number }): Promise<AuditEventRecord[]> {
+  async listAuditEvents(params: { merchantId?: string; entityType?: string; entityId?: string; limit?: number; order?: 'asc' | 'desc' }): Promise<AuditEventRecord[]> {
     const list = await this.prisma.auditEvent.findMany({
       where: {
         ...(params.merchantId ? { merchantId: params.merchantId } : {}),
@@ -1232,7 +1256,7 @@ export class PrismaDatabase implements DatabasePort {
         ...(params.entityId ? { entityId: params.entityId } : {}),
       },
       take: params.limit || 100,
-      orderBy: { createdAt: 'asc' },
+      orderBy: { createdAt: params.order || 'asc' },
     });
     return list.map((evt) => ({ ...evt, metadata: evt.metadata as Record<string, unknown> | null }));
   }

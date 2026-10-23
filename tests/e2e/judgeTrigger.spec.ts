@@ -38,7 +38,7 @@ test.describe('PayBack AI — Judge-Triggered Live Failure Participation (Task 1
       localStorage.setItem('payback_spotlight_dismissed_v1', 'true');
       localStorage.setItem('payback_guide_completed_v1', 'true');
     });
-    await mainPage.goto('/');
+    await mainPage.goto('/demo');
     await mainPage.waitForLoadState('networkidle');
 
     // Trigger failure from mobile page
@@ -62,7 +62,7 @@ test.describe('PayBack AI — Judge-Triggered Live Failure Participation (Task 1
   });
 
   test('Audit Trail Explorer displays QR code and link to mobile trigger page', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/demo');
     await page.waitForLoadState('networkidle');
 
     // Navigate to Audit Trail Explorer

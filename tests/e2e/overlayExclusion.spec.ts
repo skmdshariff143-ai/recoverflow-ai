@@ -4,7 +4,7 @@ test.describe('PayBack AI — Overlay Mutual Exclusion & Centered Compliance Mod
 
   test('spotlight is suppressed when Regulatory Footprint modal opens, and only the modal is visible', async ({ page }) => {
     // 1. Fresh page load without dismissed spotlight
-    await page.goto('/');
+    await page.goto('/demo');
     await page.waitForSelector('header');
 
     // 2. Wait for First-Time Visitor Spotlight to appear
@@ -43,7 +43,7 @@ test.describe('PayBack AI — Overlay Mutual Exclusion & Centered Compliance Mod
 
   test('opening Regulatory Footprint modal before spotlight fires prevents spotlight from stacking on top', async ({ page }) => {
     // 1. Fresh page load
-    await page.goto('/');
+    await page.goto('/demo');
     await page.waitForSelector('header');
 
     // 2. Immediately click Regulatory Footprint badge
@@ -70,7 +70,7 @@ test.describe('PayBack AI — Overlay Mutual Exclusion & Centered Compliance Mod
   });
 
   test('opening Command Palette (Cmd/Ctrl+K) suppresses spotlight', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/demo');
     await page.waitForSelector('header');
 
     const spotlightOverlay = page.getByTestId('spotlight-overlay');
@@ -93,7 +93,7 @@ test.describe('PayBack AI — Overlay Mutual Exclusion & Centered Compliance Mod
   });
 
   test('opening Judge Mode modal suppresses spotlight', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/demo');
     await page.waitForSelector('header');
 
     const spotlightOverlay = page.getByTestId('spotlight-overlay');

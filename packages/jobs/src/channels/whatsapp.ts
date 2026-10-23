@@ -83,7 +83,7 @@ export async function sendWhatsAppMessage(payload: WhatsAppMessagePayload): Prom
     ? buildAttributedCheckoutUrl(payload.ctaUrl, payload.discountCode)
     : undefined;
 
-  if (!token || !phoneId || token === 'EAAG_test_token_mock') {
+  if (((process.env.RECOVERFLOW_RUNTIME_MODE || (process.env.NODE_ENV === 'test' ? 'TEST' : 'DEMO')).toUpperCase() === 'DEMO') || !token || !phoneId || token === 'EAAG_test_token_mock') {
     // Return simulated success with realistic external message ID for development/demo
     return {
       success: true,
@@ -223,7 +223,7 @@ export async function sendWhatsAppCatalogCheckout(
     },
   };
 
-  if (!token || !phoneId || token === 'EAAG_test_token_mock') {
+  if (((process.env.RECOVERFLOW_RUNTIME_MODE || (process.env.NODE_ENV === 'test' ? 'TEST' : 'DEMO')).toUpperCase() === 'DEMO') || !token || !phoneId || token === 'EAAG_test_token_mock') {
     return {
       success: true,
       messageId: `wamid.HBgL${recipientPhone}CATALOG${Date.now().toString(36)}`,

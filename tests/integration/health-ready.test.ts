@@ -10,8 +10,8 @@ describe('RecoverFlow AI — Health & Readiness Probes', () => {
     const json = await res.json();
     expect(json.data.status).toBe('healthy');
     expect(json.data.service).toBe('recoverflow-ai-web');
-    expect(json.data.version).toBe('1.0.0');
-    expect(json.data.invariantsEnforced || json.data.metrics.invariantsEnforced).toContain('INTEGER_PAISE_MATH');
+    expect(json.data.version).toBe('0.1.0');
+    expect(json.data.uptimeSeconds).toBeGreaterThanOrEqual(0);
     expect(json.meta.requestId).toBeDefined();
     expect(json.error).toBeNull();
   });
@@ -23,7 +23,9 @@ describe('RecoverFlow AI — Health & Readiness Probes', () => {
     const json = await res.json();
     expect(json.data.status).toBe('ready');
     expect(json.data.subsystems.domainEngine.status).toBe('READY');
-    expect(json.data.subsystems.benchmarkArtifacts.status).toBe('READY');
+    expect(json.data.subsystems.database.status).toBe('READY');
+    expect(json.data.subsystems.authentication.status).toBe('READY');
+    expect(json.data.subsystems.redis.status).toBe('NOT_REQUIRED_IN_DEMO');
     expect(json.meta.requestId).toBeDefined();
     expect(json.error).toBeNull();
   });

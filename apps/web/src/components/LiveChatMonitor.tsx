@@ -10,7 +10,8 @@ import {
   Bot, 
   Mic, 
   History, 
-  Volume2 
+  Volume2,
+  Key
 } from 'lucide-react';
 import type { CartEvent, MessageLog } from '@recoverflow/core';
 import { FunnelReplayModal } from './FunnelReplayModal';
@@ -28,6 +29,8 @@ export function LiveChatMonitor({ carts }: LiveChatMonitorProps) {
   const [manualInput, setManualInput] = useState('');
   const [sendingManual, setSendingManual] = useState(false);
   const [showReplayModal, setShowReplayModal] = useState(false);
+  const [operatorToken, setOperatorToken] = useState<string>('');
+  const [takeoverError, setTakeoverError] = useState<string | null>(null);
 
   const selectedCart = carts.find((c) => c.id === selectedCartId) || activeCarts[0];
 
@@ -98,6 +101,7 @@ export function LiveChatMonitor({ carts }: LiveChatMonitorProps) {
   const handleToggleTakeover = async () => {
     const nextState = !isTakenOver;
     setIsTakenOver(nextState);
+    setTakeoverError(null);
     if (selectedCart) {
       await fetch('/api/chat/takeover', {
         method: 'POST',
@@ -111,18 +115,34 @@ export function LiveChatMonitor({ carts }: LiveChatMonitorProps) {
     if (!manualInput.trim() || !selectedCart) return;
     try {
       setSendingManual(true);
-      await fetch('/api/chat/takeover', {
+      setTakeoverError(null);
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (operatorToken.trim()) {
+        headers['x-admin-token'] = operatorToken.trim();
+      }
+      const res = await fetch('/api/chat/takeover', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           cartId: selectedCart.id,
           isTakenOver: true,
           manualMessage: manualInput.trim(),
         }),
       });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        const errMessage = data.error || (res.status === 401 || res.status === 403
+          ? 'Operator authorization required (401/403). Enter your operator admin token to dispatch live WhatsApp messages.'
+          : `Server error (${res.status}): Failed to deliver manual message.`);
+        setTakeoverError(errMessage);
+        return;
+      }
+
       setManualInput('');
-    } catch (err) {
-      console.error(err);
+      setTakeoverError(null);
+    } catch {
+      setTakeoverError('Network failure: Unable to contact chat takeover service.');
     } finally {
       setSendingManual(false);
     }
@@ -302,7 +322,47 @@ export function LiveChatMonitor({ carts }: LiveChatMonitorProps) {
         </div>
 
         {/* Input Bar */}
-        <div className="p-4 border-t border-zinc-800 bg-zinc-950/60">
+        <div className="p-4 border-t border-zinc-800 bg-zinc-950/60 space-y-3">
+          {takeoverError && (
+            <div
+              role="alert"
+              aria-live="polite"
+              className="text-xs bg-rose-950/80 border border-rose-500/50 text-rose-300 px-3 py-2 rounded-xl flex items-center justify-between"
+            >
+              <span>{takeoverError}</span>
+              <button
+                type="button"
+                onClick={() => setTakeoverError(null)}
+                className="text-rose-400 hover:text-white ml-2 text-sm font-bold"
+                aria-label="Dismiss alert"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+
+          {isTakenOver && (
+            <div className="flex items-center gap-2">
+              <label htmlFor="operator-token-input" className="sr-only">
+                Operator Admin Token
+              </label>
+              <div className="relative flex-1">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                  <Key className="h-3.5 w-3.5 text-amber-400" />
+                </div>
+                <input
+                  id="operator-token-input"
+                  type="password"
+                  value={operatorToken}
+                  onChange={(e) => setOperatorToken(e.target.value)}
+                  placeholder="Operator admin token (in-memory only, required for live dispatch)"
+                  className="w-full bg-zinc-900 border border-zinc-800 focus:border-amber-500 text-zinc-300 text-xs rounded-xl pl-9 pr-3 py-2 outline-none font-mono placeholder:text-zinc-500"
+                  autoComplete="off"
+                />
+              </div>
+            </div>
+          )}
+
           <div className="flex items-center gap-2">
             <input
               type="text"
@@ -321,6 +381,7 @@ export function LiveChatMonitor({ carts }: LiveChatMonitorProps) {
               onClick={handleSendManual}
               disabled={!isTakenOver || !manualInput.trim() || sendingManual}
               className="bg-blue-600 hover:bg-blue-500 text-white p-3 rounded-xl disabled:opacity-40 transition shadow-md"
+              aria-label="Send manual reply"
             >
               <Send className="w-4 h-4" />
             </button>

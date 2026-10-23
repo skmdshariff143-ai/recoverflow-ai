@@ -6,7 +6,7 @@ test.describe('PayBack AI — Live Recompute Feedback & Evaluation Plain-English
       localStorage.setItem('payback_spotlight_dismissed_v1', 'true');
       localStorage.setItem('payback_guide_completed_v1', 'true');
     });
-    await page.goto('/');
+    await page.goto('/demo');
     await page.waitForLoadState('networkidle');
   });
 

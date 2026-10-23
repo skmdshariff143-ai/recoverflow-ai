@@ -93,6 +93,10 @@ export function AuditTrailExplorer({
     setWorkingLedger(tamperedLedger);
     setWorkingVerification(result);
     setIsTamperActive(true);
+    // The record may move as the batch finishes. Reveal the actual broken link.
+    setSearch('');
+    setStageFilter('all');
+    setCurrentPage(Math.floor((result.tamperedIndex ?? 0) / pageSize) + 1);
   };
 
   const handleResetDemo = () => {

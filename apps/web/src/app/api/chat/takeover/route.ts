@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@recoverflow/core';
 import { sendWhatsAppMessage } from '@recoverflow/jobs';
+import { requireAdminToken } from '@/lib/apiGuards';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -25,6 +26,12 @@ export async function POST(req: NextRequest) {
 
     if (!cartId) {
       return NextResponse.json({ error: 'cartId is required' }, { status: 400 });
+    }
+
+    // Manual message dispatch requires administrator authorization
+    if (manualMessage) {
+      const authRes = requireAdminToken(req);
+      if (authRes) return authRes;
     }
 
     if (isTakenOver) {

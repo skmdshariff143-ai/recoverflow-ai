@@ -40,18 +40,20 @@ export function RazorpaySubscriptionsDashboard({ onNavigateToQueue }: Subscripti
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
+  const createDialog = React.useRef<HTMLDialogElement>(null);
+  useEffect(() => { if (isCreateModalOpen) createDialog.current?.showModal(); }, [isCreateModalOpen]);
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // New Subscription Form State
   const [newPlanName, setNewPlanName] = useState<string>('SaaS Enterprise Pro');
   const [newAmountRupees, setNewAmountRupees] = useState<number>(2499);
-  const [newCustomerEmail, setNewCustomerEmail] = useState<string>('alex.founder@buildathon.in');
+  const [newCustomerEmail, setNewCustomerEmail] = useState<string>('sample@example.test');
 
   const fetchSubscriptions = React.useCallback(async () => {
     try {
       setIsLoading(true);
-      const res = await fetch('/api/razorpay/subscriptions');
+      const res = await fetch('/api/demo/subscriptions');
       if (res.ok) {
         const data = await res.json();
         setSubscriptions(data.subscriptions || []);
@@ -69,7 +71,7 @@ export function RazorpaySubscriptionsDashboard({ onNavigateToQueue }: Subscripti
     let ignore = false;
     async function load() {
       try {
-        const res = await fetch('/api/razorpay/subscriptions');
+        const res = await fetch('/api/demo/subscriptions');
         if (res.ok && !ignore) {
           const data = await res.json();
           setSubscriptions(data.subscriptions || []);
@@ -99,8 +101,8 @@ export function RazorpaySubscriptionsDashboard({ onNavigateToQueue }: Subscripti
       setActionInProgress(subscriptionId);
       setActionMessage(null);
 
-      const res = await fetch('/api/razorpay/subscriptions/halt', {
-        method: 'POST',
+      const res = await fetch('/api/demo/subscriptions', {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           subscriptionId,
@@ -114,7 +116,7 @@ export function RazorpaySubscriptionsDashboard({ onNavigateToQueue }: Subscripti
       if (res.ok && data.success) {
         setActionMessage({
           type: 'success',
-          text: `Subscription ${subscriptionId} marked as '${action}ed'! Event pushed into recovery queue.`,
+          text: `Demo subscription ${subscriptionId} updated. No provider action was performed.`,
         });
         await fetchSubscriptions();
       } else {
@@ -137,7 +139,7 @@ export function RazorpaySubscriptionsDashboard({ onNavigateToQueue }: Subscripti
     e.preventDefault();
     try {
       setActionInProgress('creating');
-      const res = await fetch('/api/razorpay/subscriptions', {
+      const res = await fetch('/api/demo/subscriptions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -156,6 +158,7 @@ export function RazorpaySubscriptionsDashboard({ onNavigateToQueue }: Subscripti
         });
         await fetchSubscriptions();
       }
+      else { setActionMessage({ type: 'error', text: data.error || 'Unable to create the sample subscription.' }); }
     } catch (err) {
       console.error('Create subscription error:', err);
     } finally {
@@ -208,7 +211,7 @@ export function RazorpaySubscriptionsDashboard({ onNavigateToQueue }: Subscripti
                 <div className="flex items-center gap-2 flex-wrap">
                   <h2 className="text-lg font-bold text-white tracking-tight">Subscriptions</h2>
                   <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/40">
-                    Razorpay Test Mode
+                    Isolated demo
                   </span>
                   {dataSource === 'razorpay_live' ? (
                     <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1">
@@ -217,12 +220,12 @@ export function RazorpaySubscriptionsDashboard({ onNavigateToQueue }: Subscripti
                     </span>
                   ) : (
                     <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">
-                      Local Cache ({subscriptions.length})
+                      Demo records ({subscriptions.length})
                     </span>
                   )}
                 </div>
                 <p className="text-xs text-slate-400">
-                  Manage recurring subscription plans, mandate tokens, and live recovery triggers.
+                  Explore simulated subscriptions. Changes stay in this demo and never contact a provider.
                   {liveSyncInfo?.synced && liveSyncInfo.totalReported ? (
                     <span className="ml-1 text-[11px] text-emerald-400 font-mono">
                       (Fetched {subscriptions.length} of {liveSyncInfo.totalReported} from Razorpay sandbox)
@@ -354,9 +357,9 @@ export function RazorpaySubscriptionsDashboard({ onNavigateToQueue }: Subscripti
                     <td className="py-3.5 px-4 font-mono font-bold text-indigo-300">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span>{sub.subscription_id}</span>
-                        {sub.dataSource === 'razorpay_live' && (
+                        {sub.dataSource === 'local_fallback' && (
                           <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-500/40">
-                            LIVE
+                            DEMO
                           </span>
                         )}
                         <button
@@ -435,7 +438,7 @@ export function RazorpaySubscriptionsDashboard({ onNavigateToQueue }: Subscripti
                               className="px-2.5 py-1 bg-amber-950/80 hover:bg-amber-900/80 text-amber-200 border border-amber-500/50 rounded-lg text-[10px] font-bold transition flex items-center gap-1 cursor-pointer disabled:opacity-50"
                             >
                               <Zap className="w-3 h-3 text-amber-400" />
-                              <span>Halt Mandate</span>
+                              <span>Simulate failure</span>
                             </button>
 
                             <button
@@ -449,7 +452,7 @@ export function RazorpaySubscriptionsDashboard({ onNavigateToQueue }: Subscripti
                           </>
                         ) : (
                           <span className="text-[10px] text-slate-500 font-mono italic">
-                            Event Ingested
+                            Sample inactive
                           </span>
                         )}
                       </div>
@@ -464,14 +467,15 @@ export function RazorpaySubscriptionsDashboard({ onNavigateToQueue }: Subscripti
 
       {/* Create Subscription Modal */}
       {isCreateModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs">
+        <dialog ref={createDialog} aria-label="Create Demo Subscription" onCancel={() => setIsCreateModalOpen(false)} className="m-auto w-[calc(100%-2rem)] max-w-md border-0 bg-transparent p-0">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div className="flex items-center gap-2">
                 <CreditCard className="w-5 h-5 text-indigo-400" />
-                <h3 className="text-base font-bold text-white">Create Test Subscription</h3>
+                <h3 className="text-base font-bold text-white">Create Demo Subscription</h3>
               </div>
               <button
+                aria-label="Close subscription form"
                 onClick={() => setIsCreateModalOpen(false)}
                 className="text-slate-500 hover:text-white cursor-pointer"
               >
@@ -481,8 +485,9 @@ export function RazorpaySubscriptionsDashboard({ onNavigateToQueue }: Subscripti
 
             <form onSubmit={handleCreateSubscription} className="space-y-3.5 text-xs">
               <div className="space-y-1">
-                <label className="block font-bold text-slate-300">Plan Name</label>
+                <label htmlFor="demo-plan-name" className="block font-bold text-slate-300">Plan Name</label>
                 <input
+                  id="demo-plan-name"
                   type="text"
                   value={newPlanName}
                   onChange={(e) => setNewPlanName(e.target.value)}
@@ -492,11 +497,13 @@ export function RazorpaySubscriptionsDashboard({ onNavigateToQueue }: Subscripti
               </div>
 
               <div className="space-y-1">
-                <label className="block font-bold text-slate-300">Amount (₹ INR)</label>
+                <label htmlFor="demo-plan-amount" className="block font-bold text-slate-300">Amount (₹ INR)</label>
                 <input
+                  id="demo-plan-amount"
                   type="number"
-                  min="100"
-                  step="100"
+                  min="0.01"
+                  step="0.01"
+                  max="1000000"
                   value={newAmountRupees}
                   onChange={(e) => setNewAmountRupees(Number(e.target.value))}
                   required
@@ -505,8 +512,9 @@ export function RazorpaySubscriptionsDashboard({ onNavigateToQueue }: Subscripti
               </div>
 
               <div className="space-y-1">
-                <label className="block font-bold text-slate-300">Customer Email</label>
+                <label htmlFor="demo-plan-email" className="block font-bold text-slate-300">Customer Email</label>
                 <input
+                  id="demo-plan-email"
                   type="email"
                   value={newCustomerEmail}
                   onChange={(e) => setNewCustomerEmail(e.target.value)}
@@ -518,7 +526,7 @@ export function RazorpaySubscriptionsDashboard({ onNavigateToQueue }: Subscripti
               <div className="p-3 bg-indigo-950/40 border border-indigo-500/30 rounded-xl text-[11px] text-indigo-300 flex items-start gap-2">
                 <AlertTriangle className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
                 <p>
-                  Generates an authentic subscription with test-mode links and registers it in the local store &amp; Razorpay sandbox.
+                  Creates a sample record in this demo. No provider is contacted, and no payment or message is sent.
                 </p>
               </div>
 
@@ -547,7 +555,7 @@ export function RazorpaySubscriptionsDashboard({ onNavigateToQueue }: Subscripti
               </div>
             </form>
           </div>
-        </div>
+        </dialog>
       )}
     </div>
   );
