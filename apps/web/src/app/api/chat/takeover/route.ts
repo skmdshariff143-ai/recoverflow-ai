@@ -17,16 +17,16 @@ export async function GET(req: NextRequest) {
     const rateLimitRes = await enforceRateLimit(req, 30, 60000);
     if (rateLimitRes) return rateLimitRes;
 
+    const authRes = await authorizeRequest(req, 'support:intervene', { allowAnonymousDemo: true });
+    if (!authRes.authorized) return authRes.response;
+    const { session } = authRes;
+
     const { searchParams } = new URL(req.url);
     const cartId = (searchParams.get('cartId') || '').trim();
 
     if (!cartId || cartId.length > 100) {
       return NextResponse.json({ error: 'cartId is required' }, { status: 400 });
     }
-
-    const authRes = await authorizeRequest(req, 'support:intervene', { allowAnonymousDemo: true });
-    if (!authRes.authorized) return authRes.response;
-    const { session } = authRes;
 
     const cart = await db.getCartById(cartId);
     if (!cart || cart.merchantId !== session.activeMerchantId) {
@@ -49,6 +49,12 @@ export async function POST(req: NextRequest) {
     const rateLimitRes = await enforceRateLimit(req, 20, 60000);
     if (rateLimitRes) return rateLimitRes;
 
+    const authRes = await authorizeRequest(req, 'support:intervene', {
+      allowAnonymousDemo: true,
+    });
+    if (!authRes.authorized) return authRes.response;
+    const { session } = authRes;
+
     let bodyRaw: unknown = {};
     try {
       bodyRaw = await req.json();
@@ -66,13 +72,13 @@ export async function POST(req: NextRequest) {
 
     const { cartId, isTakenOver, manualMessage } = validated.data;
 
-    // Manual message dispatch requires a real authenticated operator session
-    // Toggling state only allows demo session
-    const authRes = await authorizeRequest(req, 'support:intervene', {
-      allowAnonymousDemo: !manualMessage,
-    });
-    if (!authRes.authorized) return authRes.response;
-    const { session } = authRes;
+    // Manual message dispatch requires a real authenticated operator session (never demo fallback)
+    if (manualMessage) {
+      const realAuthRes = await authorizeRequest(req, 'support:intervene', {
+        allowAnonymousDemo: false,
+      });
+      if (!realAuthRes.authorized) return realAuthRes.response;
+    }
 
     const cart = await db.getCartById(cartId);
     if (!cart || cart.merchantId !== session.activeMerchantId) {
