@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyShopifyHmac, db, globalIdempotency } from '@recoverflow/core';
+import { verifyShopifyHmac, db, globalIdempotency, getRuntimeMode } from '@recoverflow/core';
 import { globalRecoveryQueue } from '@recoverflow/jobs';
+import { internalErrorResponse } from '@/lib/http';
 
 export async function POST(req: NextRequest) {
   try {
@@ -8,9 +9,20 @@ export async function POST(req: NextRequest) {
     const hmacHeader = req.headers.get('x-shopify-hmac-sha256');
     const shopDomain = req.headers.get('x-shopify-shop-domain') || '';
 
-    const merchant =
+    // Retrieve merchant
+    const mode = getRuntimeMode();
+    let merchant =
       (await db.getMerchantByShopDomain(shopDomain)) ||
-      (await db.getMerchant('merchant_default_01'));
+      (await db.getMerchantByStoreUrl(`https://${shopDomain}`));
+
+    if (!merchant) {
+      if (mode === 'DEMO' || mode === 'TEST') {
+        merchant = await db.getMerchant('merchant_default_01');
+      } else {
+        console.warn('[Shopify Order] Unknown shop domain in LIVE/SANDBOX mode; ignoring webhook without action');
+        return NextResponse.json({ received: true, ignored: true }, { status: 200 });
+      }
+    }
 
     if (!merchant) {
       return NextResponse.json({ error: 'Merchant not found' }, { status: 404 });
@@ -56,8 +68,6 @@ export async function POST(req: NextRequest) {
       // Attribute recovery and update cart status
       await db.updateCartStatus(matchedCart.id, 'RECOVERED', 'RECOVERED');
 
-      console.log(`[Order Rehydrated & Attributed] Cart ${matchedCart.id} recovered! GMV: $${totalPrice || matchedCart.totalPrice}`);
-
       return NextResponse.json({
         status: 'rehydrated_and_recovered',
         orderId,
@@ -71,10 +81,6 @@ export async function POST(req: NextRequest) {
       orderId,
     }, { status: 200 });
   } catch (err: unknown) {
-    console.error('Shopify order webhook error:', err);
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Order processing error' },
-      { status: 500 }
-    );
+    return internalErrorResponse('webhooks/shopify/orders', err, 'Order processing error');
   }
 }

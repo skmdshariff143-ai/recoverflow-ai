@@ -134,12 +134,12 @@ describe('routeAuth: authorizeRequest and isAnonymousDemoEnabled', () => {
         body: JSON.stringify({ method: 'demo', role: 'ADMIN' }),
       });
       const loginRes = await login(loginReq);
-      const cookieHeader = loginRes.headers.get('set-cookie');
+      const cookieHeader = loginRes.headers.get('set-cookie')!;
       const token = cookieHeader.split(';')[0].replace('recoverflow_session=', '');
 
       const stored = await db.getSession(hashSessionToken(token));
       expect(stored).toBeDefined();
-      await db.revokeSession(stored.id, "Test session revoked");
+      await db.revokeSession(stored!.id, "Test session revoked");
 
       const req = createReq('http://localhost:3000/api/recovery/execute', {
         token,

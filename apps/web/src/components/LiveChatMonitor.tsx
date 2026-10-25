@@ -10,8 +10,7 @@ import {
   Bot, 
   Mic, 
   History, 
-  Volume2,
-  Key
+  Volume2
 } from 'lucide-react';
 import type { CartEvent, MessageLog } from '@recoverflow/core';
 import { FunnelReplayModal } from './FunnelReplayModal';
@@ -29,7 +28,6 @@ export function LiveChatMonitor({ carts }: LiveChatMonitorProps) {
   const [manualInput, setManualInput] = useState('');
   const [sendingManual, setSendingManual] = useState(false);
   const [showReplayModal, setShowReplayModal] = useState(false);
-  const [operatorToken, setOperatorToken] = useState<string>('');
   const [takeoverError, setTakeoverError] = useState<string | null>(null);
 
   const selectedCart = carts.find((c) => c.id === selectedCartId) || activeCarts[0];
@@ -116,13 +114,9 @@ export function LiveChatMonitor({ carts }: LiveChatMonitorProps) {
     try {
       setSendingManual(true);
       setTakeoverError(null);
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (operatorToken.trim()) {
-        headers['x-admin-token'] = operatorToken.trim();
-      }
       const res = await fetch('/api/chat/takeover', {
         method: 'POST',
-        headers,
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           cartId: selectedCart.id,
           isTakenOver: true,
@@ -133,7 +127,7 @@ export function LiveChatMonitor({ carts }: LiveChatMonitorProps) {
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         const errMessage = data.error || (res.status === 401 || res.status === 403
-          ? 'Operator authorization required (401/403). Enter your operator admin token to dispatch live WhatsApp messages.'
+          ? 'Operator session authorization required (401/403). Please sign in as an authorized operator to dispatch live WhatsApp messages.'
           : `Server error (${res.status}): Failed to deliver manual message.`);
         setTakeoverError(errMessage);
         return;
@@ -158,114 +152,113 @@ export function LiveChatMonitor({ carts }: LiveChatMonitorProps) {
               <MessageSquare className="w-4 h-4 text-green-400" />
               Active WhatsApp Threads
             </h3>
-            <span className="text-[10px] bg-green-500/10 text-green-400 font-bold px-2 py-0.5 rounded-full border border-green-500/20">
-              {activeCarts.length} Live
+            <span className="text-[10px] bg-emerald-500/10 text-emerald-400 font-mono px-2 py-0.5 rounded-full border border-emerald-500/20">
+              Live Webhooks
             </span>
           </div>
 
-          <div className="mt-3 space-y-2">
-            {activeCarts.slice(0, 5).map((c) => (
+          <div className="space-y-2 mt-3">
+            {activeCarts.map((c) => (
               <button
                 key={c.id}
                 onClick={() => setSelectedCartId(c.id)}
-                className={`w-full text-left p-3 rounded-xl border transition-all ${
+                className={`w-full text-left p-3 rounded-xl border transition flex items-center justify-between ${
                   selectedCart?.id === c.id
                     ? 'bg-zinc-800/90 border-blue-500/50 shadow-md'
-                    : 'bg-zinc-900/40 border-zinc-800/80 hover:bg-zinc-800/40'
+                    : 'bg-zinc-900/40 border-zinc-800/60 hover:bg-zinc-900/80'
                 }`}
               >
-                <div className="flex justify-between items-start">
-                  <span className="font-semibold text-zinc-200 text-xs">{c.customerName || 'Shopper'}</span>
-                  <span className="text-[10px] text-zinc-500">
-                    ${c.totalPrice.toFixed(2)}
-                  </span>
+                <div>
+                  <div className="text-xs font-semibold text-zinc-200">{c.customerName || 'Shopper'}</div>
+                  <div className="text-[11px] text-zinc-400 font-mono mt-0.5">{c.customerPhone}</div>
+                  <div className="text-[10px] text-zinc-400 mt-1 truncate max-w-[180px]">
+                    {c.items[0]?.title} • ${c.totalPrice.toFixed(2)}
+                  </div>
                 </div>
-                <div className="text-[11px] text-zinc-400 truncate mt-1">
-                  {c.items[0]?.title || 'Items in cart'}
-                </div>
-                <div className="flex items-center gap-2 mt-2">
-                  <span className="text-[10px] font-medium text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">
-                    {c.recoveryStage}
-                  </span>
-                  <span className="text-[10px] text-zinc-500">{c.customerPhone}</span>
+                <div className="text-right">
+                  <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 ring-4 ring-emerald-950 mb-1" />
+                  <div className="text-[9px] text-zinc-400 font-mono">Active</div>
                 </div>
               </button>
             ))}
           </div>
         </div>
 
-        <div className="p-3 bg-zinc-900/60 border border-zinc-800 rounded-xl text-xs text-zinc-400 mt-4">
-          <div className="flex items-center gap-1.5 font-semibold text-zinc-200 mb-1">
+        {/* Global Agent Safety Guardrail Banner */}
+        <div className="mt-4 p-3 rounded-xl bg-zinc-900/80 border border-zinc-800">
+          <div className="flex items-center gap-2 text-xs font-semibold text-zinc-300">
             <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
-            Concierge Safety Guardrail
+            Autonomous Safety Boundaries
           </div>
-          Autonomous agent will never negotiate below merchant margin or invent false inventory.
+          <p className="text-[11px] text-zinc-400 mt-1 leading-snug">
+            Max discount ceiling strictly clamped at <span className="text-amber-400 font-mono font-bold">15%</span>. Zero hallucinations on inventory or return policies.
+          </p>
         </div>
       </div>
 
-      {/* Main Chat Area (8 cols) */}
-      <div className="lg:col-span-8 flex flex-col justify-between bg-zinc-900/40">
+      {/* Main Chat Stream (8 cols) */}
+      <div className="lg:col-span-8 flex flex-col justify-between bg-zinc-950/30">
         {/* Chat Header */}
-        <div className="p-4 border-b border-zinc-800 flex flex-wrap items-center justify-between gap-3 bg-zinc-950/40">
+        <div className="p-4 border-b border-zinc-800 bg-zinc-950/60 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-emerald-900/40 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold text-sm">
-              {(selectedCart?.customerName || 'S').charAt(0)}
+            <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-zinc-950 font-bold text-sm">
+              {selectedCart?.customerName ? selectedCart.customerName[0] : 'S'}
             </div>
             <div>
-              <div className="font-semibold text-white text-sm flex items-center gap-2">
-                {selectedCart?.customerName || 'Guest Customer'}
-                <span className="text-xs text-zinc-400 font-normal">({selectedCart?.customerPhone})</span>
+              <div className="text-sm font-bold text-white flex items-center gap-2">
+                {selectedCart?.customerName || 'Sarah Jenkins'}
+                <span className="text-[10px] font-normal text-zinc-400 font-mono">{selectedCart?.customerPhone}</span>
               </div>
-              <div className="text-xs text-zinc-400 mt-0.5">
-                Cart: <span className="text-zinc-200 font-medium">${selectedCart?.totalPrice.toFixed(2)}</span> • {selectedCart?.abandonmentType}
+              <div className="text-xs text-zinc-400">
+                Cart: <span className="text-zinc-200">{selectedCart?.items[0]?.title}</span> (${selectedCart?.totalPrice.toFixed(2)})
               </div>
             </div>
           </div>
 
-          {/* Action Buttons: Session Replay & Admin Takeover */}
-          <div className="flex items-center gap-3">
+          {/* Action buttons: Funnel Replay + Human Intervention Takeover */}
+          <div className="flex items-center gap-2">
             <button
               onClick={() => setShowReplayModal(true)}
-              className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-zinc-700/80 bg-zinc-800/80 hover:bg-zinc-800 text-zinc-300 transition"
-              title="Inspect session intent & exit telemetry"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-zinc-800 text-zinc-300 hover:bg-zinc-700 border border-zinc-700 transition"
+              title="Inspect Visual Session Replay & DOM Funnel"
             >
-              <History className="w-3.5 h-3.5 text-indigo-400" />
-              <span>Session Replay</span>
+              <History className="w-3.5 h-3.5 text-blue-400" />
+              Replay Session
             </button>
 
             <button
               onClick={handleToggleTakeover}
-              className={`flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-lg border transition ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition border ${
                 isTakenOver
-                  ? 'bg-rose-500/15 border-rose-500/40 text-rose-300'
-                  : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                  ? 'bg-rose-500/20 text-rose-300 border-rose-500/40 hover:bg-rose-500/30'
+                  : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30'
               }`}
             >
               {isTakenOver ? (
                 <>
-                  <UserCheck className="w-4 h-4 text-rose-400" />
-                  <span>Admin Takeover (Active)</span>
+                  <UserCheck className="w-3.5 h-3.5" />
+                  Operator Takeover Active
                 </>
               ) : (
                 <>
-                  <Bot className="w-4 h-4 text-emerald-400" />
-                  <span>AI Concierge (Autonomous)</span>
+                  <Bot className="w-3.5 h-3.5" />
+                  AI Concierge Active
                 </>
               )}
             </button>
           </div>
         </div>
 
-        {/* Message Stream */}
-        <div className="p-6 overflow-y-auto space-y-4 max-h-[380px] flex-1">
+        {/* Message Thread */}
+        <div className="p-5 overflow-y-auto space-y-4 flex-1 max-h-[440px]">
           {defaultConversation.map((msg) => (
             <div
               key={msg.id}
               className={`flex flex-col ${msg.role === 'user' ? 'items-start' : 'items-end'}`}
             >
-              <div className="text-[10px] text-zinc-500 mb-1 flex items-center gap-1.5">
-                {msg.isAI ? <Sparkles className="w-3 h-3 text-blue-400" /> : <UserCheck className="w-3 h-3 text-zinc-400" />}
-                <span>{msg.sender}</span>
+              <div className="flex items-center gap-1.5 mb-1 text-[11px] text-zinc-400">
+                {msg.isAI && <Sparkles className="w-3 h-3 text-blue-400" />}
+                <span className="font-semibold text-zinc-300">{msg.sender}</span>
                 <span>• {msg.time}</span>
                 {msg.isVoiceNote && (
                   <span className="flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.2 rounded-full border border-emerald-500/20">
@@ -341,28 +334,6 @@ export function LiveChatMonitor({ carts }: LiveChatMonitorProps) {
             </div>
           )}
 
-          {isTakenOver && (
-            <div className="flex items-center gap-2">
-              <label htmlFor="operator-token-input" className="sr-only">
-                Operator Admin Token
-              </label>
-              <div className="relative flex-1">
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                  <Key className="h-3.5 w-3.5 text-amber-400" />
-                </div>
-                <input
-                  id="operator-token-input"
-                  type="password"
-                  value={operatorToken}
-                  onChange={(e) => setOperatorToken(e.target.value)}
-                  placeholder="Operator admin token (in-memory only, required for live dispatch)"
-                  className="w-full bg-zinc-900 border border-zinc-800 focus:border-amber-500 text-zinc-300 text-xs rounded-xl pl-9 pr-3 py-2 outline-none font-mono placeholder:text-zinc-500"
-                  autoComplete="off"
-                />
-              </div>
-            </div>
-          )}
-
           <div className="flex items-center gap-2">
             <input
               type="text"
@@ -389,6 +360,7 @@ export function LiveChatMonitor({ carts }: LiveChatMonitorProps) {
         </div>
       </div>
 
+      {/* Session Replay Modal */}
       {showReplayModal && selectedCart && (
         <FunnelReplayModal
           cart={selectedCart}

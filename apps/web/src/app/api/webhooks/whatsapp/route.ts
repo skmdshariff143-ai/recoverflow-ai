@@ -1,13 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db, globalSuppressionService, verifyWhatsAppSignature } from '@recoverflow/core';
+import crypto from 'node:crypto';
+import { db, globalSuppressionService, getRuntimeMode, type Merchant } from '@recoverflow/core';
 import { runConciergeAgent } from '@recoverflow/agents';
 import { sendWhatsAppMessage } from '@recoverflow/jobs';
+import { internalErrorResponse } from '@/lib/http';
 
-// In-memory conversation history cache (cartId -> last 5 turns)
+// In-memory conversation history cache for context continuity (max 5 turns per cart)
 const conversationHistoryCache = new Map<string, Array<{ role: 'user' | 'assistant'; content: string }>>();
 
 /**
- * Meta Webhook verification challenge (GET).
+ * Validates Meta's SHA256 HMAC signature in `X-Hub-Signature-256`.
+ */
+export function verifyWhatsAppSignature(rawBody: string, signatureHeader: string | null, appSecret: string): boolean {
+  if (!signatureHeader || !appSecret) return false;
+  const parts = signatureHeader.split('=');
+  if (parts.length !== 2 || parts[0] !== 'sha256') return false;
+
+  const expectedSignature = crypto
+    .createHmac('sha256', appSecret)
+    .update(rawBody, 'utf8')
+    .digest('hex');
+
+  const expectedBuf = Buffer.from(expectedSignature, 'utf8');
+  const providedBuf = Buffer.from(parts[1], 'utf8');
+
+  if (expectedBuf.length !== providedBuf.length) return false;
+  return crypto.timingSafeEqual(expectedBuf, providedBuf);
+}
+
+/**
+ * Meta WhatsApp Webhook Verification Handshake (GET).
  */
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -65,15 +87,37 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ status: 'ok' }, { status: 200 });
     }
 
+    const phoneNumberId = change?.metadata?.phone_number_id;
+    const displayPhoneNumber = change?.metadata?.display_phone_number;
+
+    // Resolve merchant by matching WhatsApp phone number ID or support phone
+    const merchants = await db.listMerchants();
+    let merchant: Merchant | null = merchants.find(
+      (m) =>
+        (phoneNumberId && m.whatsappPhoneId === phoneNumberId) ||
+        (displayPhoneNumber && m.supportPhone && m.supportPhone.includes(displayPhoneNumber))
+    ) || null;
+
+    const mode = getRuntimeMode();
+    if (!merchant) {
+      if (mode === 'DEMO' || mode === 'TEST') {
+        merchant = await db.getMerchant('merchant_default_01');
+      } else {
+        console.warn('[WhatsApp Webhook] Unknown phone number in LIVE/SANDBOX mode; ignoring webhook without action');
+        return NextResponse.json({ received: true, ignored: true }, { status: 200 });
+      }
+    }
+
+    if (!merchant) {
+      return NextResponse.json({ error: 'Merchant not found' }, { status: 404 });
+    }
+
     const senderPhone = `+${incomingMsg.from}`;
     let userText = '';
 
     // Handle Native WhatsApp Flow / Catalog Checkout Completion (Meta v21.0)
     const nfmReply = incomingMsg.interactive?.nfm_reply;
     if (incomingMsg.interactive?.type === 'nfm_reply' || nfmReply) {
-      const merchant = await db.getMerchant('merchant_default_01');
-      if (!merchant) return NextResponse.json({ error: 'Merchant not found' }, { status: 404 });
-
       let flowData: Record<string, unknown> = {};
       try {
         flowData = nfmReply?.response_json ? JSON.parse(nfmReply.response_json) : {};
@@ -128,11 +172,6 @@ export async function POST(req: NextRequest) {
       userText = incomingMsg.interactive.list_reply.title || incomingMsg.interactive.list_reply.id;
     } else {
       return NextResponse.json({ status: 'unsupported_message_type' }, { status: 200 });
-    }
-
-    const merchant = await db.getMerchant('merchant_default_01');
-    if (!merchant) {
-      return NextResponse.json({ error: 'Merchant not found' }, { status: 404 });
     }
 
     // CHECK OPT-OUT TRIGGERS (STOP, UNSUBSCRIBE, CANCEL, btn_opt_out)
@@ -271,7 +310,6 @@ export async function POST(req: NextRequest) {
       discountOffered: conciergeResponse.discountOffered,
     });
   } catch (err: unknown) {
-    console.error('WhatsApp webhook error:', err);
-    return NextResponse.json({ error: 'Internal error processing WhatsApp webhook' }, { status: 500 });
+    return internalErrorResponse('webhooks/whatsapp', err, 'Internal error processing WhatsApp webhook');
   }
 }

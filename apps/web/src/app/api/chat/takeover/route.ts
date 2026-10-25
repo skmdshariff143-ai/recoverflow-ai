@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@recoverflow/core';
 import { sendWhatsAppMessage } from '@recoverflow/jobs';
 import { authorizeRequest } from '@/lib/routeAuth';
-import { enforceRateLimit } from '@/lib/apiGuards';
+import { enforceRateLimit, requireServiceToken } from '@/lib/apiGuards';
 import { internalErrorResponse } from '@/lib/http';
 import { z } from 'zod';
 
@@ -49,11 +49,21 @@ export async function POST(req: NextRequest) {
     const rateLimitRes = await enforceRateLimit(req, 20, 60000);
     if (rateLimitRes) return rateLimitRes;
 
-    const authRes = await authorizeRequest(req, 'support:intervene', {
-      allowAnonymousDemo: true,
-    });
-    if (!authRes.authorized) return authRes.response;
-    const { session } = authRes;
+    const hasServiceTokenHeader = Boolean(req.headers.get('x-admin-token'));
+    let activeMerchantId: string | null = null;
+    let isServiceAuthorized = false;
+
+    if (hasServiceTokenHeader) {
+      const serviceTokenErr = requireServiceToken(req);
+      if (serviceTokenErr) return serviceTokenErr;
+      isServiceAuthorized = true;
+    } else {
+      const authRes = await authorizeRequest(req, 'support:intervene', {
+        allowAnonymousDemo: true,
+      });
+      if (!authRes.authorized) return authRes.response;
+      activeMerchantId = authRes.session.activeMerchantId;
+    }
 
     let bodyRaw: unknown = {};
     try {
@@ -72,16 +82,29 @@ export async function POST(req: NextRequest) {
 
     const { cartId, isTakenOver, manualMessage } = validated.data;
 
-    // Manual message dispatch requires a real authenticated operator session (never demo fallback)
+    // Manual message dispatch requires either:
+    // 1. A real authenticated operator session (never demo fallback), OR
+    // 2. An authorized service token (via requireServiceToken).
     if (manualMessage) {
-      const realAuthRes = await authorizeRequest(req, 'support:intervene', {
-        allowAnonymousDemo: false,
-      });
-      if (!realAuthRes.authorized) return realAuthRes.response;
+      if (isServiceAuthorized) {
+        // Service token caller authorized
+      } else {
+        const realAuthRes = await authorizeRequest(req, 'support:intervene', {
+          allowAnonymousDemo: false,
+        });
+        if (!realAuthRes.authorized) return realAuthRes.response;
+        if (realAuthRes.session) {
+          activeMerchantId = realAuthRes.session.activeMerchantId;
+        }
+      }
     }
 
     const cart = await db.getCartById(cartId);
-    if (!cart || cart.merchantId !== session.activeMerchantId) {
+    if (!cart) {
+      return NextResponse.json({ error: 'Cart not found' }, { status: 404 });
+    }
+
+    if (activeMerchantId && cart.merchantId !== activeMerchantId) {
       return NextResponse.json({ error: 'Cart not found' }, { status: 404 });
     }
 
@@ -92,7 +115,8 @@ export async function POST(req: NextRequest) {
       db.removeAdminTakeover(cartId);
     }
 
-    const merchant = await db.getMerchant(session.activeMerchantId);
+    const targetMerchantId = activeMerchantId || cart.merchantId;
+    const merchant = await db.getMerchant(targetMerchantId);
 
     // If manual message is provided by the admin, dispatch it
     if (manualMessage && cart.customerPhone && merchant) {
