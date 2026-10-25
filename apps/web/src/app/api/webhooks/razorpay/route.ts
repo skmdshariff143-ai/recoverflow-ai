@@ -151,7 +151,10 @@ export async function DELETE(req: NextRequest) {
     const rateLimitRes = await enforceRateLimit(req, 10, 60000);
     if (rateLimitRes) return rateLimitRes;
 
-    const authRes = await authorizeRequest(req, 'integration:manage', { allowAnonymousDemo: false });
+    const requiredPermission = ['LIVE', 'SANDBOX'].includes(process.env.RECOVERFLOW_RUNTIME_MODE || '')
+      ? 'integration:manage'
+      : 'recovery:execute';
+    const authRes = await authorizeRequest(req, requiredPermission, { allowAnonymousDemo: true });
     if (!authRes.authorized) return authRes.response;
 
     liveWebhookStore.clear();

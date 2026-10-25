@@ -119,8 +119,15 @@ export async function enforceRateLimit(
   windowMs: number = 60000
 ): Promise<NextResponse | null> {
   const clientIp = getClientIp(req);
+  let pathname = '';
+  try {
+    pathname = new URL(req.url).pathname;
+  } catch {
+    pathname = 'unknown';
+  }
+  const key = `${pathname}:${clientIp}`;
 
-  const result = await checkRateLimit(clientIp, limit, windowMs);
+  const result = await checkRateLimit(key, limit, windowMs);
   if (!result.allowed) {
     return NextResponse.json(
       {

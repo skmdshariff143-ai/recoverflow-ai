@@ -133,6 +133,7 @@ export async function POST(req: NextRequest) {
                 invoice_id: null,
                 international: false,
                 method: method,
+                customer_id: `cust_judge_${Math.floor(Math.random() * 9000 + 1000)}`,
                 amount_refunded: 0,
                 refund_status: null,
                 captured: false,
