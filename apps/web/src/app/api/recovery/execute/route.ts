@@ -2,7 +2,7 @@
  * PayBack AI — Server-Side Recovery Execution API Route.
  *
  * Enforces strict request validation, adapter boundary checks, and enforceable
- * idempotency replay/conflict detection.
+ * atomic idempotency replay/conflict/in-progress locking.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -43,7 +43,13 @@ export async function POST(req: NextRequest) {
     });
     if (!authResult.authorized) return authResult.response;
 
-    const body = await req.json();
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON request body' }, { status: 400 });
+    }
+
     const parseResult = RecoveryExecutionRequestSchema.safeParse(body);
 
     if (!parseResult.success) {
@@ -58,47 +64,70 @@ export async function POST(req: NextRequest) {
 
     const payload = parseResult.data;
 
-    // ── Idempotency Check ──────────────────────────────────────────
-    const idempCheck = idempotencyStore.check(payload.idempotencyKey, payload);
-    if (idempCheck.status === 'replay') {
-      const receipt = idempCheck.receipt as Record<string, unknown> | undefined;
+    // ── Atomic Synchronous Idempotency Begin / Locking ─────────────
+    const idempResult = idempotencyStore.begin(payload.idempotencyKey, payload, 30);
+
+    if (idempResult.status === 'replay') {
+      const receipt = idempResult.receipt as Record<string, unknown> | undefined;
       return NextResponse.json({
         success: receipt?.success ?? true,
-        receipt: idempCheck.receipt,
+        receipt: idempResult.receipt,
         serverTimestamp: new Date().toISOString(),
         idempotencyStatus: 'replayed_existing_execution',
         securityDisclaimer: 'Executed in Test Mode. Zero real financial debit triggered.',
       });
-    } else if (idempCheck.status === 'conflict') {
+    }
+
+    if (idempResult.status === 'conflict') {
       return NextResponse.json(
         {
           error:
             'Idempotency Conflict: The provided idempotency key has already been used with a different request payload.',
+          message: idempResult.message,
         },
         { status: 409 },
       );
     }
 
-    // ── Dispatch Execution to Requested Adapter ────────────────────
-    let adapter;
-    if (requestedAdapter === 'razorpay_test_mode') {
-      adapter = new RazorpayTestModeAdapter();
-    } else {
-      adapter = globalSimulatorAdapter;
+    if (idempResult.status === 'in_progress') {
+      return NextResponse.json(
+        {
+          error: 'Operation in progress. Concurrent execution detected.',
+          message: idempResult.message,
+        },
+        { status: 409 },
+      );
     }
 
-    const receipt = await adapter.execute(payload);
+    let isSaved = false;
+    try {
+      // ── Dispatch Execution to Requested Adapter ────────────────────
+      let adapter;
+      if (requestedAdapter === 'razorpay_test_mode') {
+        adapter = new RazorpayTestModeAdapter();
+      } else {
+        adapter = globalSimulatorAdapter;
+      }
 
-    // Save in idempotency store
-    idempotencyStore.save(payload.idempotencyKey, payload, receipt);
+      const receipt = await adapter.execute(payload);
 
-    return NextResponse.json({
-      success: receipt.success,
-      receipt,
-      serverTimestamp: new Date().toISOString(),
-      idempotencyStatus: 'new_execution_recorded',
-      securityDisclaimer: 'Executed in Test Mode. Zero real financial debit triggered.',
-    });
+      // Save committed execution in idempotency store
+      idempotencyStore.save(payload.idempotencyKey, payload, receipt);
+      isSaved = true;
+
+      return NextResponse.json({
+        success: receipt.success,
+        receipt,
+        serverTimestamp: new Date().toISOString(),
+        idempotencyStatus: 'new_execution_recorded',
+        securityDisclaimer: 'Executed in Test Mode. Zero real financial debit triggered.',
+      });
+    } finally {
+      // If execution throws, release lock so retries are not deadlocked
+      if (!isSaved) {
+        idempotencyStore.release(payload.idempotencyKey);
+      }
+    }
   } catch (err: unknown) {
     return internalErrorResponse('recovery/execute', err, 'Internal execution error');
   }
