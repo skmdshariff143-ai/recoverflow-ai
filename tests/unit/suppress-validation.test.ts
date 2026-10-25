@@ -4,13 +4,16 @@ import { POST as suppressPOST } from '../../apps/web/src/app/api/recovery/suppre
 
 describe('suppress-validation: Payload Validation & Boundary Enforcement', () => {
   const origMode = process.env.RECOVERFLOW_RUNTIME_MODE;
+  const origAnon = process.env.RECOVERFLOW_ALLOW_ANON_DEMO;
 
   beforeEach(() => {
     process.env.RECOVERFLOW_RUNTIME_MODE = 'DEMO';
+    process.env.RECOVERFLOW_ALLOW_ANON_DEMO = 'true';
   });
 
   afterEach(() => {
     process.env.RECOVERFLOW_RUNTIME_MODE = origMode;
+    process.env.RECOVERFLOW_ALLOW_ANON_DEMO = origAnon;
   });
 
   it('rejects empty payload or missing identifier with 400 Bad Request', async () => {

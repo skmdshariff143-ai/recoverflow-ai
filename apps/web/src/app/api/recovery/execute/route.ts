@@ -13,9 +13,15 @@ import {
   globalSimulatorAdapter,
 } from '@recoverflow/core';
 import { idempotencyStore } from '@recoverflow/core';
+import { authorizeRequest } from '@/lib/routeAuth';
+import { enforceRateLimit } from '@/lib/apiGuards';
+import { internalErrorResponse } from '@/lib/http';
 
 export async function POST(req: NextRequest) {
   try {
+    const rateLimitRes = await enforceRateLimit(req, 30, 60000);
+    if (rateLimitRes) return rateLimitRes;
+
     const rawAdapterHeader = req.headers.get('x-recovery-adapter') ?? 'simulator';
     const adapterParse = AdapterTypeSchema.safeParse(rawAdapterHeader);
 
@@ -29,6 +35,14 @@ export async function POST(req: NextRequest) {
     }
 
     const requestedAdapter = adapterParse.data;
+    const isSimulator = requestedAdapter === 'simulator';
+
+    // Anonymous demo allowed only for simulator adapter; razorpay_test_mode requires a real session
+    const authResult = await authorizeRequest(req, 'recovery:execute', {
+      allowAnonymousDemo: isSimulator,
+    });
+    if (!authResult.authorized) return authResult.response;
+
     const body = await req.json();
     const parseResult = RecoveryExecutionRequestSchema.safeParse(body);
 
@@ -86,7 +100,6 @@ export async function POST(req: NextRequest) {
       securityDisclaimer: 'Executed in Test Mode. Zero real financial debit triggered.',
     });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Internal execution error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return internalErrorResponse('recovery/execute', err, 'Internal execution error');
   }
 }

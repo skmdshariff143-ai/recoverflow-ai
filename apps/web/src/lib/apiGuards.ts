@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import crypto from 'node:crypto';
+import { getClientIp } from './http';
 
 export interface RateLimitRecord {
   count: number;
@@ -109,14 +110,15 @@ export async function checkRateLimit(
   };
 }
 
+/**
+ * Enforces sliding window rate limits using the unforgeable client IP from getClientIp.
+ */
 export async function enforceRateLimit(
   req: Request,
   limit: number = 30,
   windowMs: number = 60000
 ): Promise<NextResponse | null> {
-  const forwardedFor = req.headers.get('x-forwarded-for') || '';
-  const realIp = req.headers.get('x-real-ip') || '';
-  const clientIp = (forwardedFor.split(',')[0] || realIp || '127.0.0.1').trim();
+  const clientIp = getClientIp(req);
 
   const result = await checkRateLimit(clientIp, limit, windowMs);
   if (!result.allowed) {
@@ -141,7 +143,11 @@ export async function enforceRateLimit(
   return null;
 }
 
-export function requireAdminToken(req: Request): NextResponse | null {
+/**
+ * Validates service-to-service / operator token via timing-safe comparison.
+ * Never allows anonymous or demo bypass.
+ */
+export function requireServiceToken(req: Request): NextResponse | null {
   const tokenHeader = req.headers.get('x-admin-token') || '';
   const authHeader = req.headers.get('authorization') || '';
   const bearerToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
@@ -160,7 +166,7 @@ export function requireAdminToken(req: Request): NextResponse | null {
 
   if (!supplied) {
     return NextResponse.json(
-      { error: 'Unauthorized: Operator token required in x-admin-token header' },
+      { error: 'Unauthorized: Service token required in x-admin-token or Authorization header' },
       { status: 401 }
     );
   }
@@ -171,13 +177,15 @@ export function requireAdminToken(req: Request): NextResponse | null {
 
   if (suppliedBuf.length !== expectedBuf.length || !crypto.timingSafeEqual(suppliedBuf, expectedBuf)) {
     return NextResponse.json(
-      { error: 'Unauthorized: Invalid operator token' },
+      { error: 'Unauthorized: Invalid service token' },
       { status: 403 }
     );
   }
 
   return null;
 }
+
+export const requireAdminToken = requireServiceToken;
 
 export async function enforceRouteAuth(
   req: Request,
@@ -186,25 +194,21 @@ export async function enforceRouteAuth(
   const runtimeMode = process.env.RECOVERFLOW_RUNTIME_MODE || 'DEMO';
   const isDemo = runtimeMode === 'DEMO';
 
-  // If live external credentials or live spend are required, operator token is mandatory
   if (opts?.requiresLiveCredentials) {
-    return requireAdminToken(req);
+    return requireServiceToken(req);
   }
 
-  // If running in DEMO mode and simulation is permitted, allow request without token
   if (isDemo && opts?.allowDemoSimulation) {
     return null;
   }
 
-  // In SANDBOX / LIVE mode, token is strictly required
   if (!isDemo) {
-    return requireAdminToken(req);
+    return requireServiceToken(req);
   }
 
-  // Default in demo mode
   if (opts?.allowDemoSimulation !== false) {
     return null;
   }
 
-  return requireAdminToken(req);
+  return requireServiceToken(req);
 }

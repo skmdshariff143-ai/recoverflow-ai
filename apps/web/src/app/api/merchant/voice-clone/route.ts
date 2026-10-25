@@ -1,20 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'node:crypto';
 import { db } from '@recoverflow/core';
-import { enforceRateLimit, enforceRouteAuth } from '@/lib/apiGuards';
+import { enforceRateLimit } from '@/lib/apiGuards';
+import { authorizeRequest } from '@/lib/routeAuth';
+import { internalErrorResponse } from '@/lib/http';
 
 export async function POST(req: NextRequest) {
   try {
     const rateLimitRes = await enforceRateLimit(req, 5, 60000);
     if (rateLimitRes) return rateLimitRes;
 
-    const authRes = await enforceRouteAuth(req, {
-      allowDemoSimulation: true,
-      requiresLiveCredentials: process.env.RECOVERFLOW_RUNTIME_MODE !== 'DEMO',
+    // Always requires a real authenticated session with policy:modify
+    const authRes = await authorizeRequest(req, 'policy:modify', {
+      allowAnonymousDemo: false,
     });
-    if (authRes) return authRes;
+    if (!authRes.authorized) return authRes.response;
+    const { session } = authRes;
 
-    const merchantId = req.headers.get('x-merchant-id') || 'merchant_default_01';
+    // Merchant comes strictly from active session
+    const merchantId = session.activeMerchantId;
     let merchant = await db.getMerchant(merchantId);
 
     if (!merchant && db.listMerchants) {
@@ -44,7 +48,12 @@ export async function POST(req: NextRequest) {
       sampleDurationSeconds = Math.max(5, Math.min(60, Math.round(buffer.length / 16000)));
     } else {
       // JSON payload mode
-      const body = await req.json();
+      let body: any = {};
+      try {
+        body = await req.json();
+      } catch {
+        body = {};
+      }
       const customLabel = body.label || 'Founder Executive Voice';
       const hash = crypto.createHash('sha256').update(`${merchantId}:${customLabel}:${Date.now()}`).digest('hex').slice(0, 8);
       voiceId = `voice_clone_${merchant.storeName.toLowerCase().replace(/[^a-z0-9]/g, '_')}_${hash}`;
@@ -60,16 +69,11 @@ export async function POST(req: NextRequest) {
       success: true,
       voiceId,
       merchantId: merchant.id,
-      storeName: merchant.storeName,
       sampleDurationSeconds,
-      status: 'ACTIVE_CLONED',
-      message: `Founder custom voice '${voiceId}' successfully cloned and registered for VIP recovery calls.`,
+      status: 'PROCESSED',
+      message: `Voice model cloned successfully for ${merchant.storeName}.`,
     });
   } catch (err: unknown) {
-    console.error('[VoiceClone Error]:', err);
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Internal voice cloning upload failure' },
-      { status: 500 }
-    );
+    return internalErrorResponse('merchant/voice-clone', err, 'Failed to process voice clone request');
   }
 }

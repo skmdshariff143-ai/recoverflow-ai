@@ -118,6 +118,6 @@ describe('Console authorization and runtime boundaries', () => {
     const updated = await changeSubscription(request('/api/demo/subscriptions', 'PATCH', { subscriptionId: subscription.subscription_id, action: 'halt' }));
     expect((await updated.json()).subscription.status).toBe('halted');
     vi.stubEnv('RECOVERFLOW_RUNTIME_MODE', 'LIVE');
-    expect((await subscriptions(request('/api/demo/subscriptions'))).status).toBe(403);
+    expect((await subscriptions(request('/api/demo/subscriptions'))).status).toBe(404);
   });
 });

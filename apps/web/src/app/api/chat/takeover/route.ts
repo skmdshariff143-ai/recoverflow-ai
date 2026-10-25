@@ -1,51 +1,95 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@recoverflow/core';
 import { sendWhatsAppMessage } from '@recoverflow/jobs';
-import { requireAdminToken } from '@/lib/apiGuards';
+import { authorizeRequest } from '@/lib/routeAuth';
+import { enforceRateLimit } from '@/lib/apiGuards';
+import { internalErrorResponse } from '@/lib/http';
+import { z } from 'zod';
+
+const TakeoverBodySchema = z.object({
+  cartId: z.string().trim().min(1).max(100),
+  isTakenOver: z.boolean().optional(),
+  manualMessage: z.string().trim().max(1000).optional(),
+});
 
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const cartId = searchParams.get('cartId');
+  try {
+    const rateLimitRes = await enforceRateLimit(req, 30, 60000);
+    if (rateLimitRes) return rateLimitRes;
 
-  if (!cartId) {
-    return NextResponse.json({ error: 'cartId is required' }, { status: 400 });
+    const { searchParams } = new URL(req.url);
+    const cartId = (searchParams.get('cartId') || '').trim();
+
+    if (!cartId || cartId.length > 100) {
+      return NextResponse.json({ error: 'cartId is required' }, { status: 400 });
+    }
+
+    const authRes = await authorizeRequest(req, 'support:intervene', { allowAnonymousDemo: true });
+    if (!authRes.authorized) return authRes.response;
+    const { session } = authRes;
+
+    const cart = await db.getCartById(cartId);
+    if (!cart || cart.merchantId !== session.activeMerchantId) {
+      return NextResponse.json({ error: 'Cart not found' }, { status: 404 });
+    }
+
+    const isTakenOver = db.isAdminTakenOver(cartId);
+    return NextResponse.json({
+      cartId,
+      isTakenOver,
+      remainingMs: isTakenOver ? (db.getAdminTakeoverRemainingMs ? db.getAdminTakeoverRemainingMs(cartId) : 0) : 0,
+    });
+  } catch (err: unknown) {
+    return internalErrorResponse('chat/takeover', err, 'Failed to retrieve takeover state');
   }
-
-  const isTakenOver = db.isAdminTakenOver(cartId);
-  return NextResponse.json({
-    cartId,
-    isTakenOver,
-    remainingMs: isTakenOver ? (db.getAdminTakeoverRemainingMs ? db.getAdminTakeoverRemainingMs(cartId) : 0) : 0,
-  });
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const { cartId, isTakenOver, manualMessage } = body;
+    const rateLimitRes = await enforceRateLimit(req, 20, 60000);
+    if (rateLimitRes) return rateLimitRes;
 
-    if (!cartId) {
-      return NextResponse.json({ error: 'cartId is required' }, { status: 400 });
+    let bodyRaw: unknown = {};
+    try {
+      bodyRaw = await req.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
     }
 
-    // Manual message dispatch requires administrator authorization
-    if (manualMessage) {
-      const authRes = requireAdminToken(req);
-      if (authRes) return authRes;
+    const validated = TakeoverBodySchema.safeParse(bodyRaw);
+    if (!validated.success) {
+      return NextResponse.json(
+        { error: 'Invalid takeover request payload', issues: validated.error.issues },
+        { status: 400 }
+      );
+    }
+
+    const { cartId, isTakenOver, manualMessage } = validated.data;
+
+    // Manual message dispatch requires a real authenticated operator session
+    // Toggling state only allows demo session
+    const authRes = await authorizeRequest(req, 'support:intervene', {
+      allowAnonymousDemo: !manualMessage,
+    });
+    if (!authRes.authorized) return authRes.response;
+    const { session } = authRes;
+
+    const cart = await db.getCartById(cartId);
+    if (!cart || cart.merchantId !== session.activeMerchantId) {
+      return NextResponse.json({ error: 'Cart not found' }, { status: 404 });
     }
 
     if (isTakenOver) {
       // Engage 60-minute lock (3,600,000 ms)
       db.setAdminTakeover(cartId, 3600000);
-    } else {
+    } else if (isTakenOver === false) {
       db.removeAdminTakeover(cartId);
     }
 
-    const cart = await db.getCartById(cartId);
-    const merchant = await db.getMerchant('merchant_default_01');
+    const merchant = await db.getMerchant(session.activeMerchantId);
 
     // If manual message is provided by the admin, dispatch it
-    if (manualMessage && cart?.customerPhone && merchant) {
+    if (manualMessage && cart.customerPhone && merchant) {
       await sendWhatsAppMessage({
         to: cart.customerPhone,
         bodyText: manualMessage,
@@ -72,7 +116,6 @@ export async function POST(req: NextRequest) {
       messageSent: Boolean(manualMessage),
     });
   } catch (err: unknown) {
-    console.error('Takeover route error:', err);
-    return NextResponse.json({ error: 'Failed to update takeover state' }, { status: 500 });
+    return internalErrorResponse('chat/takeover', err, 'Failed to update takeover state');
   }
 }

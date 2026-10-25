@@ -7,7 +7,7 @@ import { route, ApiError } from '@/lib/server/access';
 
 const state = globalThis as unknown as { recoverflowDemoSubscriptions?: TestSubscription[] };
 function records() {
-  if (!['DEMO', 'TEST'].includes(getRuntimeMode())) throw new ApiError(403, 'Subscription simulation is only available in demo mode.');
+  if (!['DEMO', 'TEST'].includes(getRuntimeMode())) throw new ApiError(404, 'Subscription simulation is only available in demo mode.');
   state.recoverflowDemoSubscriptions ??= ['Starter monthly', 'Growth monthly', 'Scale annual'].map((name, index) => ({
     subscription_id: `sub_demo_${index + 1}`, plan_id: `plan_demo_${index + 1}`, plan_name: name,
     subscription_link: '/demo', customer_id: `customer_demo_${index + 1}`, customer_email: `sample${index + 1}@example.test`,

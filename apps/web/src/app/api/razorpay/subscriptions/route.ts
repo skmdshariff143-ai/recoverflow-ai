@@ -1,24 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { subscriptionStore, type TestSubscription } from '@recoverflow/core';
-import { enforceRateLimit, enforceRouteAuth } from '@/lib/apiGuards';
+import { enforceRateLimit } from '@/lib/apiGuards';
+import { authorizeRequest } from '@/lib/routeAuth';
+import { internalErrorResponse } from '@/lib/http';
 
-export async function GET() {
-  const subs = subscriptionStore.getSubscriptions();
-  return NextResponse.json({
-    success: true,
-    count: subs.length,
-    subscriptions: subs,
-    dashboardColumns: [
-      'Subscription Id',
-      'Plan Id',
-      'Subscription Link',
-      'Customer Id',
-      'Next Due on',
-      'Created At',
-      'Status',
-    ],
-    timestamp: new Date().toISOString(),
-  });
+export async function GET(req: NextRequest) {
+  try {
+    const authRes = await authorizeRequest(req, 'policy:view', { allowAnonymousDemo: true });
+    if (!authRes.authorized) return authRes.response;
+
+    const subs = subscriptionStore.getSubscriptions();
+    return NextResponse.json({
+      success: true,
+      count: subs.length,
+      subscriptions: subs,
+      dashboardColumns: [
+        'Subscription Id',
+        'Plan Id',
+        'Subscription Link',
+        'Customer Id',
+        'Next Due on',
+        'Created At',
+        'Status',
+      ],
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err: unknown) {
+    return internalErrorResponse('razorpay/subscriptions:GET', err, 'Failed to fetch subscriptions');
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -26,15 +35,21 @@ export async function POST(req: NextRequest) {
     const rateLimitRes = await enforceRateLimit(req, 10, 60000);
     if (rateLimitRes) return rateLimitRes;
 
-    const body = await req.json().catch(() => ({}));
+    // Creating real Razorpay resources always requires a real authenticated session with integration:manage
+    const authRes = await authorizeRequest(req, 'integration:manage', {
+      allowAnonymousDemo: false,
+    });
+    if (!authRes.authorized) return authRes.response;
+
+    let body: any = {};
+    try {
+      body = await req.json();
+    } catch {
+      body = {};
+    }
+
     const keyId = process.env.RAZORPAY_KEY_ID;
     const keySecret = process.env.RAZORPAY_KEY_SECRET;
-
-    const authRes = await enforceRouteAuth(req, {
-      allowDemoSimulation: true,
-      requiresLiveCredentials: Boolean(body.useLiveCredentials || (keyId && process.env.RECOVERFLOW_RUNTIME_MODE !== 'DEMO')),
-    });
-    if (authRes) return authRes;
 
     const planName = typeof body.planName === 'string' && body.planName ? body.planName : 'Custom SaaS Plan';
     const amountRupees = typeof body.amountRupees === 'number' && body.amountRupees > 0 ? body.amountRupees : 2499;
@@ -123,8 +138,7 @@ export async function POST(req: NextRequest) {
       subscription: newSub,
       totalSubscriptions: subscriptionStore.getSubscriptions().length,
     });
-  } catch (err) {
-    const errorMsg = err instanceof Error ? err.message : String(err);
-    return NextResponse.json({ error: 'Failed to create subscription', details: errorMsg }, { status: 500 });
+  } catch (err: unknown) {
+    return internalErrorResponse('razorpay/subscriptions:POST', err, 'Failed to create subscription');
   }
 }
