@@ -37,7 +37,15 @@ export async function POST(req: NextRequest) {
   try {
     const rawBody = await req.text();
     const signatureHeader = req.headers.get('x-hub-signature-256');
-    const appSecret = process.env.WHATSAPP_APP_SECRET || 'rf_meta_app_secret_test';
+    const appSecret = process.env.WHATSAPP_APP_SECRET;
+
+    if (!appSecret) {
+      console.error('[WhatsApp Webhook] WHATSAPP_APP_SECRET is unset. Failing closed.');
+      return NextResponse.json(
+        { error: 'Service Unavailable: WhatsApp webhook app secret unconfigured' },
+        { status: 503 }
+      );
+    }
 
     // Verify signature
     const isAuthentic = verifyWhatsAppSignature(rawBody, signatureHeader, appSecret);

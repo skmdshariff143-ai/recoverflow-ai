@@ -4,6 +4,7 @@ import { db } from '../../packages/core/src/db';
 import {
   createSessionToken,
   DEMO_PERSONA_SESSIONS,
+  hashSessionToken,
 } from '../../packages/core/src/auth';
 import { authorizeRequest, isAnonymousDemoEnabled } from '../../apps/web/src/lib/routeAuth';
 import { POST as login } from '../../apps/web/src/app/api/auth/session/route';
@@ -109,6 +110,39 @@ describe('routeAuth: authorizeRequest and isAnonymousDemoEnabled', () => {
       vi.stubEnv('RECOVERFLOW_ALLOW_ANON_DEMO', 'true');
       const req = createReq('http://localhost:3000/api/recovery/execute', {
         token: 'invalid-malformed-token-xyz',
+      });
+      const res = await authorizeRequest(req, 'recovery:execute', { allowAnonymousDemo: true });
+      expect(res.authorized).toBe(false);
+      expect(res.response?.status).toBe(401);
+    });
+
+    it('returns 401 when an invalid cookie token is provided and NEVER falls back to demo persona', async () => {
+      vi.stubEnv('RECOVERFLOW_ALLOW_ANON_DEMO', 'true');
+      const req = createReq('http://localhost:3000/api/recovery/execute', {
+        cookie: 'recoverflow_session=corrupted-or-invalid-cookie-token-999',
+      });
+      const res = await authorizeRequest(req, 'recovery:execute', { allowAnonymousDemo: true });
+      expect(res.authorized).toBe(false);
+      expect(res.response?.status).toBe(401);
+    });
+
+    it('delegates to access.ts and rejects a revoked database session with 401', async () => {
+      vi.stubEnv('RECOVERFLOW_ALLOW_ANON_DEMO', 'true');
+      const loginReq = new NextRequest('http://localhost:3000/api/auth/session', {
+        method: 'POST',
+        headers: { origin: 'http://localhost:3000' },
+        body: JSON.stringify({ method: 'demo', role: 'ADMIN' }),
+      });
+      const loginRes = await login(loginReq);
+      const cookieHeader = loginRes.headers.get('set-cookie');
+      const token = cookieHeader.split(';')[0].replace('recoverflow_session=', '');
+
+      const stored = await db.getSession(hashSessionToken(token));
+      expect(stored).toBeDefined();
+      await db.revokeSession(stored.id, "Test session revoked");
+
+      const req = createReq('http://localhost:3000/api/recovery/execute', {
+        token,
       });
       const res = await authorizeRequest(req, 'recovery:execute', { allowAnonymousDemo: true });
       expect(res.authorized).toBe(false);
