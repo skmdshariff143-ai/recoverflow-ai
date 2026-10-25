@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyShopifyHmac, db, globalSuppressionService } from '@recoverflow/core';
+import { internalErrorResponse } from '@/lib/http';
 
 export async function POST(req: NextRequest) {
   try {
@@ -8,8 +9,18 @@ export async function POST(req: NextRequest) {
     const topic = req.headers.get('x-shopify-topic'); // e.g. customers/data_request, customers/redact, shop/redact
     const shopDomain = req.headers.get('x-shopify-shop-domain') || '';
 
-    const merchant = await db.getMerchantByShopDomain(shopDomain) || await db.getMerchant('merchant_default_01');
-    const secret = merchant?.webhookSecret || process.env.SHOPIFY_WEBHOOK_SECRET || 'shpss_test_secret_key_99182';
+    // In ALL runtime modes, GDPR requests MUST be matched to an authentic registered merchant.
+    // GDPR operations must NEVER act on a fallback tenant.
+    const merchant = await db.getMerchantByShopDomain(shopDomain);
+    if (!merchant) {
+      console.warn('[Shopify GDPR] Unknown shop domain; ignoring GDPR webhook without fallback action');
+      return NextResponse.json({ received: true, ignored: true }, { status: 200 });
+    }
+
+    const secret = merchant.webhookSecret || process.env.SHOPIFY_WEBHOOK_SECRET;
+    if (!secret) {
+      return NextResponse.json({ error: 'Shopify webhook secret unconfigured' }, { status: 503 });
+    }
 
     const isValid = verifyShopifyHmac(rawBody, hmacHeader, secret);
     const allowBypassForDemo = process.env.NODE_ENV !== 'production' && req.headers.get('x-recoverflow-sim') === 'true';
@@ -23,26 +34,20 @@ export async function POST(req: NextRequest) {
     switch (topic) {
       case 'customers/data_request': {
         // Customer requested their stored data
-        const customerEmail = payload.customer?.email;
-        const customerPhone = payload.customer?.phone;
-        console.log(`[GDPR Data Request] Shop: ${shopDomain}, Customer: ${customerEmail || customerPhone}`);
         return NextResponse.json({ status: 'acknowledged', action: 'data_compiled' }, { status: 200 });
       }
 
       case 'customers/redact': {
         // Customer requested deletion of personal data
-        const customerEmail = payload.customer?.email;
         const customerPhone = payload.customer?.phone;
-        console.log(`[GDPR Customer Redact] Redacting data for ${customerEmail || customerPhone}`);
-        if (merchant && customerPhone) {
+        if (customerPhone) {
           await globalSuppressionService.suppress(merchant.id, customerPhone, 'PHONE', 'MANUAL');
         }
         return NextResponse.json({ status: 'acknowledged', action: 'customer_redacted' }, { status: 200 });
       }
 
       case 'shop/redact': {
-        // Merchant uninstalled app; redact store records 48h later
-        console.log(`[GDPR Shop Redact] Redacting shop data for ${shopDomain}`);
+        // Merchant uninstalled app; redact store records
         return NextResponse.json({ status: 'acknowledged', action: 'shop_redacted' }, { status: 200 });
       }
 
@@ -50,7 +55,6 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ status: 'ok' }, { status: 200 });
     }
   } catch (err: unknown) {
-    console.error('GDPR webhook error:', err);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return internalErrorResponse('webhooks/shopify/gdpr', err, 'Internal server error');
   }
 }

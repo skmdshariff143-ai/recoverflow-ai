@@ -35,7 +35,7 @@ export class AtomicTransactionalIdempotencyStore<T = unknown> {
 
   public reserve(key: string, payload: unknown, lockTtlMs?: number): IdempotencyReservation<T> {
     const payloadHash = this.hashPayload(payload);
-    const ttl = lockTtlMs || this.config.defaultTtlMs || 30000;
+    const ttl = lockTtlMs ?? this.config.executionTimeoutMs ?? this.config.defaultTtlMs ?? 5000;
     const now = Date.now();
     const existing = this.store.get(key);
 
@@ -43,7 +43,7 @@ export class AtomicTransactionalIdempotencyStore<T = unknown> {
       if (existing.payloadHash !== payloadHash) {
         return {
           status: 'CONFLICT',
-          message: `Payload hash mismatch on key ${key}`,
+          message: 'Payload mismatch: idempotency key reused with a different request payload hash.',
         };
       }
 
@@ -78,15 +78,18 @@ export class AtomicTransactionalIdempotencyStore<T = unknown> {
     return { status: 'ACQUIRED', version: 1 };
   }
 
-  public commit(key: string, payload: unknown, result: T, _version?: number): void {
+  public commit(key: string, payload: unknown, result: T, version?: number): void {
     const payloadHash = this.hashPayload(payload);
     const existing = this.store.get(key);
+    if (!existing || existing.payloadHash !== payloadHash || existing.status !== 'IN_PROGRESS' || existing.lockedUntil <= Date.now() || (version !== undefined && existing.version !== version)) {
+      throw new Error('Idempotency reservation is missing, expired, or no longer owned by this execution.');
+    }
     this.store.set(key, {
       payloadHash,
       status: 'COMMITTED',
       result,
       lockedUntil: 0,
-      version: (existing?.version || 1) + 1,
+      version: existing.version,
     });
   }
 
@@ -99,8 +102,22 @@ export class AtomicTransactionalIdempotencyStore<T = unknown> {
   }
 }
 
+export type IdempotencyBeginResult<T = any> =
+  | { status: 'new' }
+  | { status: 'replay'; receipt: T }
+  | { status: 'conflict'; message: string }
+  | { status: 'in_progress'; message: string };
+
+interface StoredIdempotencyEntry<T = any> {
+  payloadHash: string;
+  status: 'IN_PROGRESS' | 'COMMITTED';
+  receipt?: T;
+  lockedUntil: number;
+  expiresAt: number;
+}
+
 export class IdempotencyManager {
-  private memoryStore = new Map<string, { payloadHash: string; receipt?: any; expiresAt: number }>();
+  private memoryStore = new Map<string, StoredIdempotencyEntry>();
   private redisClient: Redis | null = null;
   private isRedisHealthy = false;
 
@@ -121,6 +138,68 @@ export class IdempotencyManager {
     return crypto.createHash('sha256').update(JSON.stringify(payload || {})).digest('hex');
   }
 
+  /**
+   * Synchronously attempts to begin/acquire an idempotency lock for key and payload.
+   * Node's single-threaded event loop guarantees synchronous Map mutations are atomic.
+   */
+  public begin<T = any>(key: string, payload: unknown, lockTtlSeconds = 30): IdempotencyBeginResult<T> {
+    const prefixedKey = `idemp:${key}`;
+    const now = Date.now();
+    const payloadHash = this.hashPayload(payload);
+    const existing = this.memoryStore.get(prefixedKey);
+
+    if (existing) {
+      // 1. Key expired after previous commit
+      if (existing.status === 'COMMITTED' && existing.expiresAt <= now) {
+        this.memoryStore.set(prefixedKey, {
+          payloadHash,
+          status: 'IN_PROGRESS',
+          lockedUntil: now + lockTtlSeconds * 1000,
+          expiresAt: now + 86400 * 1000,
+        });
+        return { status: 'new' };
+      }
+
+      // 2. Payload mismatch -> conflict
+      if (existing.payloadHash !== payloadHash) {
+        return {
+          status: 'conflict',
+          message: 'Payload mismatch: idempotency key reused with a different request payload hash.',
+        };
+      }
+
+      // 3. Exact match replay of committed execution
+      if (existing.status === 'COMMITTED') {
+        return {
+          status: 'replay',
+          receipt: existing.receipt as T,
+        };
+      }
+
+      // 4. In progress
+      if (existing.status === 'IN_PROGRESS') {
+        if (existing.lockedUntil > now) {
+          return {
+            status: 'in_progress',
+            message: 'Operation in progress. Concurrent execution detected.',
+          };
+        }
+        // Lock expired without save, allow retry/re-acquisition
+        existing.lockedUntil = now + lockTtlSeconds * 1000;
+        return { status: 'new' };
+      }
+    }
+
+    // New key: acquire lock synchronously before any async gap
+    this.memoryStore.set(prefixedKey, {
+      payloadHash,
+      status: 'IN_PROGRESS',
+      lockedUntil: now + lockTtlSeconds * 1000,
+      expiresAt: now + 86400 * 1000,
+    });
+    return { status: 'new' };
+  }
+
   public check(key: string, request?: unknown): { status: 'new' | 'replay' | 'conflict'; receipt?: any } {
     const prefixedKey = `idemp:${key}`;
     const now = Date.now();
@@ -135,7 +214,11 @@ export class IdempotencyManager {
       return { status: 'conflict' };
     }
 
-    return { status: 'replay', receipt: existing.receipt };
+    if (existing.status === 'COMMITTED') {
+      return { status: 'replay', receipt: existing.receipt };
+    }
+
+    return { status: 'new' };
   }
 
   public save(key: string, request: unknown, receipt?: unknown, ttlSeconds = 86400): void {
@@ -143,7 +226,9 @@ export class IdempotencyManager {
     const payloadHash = this.hashPayload(request);
     this.memoryStore.set(prefixedKey, {
       payloadHash,
+      status: 'COMMITTED',
       receipt,
+      lockedUntil: 0,
       expiresAt: Date.now() + ttlSeconds * 1000,
     });
   }
@@ -167,16 +252,18 @@ export class IdempotencyManager {
 
     this.memoryStore.set(prefixedKey, {
       payloadHash: '1',
+      status: 'IN_PROGRESS',
+      lockedUntil: now + ttlSeconds * 1000,
       expiresAt: now + ttlSeconds * 1000,
     });
     return true;
   }
 
-  async release(key: string): Promise<void> {
+  public release(key: string): void {
     const prefixedKey = `idemp:${key}`;
     if (this.redisClient && this.isRedisHealthy) {
       try {
-        await this.redisClient.del(prefixedKey);
+        this.redisClient.del(prefixedKey).catch(() => {});
       } catch {
         // Fall back
       }

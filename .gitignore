@@ -34,6 +34,9 @@ yarn-error.log*
 
 # env files
 .env*
+# Local verification logs and preview process marker
+/.*.log
+/.console-server.pid
 !.env.example
 
 # vercel
@@ -43,4 +46,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+/.console-production.pid
+/.npm-cache/
+.vercel
 .env*

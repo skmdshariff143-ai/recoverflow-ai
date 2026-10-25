@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('PayBack AI — Deliberate Empty & Filter Clear States', () => {
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/demo');
     await page.waitForSelector('header');
     await page.waitForSelector('[data-testid="queue-row"]');
   });

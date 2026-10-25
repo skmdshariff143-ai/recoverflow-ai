@@ -34,10 +34,25 @@ export interface OrganizationRecord {
 export interface UserRecord {
   id: string;
   email: string;
+  passwordHash?: string | null;
   name?: string | null;
   avatarUrl?: string | null;
   createdAt: Date | string;
   updatedAt: Date | string;
+}
+
+export interface CaseReviewInput {
+  merchantId: string;
+  caseId: string;
+  userId: string;
+  action: 'approve' | 'reject';
+  reason: string;
+}
+
+export interface CaseReviewResult {
+  outcome: 'recorded' | 'already_reviewed' | 'not_found' | 'not_pending';
+  status?: string;
+  approvals?: number;
 }
 
 export interface MembershipRecord {
@@ -322,6 +337,8 @@ export interface ExperimentMetricArm {
 export interface SearchRecoveryCasesParams {
   merchantId: string;
   status?: string;
+  activeOnly?: boolean;
+  sortBy?: 'createdAt' | 'expectedValuePaise';
   minExpectedValuePaise?: number | bigint;
   search?: string;
   limit?: number;
@@ -373,7 +390,7 @@ export interface DatabasePort {
   createOrganization(data: { name: string; slug: string }): Promise<OrganizationRecord>;
   getUser(id: string): Promise<UserRecord | null>;
   getUserByEmail(email: string): Promise<UserRecord | null>;
-  createUser(data: { email: string; name?: string }): Promise<UserRecord>;
+  createUser(data: { email: string; name?: string; passwordHash?: string }): Promise<UserRecord>;
   getMembership(userId: string, organizationId: string): Promise<MembershipRecord | null>;
   createMembership(data: { userId: string; organizationId: string; role: UserRole }): Promise<MembershipRecord>;
 
@@ -450,6 +467,7 @@ export interface DatabasePort {
 
   listRecoveryCases(params: { merchantId: string; status?: string; limit?: number; offset?: number }): Promise<RecoveryCaseRecord[]>;
   searchRecoveryCases(params: SearchRecoveryCasesParams): Promise<{ items: RecoveryCaseRecord[]; total: number }>;
+  reviewRecoveryCase(input: CaseReviewInput): Promise<CaseReviewResult>;
 
   // Unit-of-Work Atomic Transaction Methods
   createRecoveryCaseAndEnqueue(params: CreateRecoveryCaseAndEnqueueParams): Promise<{
@@ -546,7 +564,7 @@ export interface DatabasePort {
     metadata?: Record<string, unknown>;
   }): Promise<AuditEventRecord>;
   getLatestAuditEvent(merchantId?: string): Promise<AuditEventRecord | null>;
-  listAuditEvents(params: { merchantId?: string; entityType?: string; entityId?: string; limit?: number }): Promise<AuditEventRecord[]>;
+  listAuditEvents(params: { merchantId?: string; entityType?: string; entityId?: string; limit?: number; order?: 'asc' | 'desc' }): Promise<AuditEventRecord[]>;
   verifyAuditChain(merchantId?: string): Promise<{ valid: boolean; totalEvents: number; brokenAtId?: string }>;
 
   // Messages, Suppressions & E-Commerce

@@ -9,7 +9,7 @@ test.describe('PayBack AI — Mobile-Responsive Judge View', () => {
       sessionStorage.setItem('payback_spotlight_dismissed_v1', 'true');
     });
 
-    await page.goto('/');
+    await page.goto('/demo');
     await page.waitForSelector('header');
 
     // 1. Check headline KPIs and Trust Score are visible
@@ -53,7 +53,7 @@ test.describe('PayBack AI — Mobile-Responsive Judge View', () => {
       sessionStorage.setItem('payback_spotlight_dismissed_v1', 'true');
     });
 
-    await page.goto('/');
+    await page.goto('/demo');
     await page.waitForSelector('header');
 
     const trustScore = page.locator('[data-testid="trust-score-card"]');

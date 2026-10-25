@@ -19,7 +19,7 @@ test.describe('Autonomous Recovery Control Room & 3-Cycle Loop', () => {
       localStorage.setItem('payback_spotlight_dismissed_v1', 'true');
       localStorage.setItem('payback_guide_completed_v1', 'true');
     });
-    await page.goto('/');
+    await page.goto('/demo');
     await page.waitForLoadState('networkidle');
   });
 

@@ -1,12 +1,12 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('PayBack AI — Razorpay Subscriptions Live Sync Dashboard', () => {
+test.describe('PayBack AI — Isolated Subscription Demo', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/demo');
     await page.waitForSelector('header');
   });
 
-  test('navigates to Subscriptions tab and renders live synced subscription portfolio', async ({ page }) => {
+  test('navigates to Subscriptions tab and renders explicitly simulated subscription portfolio', async ({ page }) => {
     // 1. Click Subscriptions tab in top navigation
     const subTab = page.locator('[data-testid="tab-subscriptions"]');
     await expect(subTab).toBeVisible();
@@ -14,7 +14,7 @@ test.describe('PayBack AI — Razorpay Subscriptions Live Sync Dashboard', () =>
 
     // 2. Verify header and badge are visible
     await expect(page.getByRole('heading', { name: 'Subscriptions', exact: true })).toBeVisible();
-    await expect(page.locator('span').filter({ hasText: /^Razorpay Test Mode$/ })).toBeVisible();
+    await expect(page.locator('span').filter({ hasText: /^Isolated demo$/ })).toBeVisible();
 
     // 3. Confirm table headers are properly rendered
     await expect(page.getByRole('columnheader', { name: 'Subscription Id' })).toBeVisible();
@@ -23,14 +23,14 @@ test.describe('PayBack AI — Razorpay Subscriptions Live Sync Dashboard', () =>
     await expect(page.getByRole('columnheader', { name: 'Customer Id' })).toBeVisible();
     await expect(page.getByRole('columnheader', { name: 'Status' })).toBeVisible();
 
-    // 4. Confirm real subscription rows are loaded in the table
+    // 4. Confirm sample subscription rows are loaded in the table
     const tableRows = page.locator('tbody tr');
     await expect(tableRows.first()).toBeVisible({ timeout: 10000 });
     const count = await tableRows.count();
     expect(count).toBeGreaterThanOrEqual(1);
 
-    // 5. Verify live badge presence on synced subscriptions
-    const liveBadges = page.getByText('LIVE', { exact: true });
+    // 5. Verify demo badge presence on sample subscriptions
+    const liveBadges = page.getByText('DEMO', { exact: true });
     await expect(liveBadges.first()).toBeVisible();
   });
 
@@ -67,12 +67,28 @@ test.describe('PayBack AI — Razorpay Subscriptions Live Sync Dashboard', () =>
     await createBtn.click();
 
     // Modal should be visible
-    await expect(page.getByRole('heading', { name: 'Create Test Subscription' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Create Demo Subscription' })).toBeVisible();
 
     // Cancel modal
-    const cancelBtn = page.getByRole('button', { name: 'Cancel', exact: true });
+    const cancelBtn = page.getByRole('dialog').getByRole('button', { name: 'Cancel', exact: true });
     await expect(cancelBtn).toBeVisible();
     await cancelBtn.click();
-    await expect(page.getByRole('heading', { name: 'Create Test Subscription' })).not.toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Create Demo Subscription' })).not.toBeVisible();
   });
-});
+  test('creates a sample subscription and simulates a failure without provider execution', async ({ page }) => {
+    await page.getByTestId('tab-subscriptions').click();
+    await page.getByRole('button', { name: 'Create Subscription', exact: true }).click();
+    const dialog = page.getByRole('dialog', { name: 'Create Demo Subscription' });
+    await expect(dialog).toBeVisible();
+    const plan = `Sample plan ${Date.now()}`;
+    await dialog.getByLabel('Plan Name').fill(plan);
+    await dialog.getByLabel('Amount (₹ INR)').fill('1234.56');
+    await dialog.getByLabel('Customer Email').fill('sample@example.test');
+    await dialog.getByRole('button', { name: 'Create Subscription', exact: true }).click();
+    await expect(dialog).not.toBeVisible();
+    const row = page.getByRole('row').filter({ hasText: plan });
+    await expect(row).toContainText('DEMO');
+    await row.getByRole('button', { name: 'Simulate failure', exact: true }).click();
+    await expect(row).toContainText('halted');
+    await expect(page.getByText(/No provider action was performed/)).toBeVisible();
+  });});

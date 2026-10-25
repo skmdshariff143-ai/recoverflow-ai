@@ -18,6 +18,7 @@ export interface TestSubscription {
   status: 'active' | 'created' | 'authenticated' | 'halted' | 'cancelled' | 'paused' | 'completed';
   failure_reason?: string;
   dataSource?: 'razorpay_live' | 'local_fallback';
+  simulated?: boolean;
 }
 
 const INITIAL_DEMO_SUBSCRIPTIONS: TestSubscription[] = [

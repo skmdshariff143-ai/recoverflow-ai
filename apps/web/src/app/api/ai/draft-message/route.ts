@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { draftCustomerCommunicationWithGemini } from '@recoverflow/agents';
+import { enforceRateLimit } from '@/lib/apiGuards';
+import { authorizeRequest } from '@/lib/routeAuth';
+import { internalErrorResponse } from '@/lib/http';
 import { z } from 'zod';
 
 const RequestSchema = z.object({
@@ -11,7 +14,19 @@ const RequestSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
+    const rateLimitRes = await enforceRateLimit(req, 20, 60000);
+    if (rateLimitRes) return rateLimitRes;
+
+    const authRes = await authorizeRequest(req, 'support:intervene', { allowAnonymousDemo: true });
+    if (!authRes.authorized) return authRes.response;
+
+    let body: unknown = {};
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON request body' }, { status: 400 });
+    }
+
     const validated = RequestSchema.safeParse(body);
 
     if (!validated.success) {
@@ -30,9 +45,6 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(message);
   } catch (err: unknown) {
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Internal communication drafting error' },
-      { status: 500 },
-    );
+    return internalErrorResponse('ai/draft-message', err, 'Internal communication drafting error');
   }
 }

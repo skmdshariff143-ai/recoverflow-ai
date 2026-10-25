@@ -6,7 +6,7 @@ test.describe('PayBack AI — Cost-of-Inaction Live Counter', () => {
     await page.addInitScript(() => {
       sessionStorage.setItem('payback_spotlight_dismissed_v1', 'true');
     });
-    await page.goto('/');
+    await page.goto('/demo');
     await page.waitForSelector('header');
   });
 

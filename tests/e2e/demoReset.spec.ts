@@ -7,7 +7,7 @@ test.describe('PayBack AI — One-Command Demo Reset (Task 6)', () => {
       localStorage.setItem('payback_spotlight_dismissed_v1', 'true');
       localStorage.setItem('payback_guide_completed_v1', 'true');
     });
-    await page.goto('/');
+    await page.goto('/demo');
     await page.waitForSelector('header');
   });
 

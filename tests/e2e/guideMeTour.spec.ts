@@ -6,7 +6,7 @@ test.describe('PayBack AI — Self-Playing Guided Tour Mode ("Guide Me")', () =>
     await page.addInitScript(() => {
       sessionStorage.setItem('payback_spotlight_dismissed_v1', 'true');
     });
-    await page.goto('/');
+    await page.goto('/demo');
     await page.waitForSelector('header');
   });
 

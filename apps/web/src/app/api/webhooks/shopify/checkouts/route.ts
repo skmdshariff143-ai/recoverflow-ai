@@ -4,11 +4,13 @@ import {
   globalIdempotency,
   globalSuppressionService,
   db,
+  getRuntimeMode,
   type CartEvent,
   type CartItem,
   type AbandonmentType,
 } from '@recoverflow/core';
 import { globalRecoveryQueue } from '@recoverflow/jobs';
+import { internalErrorResponse } from '@/lib/http';
 
 export async function POST(req: NextRequest) {
   try {
@@ -17,9 +19,19 @@ export async function POST(req: NextRequest) {
     const storeDomain = req.headers.get('x-shopify-shop-domain') || 'aurora-apparel.myshopify.com';
 
     // Retrieve merchant
-    const merchant =
+    const mode = getRuntimeMode();
+    let merchant =
       (await db.getMerchantByStoreUrl(`https://${storeDomain}`)) ||
-      (await db.getMerchant('merchant_default_01'));
+      (await db.getMerchantByShopDomain(storeDomain));
+
+    if (!merchant) {
+      if (mode === 'DEMO' || mode === 'TEST') {
+        merchant = await db.getMerchant('merchant_default_01');
+      } else {
+        console.warn('[Shopify Checkout] Unknown shop domain in LIVE/SANDBOX mode; ignoring webhook without action');
+        return NextResponse.json({ received: true, ignored: true }, { status: 200 });
+      }
+    }
 
     if (!merchant) {
       return NextResponse.json({ error: 'Merchant not registered' }, { status: 404 });
@@ -89,7 +101,7 @@ export async function POST(req: NextRequest) {
       customerEmail,
       customerName: customerName || 'Valued Shopper',
       currency: payload.currency || 'USD',
-      totalPrice: parseFloat(payload.total_price || '0') || 150.0,
+      totalPrice: parseFloat(payload.total_price || '0') || 0,
       items: items.length > 0 ? items : [
         {
           id: 'item_sample',
@@ -122,10 +134,6 @@ export async function POST(req: NextRequest) {
       scheduledDelayMs: scheduled.delayMs,
     });
   } catch (err: unknown) {
-    console.error('Shopify checkout webhook error:', err);
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Internal server error' },
-      { status: 500 }
-    );
+    return internalErrorResponse('webhooks/shopify/checkouts', err, 'Internal server error');
   }
 }

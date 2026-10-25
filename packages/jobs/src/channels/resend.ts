@@ -143,7 +143,7 @@ export async function sendCartRecoveryEmail(payload: EmailRecoveryPayload): Prom
   const apiKey = payload.apiKey || process.env.RESEND_API_KEY;
   const html = buildResponsiveCartEmailHtml(payload);
 
-  if (!apiKey || apiKey === 're_test_mock_key') {
+  if (((process.env.RECOVERFLOW_RUNTIME_MODE || (process.env.NODE_ENV === 'test' ? 'TEST' : 'DEMO')).toUpperCase() === 'DEMO') || !apiKey || apiKey === 're_test_mock_key') {
     return {
       success: true,
       emailId: `email_mock_${Date.now().toString(36)}`,

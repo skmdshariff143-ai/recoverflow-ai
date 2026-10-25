@@ -61,7 +61,7 @@ describe('RecoverFlow AI — Outbox BullMQ Crash Window & Idempotency (PostgreSQ
     });
 
     const outboxId = uow.outbox.id;
-    const deterministicJobId = `outbox:${outboxId}`;
+    const deterministicJobId = `outbox_${outboxId}`;
 
     // 2. Worker 1 claims outbox event with a 1-second lease
     const claimed1 = await db.claimOutboxEvents('worker_crashing_1', 1, 1000);

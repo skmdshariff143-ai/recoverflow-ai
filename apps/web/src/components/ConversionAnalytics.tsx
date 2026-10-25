@@ -30,9 +30,9 @@ interface ConversionAnalyticsProps {
 
 export function ConversionAnalytics({ stats, onExportReport }: ConversionAnalyticsProps) {
   const recoveredGmv = stats?.recoveredGmv || 0;
-  const recoveryRate = stats?.recoveryRatePercent || 35.7;
-  const roasMultiplier = stats?.roasMultiplier || 18.5;
-  const marginalProfit = stats?.marginalProfitSaved || (recoveredGmv * 0.65);
+  const recoveryRate = stats?.recoveryRatePercent ?? 0;
+  const roasMultiplier = stats?.roasMultiplier ?? null;
+  const marginalProfit = stats?.marginalProfitSaved ?? (recoveredGmv > 0 ? recoveredGmv * 0.65 : 0);
   const deliveryRate = 98.4; // 98.4% Meta Tier-1 SLA
 
   const handleExport = () => {
@@ -133,9 +133,15 @@ export function ConversionAnalytics({ stats, onExportReport }: ConversionAnalyti
                 <div className="text-xs text-zinc-400">Primary Channel (Immediate & 30m Cadence)</div>
               </div>
             </div>
-            <span className="text-xs font-bold text-green-400 bg-green-500/10 border border-green-500/30 px-2.5 py-1 rounded-md">
-              14.2x ROI
-            </span>
+            {roasMultiplier != null ? (
+              <span className="text-xs font-bold text-green-400 bg-green-500/10 border border-green-500/30 px-2.5 py-1 rounded-md">
+                {roasMultiplier}x ROI
+              </span>
+            ) : (
+              <span className="text-xs text-zinc-500 bg-zinc-800/50 px-2 py-0.5 rounded">
+                No data yet
+              </span>
+            )}
           </div>
 
           <div className="grid grid-cols-3 gap-3 pt-2 border-t border-zinc-800">
@@ -149,7 +155,7 @@ export function ConversionAnalytics({ stats, onExportReport }: ConversionAnalyti
             </div>
             <div>
               <div className="text-xs text-zinc-500">Conversion</div>
-              <div className="text-lg font-bold text-green-400 mt-0.5">66.7%</div>
+              <div className="text-lg font-bold text-green-400 mt-0.5">{recoveryRate > 0 ? `${recoveryRate}%` : 'No data yet'}</div>
             </div>
           </div>
         </div>
@@ -211,12 +217,12 @@ export function ConversionAnalytics({ stats, onExportReport }: ConversionAnalyti
           <div className="flex items-center gap-4 bg-zinc-950 border border-zinc-800 rounded-xl p-3">
             <div>
               <div className="text-[10px] text-zinc-500 font-semibold uppercase tracking-wider">True Incremental ROAS</div>
-              <div className="text-2xl font-extrabold text-indigo-400">22.4x</div>
+              <div className="text-2xl font-extrabold text-indigo-400">{roasMultiplier != null ? `${roasMultiplier}x` : '—'}</div>
             </div>
             <div className="h-8 w-px bg-zinc-800" />
             <div>
               <div className="text-[10px] text-zinc-500 font-semibold uppercase tracking-wider">Causal Net Lift</div>
-              <div className="text-2xl font-extrabold text-emerald-400">+218.8%</div>
+              <div className="text-2xl font-extrabold text-emerald-400">{recoveryRate > 11.2 ? `+${(((recoveryRate - 11.2) / 11.2) * 100).toFixed(1)}%` : recoveryRate > 0 ? `${recoveryRate}%` : '—'}</div>
             </div>
           </div>
         </div>

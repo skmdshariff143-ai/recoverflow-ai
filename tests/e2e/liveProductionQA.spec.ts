@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Live Production QA Rehearsal Walkthrough', () => {
-  const LIVE_URL = process.env.PLAYWRIGHT_TEST_BASE_URL || '/';
+  const LIVE_URL = process.env.PLAYWRIGHT_TEST_BASE_URL || '/demo';
 
   test('Execute exact new 5-stop pitch rehearsal on live production', async ({ page }) => {
     const consoleErrors: string[] = [];
@@ -152,6 +152,6 @@ test.describe('Live Production QA Rehearsal Walkthrough', () => {
     console.log(`Total Stop 5 Time: ${stop5Time}ms`);
     console.log(`Total Console Errors count: ${consoleErrors.length}`);
 
-    expect(consoleErrors.length).toBe(0);
+    expect(consoleErrors).toEqual([]);
   });
 });

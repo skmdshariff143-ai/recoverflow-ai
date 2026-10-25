@@ -1,17 +1,38 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { subscriptionStore } from '@recoverflow/core';
 import { liveWebhookStore } from '@recoverflow/core';
 import { mapRazorpayWebhookToFailedPayment, type RazorpayWebhookPayload } from '@recoverflow/core';
+import { enforceRateLimit } from '@/lib/apiGuards';
+import { authorizeRequest } from '@/lib/routeAuth';
+import { internalErrorResponse } from '@/lib/http';
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json().catch(() => ({}));
-    const subscriptionId = typeof body.subscriptionId === 'string' && body.subscriptionId
-      ? body.subscriptionId
-      : 'sub_TXW1raR9Uus3ch';
+    const rateLimitRes = await enforceRateLimit(req, 15, 60000);
+    if (rateLimitRes) return rateLimitRes;
+
+    const authRes = await authorizeRequest(req, 'recovery:execute', {
+      allowAnonymousDemo: true,
+    });
+    if (!authRes.authorized) return authRes.response;
+
+    let body: any = {};
+    try {
+      body = await req.json();
+    } catch {
+      body = {};
+    }
+
+    const subscriptionId = typeof body.subscriptionId === 'string' ? body.subscriptionId.trim() : '';
+    if (!/^sub_[A-Za-z0-9]{6,40}$/.test(subscriptionId)) {
+      return NextResponse.json(
+        { error: 'Invalid subscriptionId: must match /^sub_[A-Za-z0-9]{6,40}$/' },
+        { status: 400 }
+      );
+    }
 
     const action = body.action === 'cancel' ? 'cancelled' : 'halted';
-    const reason = typeof body.reason === 'string' ? body.reason : 'Mandate declined by issuing bank';
+    const reason = typeof body.reason === 'string' ? body.reason.slice(0, 255) : 'Mandate declined by issuing bank';
 
     const updated = subscriptionStore.updateStatus(subscriptionId, action, reason);
     const sub = updated ?? {
@@ -66,8 +87,7 @@ export async function POST(req: NextRequest) {
       totalLiveEvents: liveWebhookStore.getCount(),
       timestamp: new Date().toISOString(),
     });
-  } catch (err) {
-    const errorMsg = err instanceof Error ? err.message : String(err);
-    return NextResponse.json({ error: 'Failed to halt subscription', details: errorMsg }, { status: 500 });
+  } catch (err: unknown) {
+    return internalErrorResponse('razorpay/subscriptions/halt', err, 'Failed to halt subscription');
   }
 }

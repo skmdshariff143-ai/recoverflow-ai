@@ -71,6 +71,7 @@ model Organization {
 model User {
   id          String       @id @default(cuid())
   email       String       @unique
+  passwordHash String?
   name        String?
   avatarUrl   String?
   memberships Membership[]
@@ -517,6 +518,7 @@ model Notification {
 // ── E-Commerce Cart Recovery Models (Retained for Full Backward Compatibility) ──
 
 enum CartStatus {
+  OPEN
   ABANDONED
   CONTACTED
   RECOVERED
@@ -532,6 +534,7 @@ enum AbandonmentType {
 }
 
 enum RecoveryStage {
+  NOT_STARTED
   QUEUED
   WHATSAPP_SENT
   EMAIL_FALLBACK

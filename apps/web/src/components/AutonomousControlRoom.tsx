@@ -69,7 +69,7 @@ export const AutonomousControlRoom: React.FC<AutonomousControlRoomProps> = ({
   const [isAutoPlaying, setIsAutoPlaying] = useState<boolean>(false);
 
   // Derived Discovery Funnel Counts
-  const totalFailedCount = payments.length || 100;
+  const totalFailedCount = payments.length;
   const totalAtRiskPaise = useMemo(
     () => payments.reduce((sum, p) => sum + p.amount, 0),
     [payments],

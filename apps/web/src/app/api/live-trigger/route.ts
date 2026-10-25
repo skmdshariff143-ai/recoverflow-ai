@@ -8,109 +8,110 @@
  *
  * Invariants:
  * 1. Strictly rate-limited (max 15 triggers per minute per client).
- * 2. Generates canonical Razorpay webhook payload structure.
- * 3. Enforces minor unit paise representation.
- * 4. Appends to liveWebhookStore for instantaneous reflection in the Command Center queue.
+ * 2. Authenticated via routeAuth, demo-safe simulated execution allowed.
+ * 3. Zod-validated trigger inputs.
+ * 4. Minor unit paise representation.
+ * 5. Appends to liveWebhookStore for instantaneous reflection in the Command Center queue.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { checkRateLimit } from '@recoverflow/core';
+import { enforceRateLimit } from '@/lib/apiGuards';
+import { authorizeRequest } from '@/lib/routeAuth';
+import { internalErrorResponse } from '@/lib/http';
 import { liveWebhookStore } from '@recoverflow/core';
 import {
   mapRazorpayWebhookToFailedPayment,
   type RazorpayWebhookPayload,
 } from '@recoverflow/core';
+import { z } from 'zod';
+
+const LiveTriggerSchema = z.object({
+  category: z.string().max(100).optional(),
+  amountPaise: z.number().int().positive().max(100000000).optional(),
+  amountRupees: z.number().positive().max(1000000).optional(),
+  judgeNote: z.string().max(255).optional(),
+  subscriptionId: z.string().max(100).optional(),
+  paymentId: z.string().max(100).optional(),
+  method: z.string().max(50).optional(),
+});
 
 export async function POST(req: NextRequest) {
   try {
     // 1. Rate Limiting Check
-    const forwardedFor = req.headers.get('x-forwarded-for') || '127.0.0.1';
-    const clientIp = forwardedFor.split(',')[0].trim();
-    const rateLimit = checkRateLimit(clientIp, 15, 60000);
+    const rateLimitRes = await enforceRateLimit(req, 15, 60000);
+    if (rateLimitRes) return rateLimitRes;
 
-    if (!rateLimit.allowed) {
+    // 2. Auth Guard
+    const authRes = await authorizeRequest(req, 'recovery:execute', {
+      allowAnonymousDemo: true,
+    });
+    if (!authRes.authorized) return authRes.response;
+
+    // 3. Parse & Validate Trigger Parameters
+    let bodyRaw: unknown = {};
+    try {
+      bodyRaw = await req.json();
+    } catch {
+      bodyRaw = {};
+    }
+
+    const validated = LiveTriggerSchema.safeParse(bodyRaw);
+    if (!validated.success) {
       return NextResponse.json(
-        {
-          error: 'Rate limit exceeded for demo live-trigger.',
-          message: `Maximum 15 triggers per minute allowed. Please wait ${rateLimit.resetInSeconds}s before triggering again.`,
-          retryAfterSeconds: rateLimit.resetInSeconds,
-        },
-        {
-          status: 429,
-          headers: {
-            'Retry-After': String(rateLimit.resetInSeconds),
-            'X-RateLimit-Limit': '15',
-            'X-RateLimit-Remaining': '0',
-          },
-        },
+        { error: 'Invalid live-trigger payload', issues: validated.error.issues },
+        { status: 400 }
       );
     }
 
-    // 2. Parse Trigger Parameters
-    let body: Record<string, unknown> = {};
-    try {
-      body = await req.json();
-    } catch {
-      // Use defaults if empty body
-      body = {};
-    }
+    const body = validated.data;
+    const category = body.category || 'bank_downtime';
 
-    const category = typeof body.category === 'string' && body.category
-      ? body.category
-      : 'bank_downtime';
-    
     // Amount in paise (default ₹2,499 = 249900 paise)
-    let amountPaise = typeof body.amountPaise === 'number' && body.amountPaise > 0
+    let amountPaise = body.amountPaise && body.amountPaise > 0
       ? Math.floor(body.amountPaise)
       : 249900;
 
-    if (typeof body.amountRupees === 'number' && body.amountRupees > 0) {
+    if (body.amountRupees && body.amountRupees > 0) {
       amountPaise = Math.floor(body.amountRupees * 100);
     }
 
-    const judgeNote = typeof body.judgeNote === 'string' && body.judgeNote.trim()
+    const judgeNote = body.judgeNote && body.judgeNote.trim()
       ? body.judgeNote.trim()
       : 'Judge Live Demo Injection';
 
-    const rawId = typeof body.subscriptionId === 'string' && body.subscriptionId.trim()
+    const rawId = body.subscriptionId && body.subscriptionId.trim()
       ? body.subscriptionId.trim()
-      : typeof body.paymentId === 'string' && body.paymentId.trim()
+      : body.paymentId && body.paymentId.trim()
       ? body.paymentId.trim()
       : `pay_judge_${Math.random().toString(36).slice(2, 8)}`;
 
-    const isSubscription = rawId.startsWith('sub_');
-
-    const method = typeof body.method === 'string' && body.method
-      ? body.method
-      : 'upi';
-
-    // 3. Construct Canonical Razorpay Webhook Payload
+    const isSubscription = rawId.startsWith('sub_') || category === 'mandate_revoked' || category === 'invalid_mandate';
+    const method = body.method || 'card';
+    const subId = rawId;
+    const paymentId = rawId;
     const nowSec = Math.floor(Date.now() / 1000);
-    const eventName = isSubscription
-      ? (category === 'invalid_mandate' ? 'subscription.halted' : category === 'customer_cancellation' ? 'subscription.cancelled' : 'subscription.halted')
-      : 'payment.failed';
 
+    // 4. Construct Synthetic Event Payload
     const webhookPayload: RazorpayWebhookPayload = isSubscription
       ? {
           entity: 'event',
           account_id: 'acc_rzp_live_buildathon',
-          event: eventName,
+          event: 'subscription.halted',
           created_at: nowSec,
           payload: {
             subscription: {
               entity: {
-                id: rawId,
-                plan_id: 'plan_live_saas_pro',
-                customer_id: `cust_${rawId.replace(/^sub_/, '')}`,
-                status: category === 'customer_cancellation' ? 'cancelled' : 'halted',
+                id: subId,
+                plan_id: 'plan_pro_monthly_01',
+                customer_id: 'cust_judge_demo',
+                status: 'halted',
                 paid_count: 3,
                 remaining_count: 9,
                 notes: {
                   amount: amountPaise,
-                  judge_demo: 'true',
-                  judge_note: judgeNote,
+                  reason: 'Customer cancelled mandate via UPI autopay app',
+                  on_time_rate: 0.88,
                   opt_out: 'false',
-                  on_time_rate: 0.85,
                 },
               },
             },
@@ -124,32 +125,50 @@ export async function POST(req: NextRequest) {
           payload: {
             payment: {
               entity: {
-                id: rawId,
+                id: paymentId,
                 amount: amountPaise,
                 currency: 'INR',
                 status: 'failed',
+                order_id: `order_live_${Date.now()}`,
+                invoice_id: null,
+                international: false,
                 method: method,
                 customer_id: `cust_judge_${Math.floor(Math.random() * 9000 + 1000)}`,
-                email: 'judge.review@buildathon.razorpay.com',
-                contact: '+919876500000',
-                error_code: 'BAD_REQUEST_ERROR',
-                error_description: `Live test failure: ${category.replace(/_/g, ' ')} during processing.`,
-                error_source: category === 'bank_downtime' ? 'issuing_bank' : 'gateway',
-                error_step: 'payment_authorization',
-                error_reason: category,
-                created_at: nowSec,
+                amount_refunded: 0,
+                refund_status: null,
+                captured: false,
+                description: `Live Judge Trigger: ${judgeNote}`,
+                card_id: method === 'card' ? 'card_live_visa_demo' : null,
+                bank: method === 'netbanking' ? 'HDFC' : null,
+                wallet: null,
+                vpa: method === 'upi' ? 'judge@okhdfcbank' : null,
+                email: 'evaluator.judge@buildathon.in',
+                contact: '+919876543210',
                 notes: {
-                  judge_demo: 'true',
+                  project: 'PayBack AI',
+                  category: category,
                   judge_note: judgeNote,
-                  opt_out: 'false',
-                  on_time_rate: 0.85,
                 },
+                error_code: category === 'bank_downtime'
+                  ? 'GATEWAY_ERROR'
+                  : category === 'insufficient_funds'
+                    ? 'BAD_REQUEST_ERROR'
+                    : 'PAYMENT_FAILED',
+                error_description: category === 'bank_downtime'
+                  ? 'Issuing bank network connection timed out during 2FA challenge'
+                  : category === 'insufficient_funds'
+                    ? 'Account has insufficient balance to honor debit'
+                    : `Simulated gateway rejection: ${category}`,
+                error_source: 'gateway',
+                error_step: 'payment_authorization',
+                error_reason: category === 'bank_downtime' ? 'bank_downtime' : category,
+                created_at: nowSec,
               },
             },
           },
         };
 
-    // 4. Map & Ingest into Live Webhook Store
+    // 5. Map & Ingest into Live Webhook Store
     const failedPayment = mapRazorpayWebhookToFailedPayment(webhookPayload);
     liveWebhookStore.addEvent(failedPayment);
 
@@ -158,14 +177,9 @@ export async function POST(req: NextRequest) {
       message: 'Live test payment failure event successfully ingested!',
       payment: failedPayment,
       totalLiveEvents: liveWebhookStore.getCount(),
-      rateLimitRemaining: rateLimit.remaining,
       timestamp: new Date().toISOString(),
     });
-  } catch (err) {
-    const errorMsg = err instanceof Error ? err.message : String(err);
-    return NextResponse.json(
-      { error: 'Failed to process live failure trigger', details: errorMsg },
-      { status: 500 },
-    );
+  } catch (err: unknown) {
+    return internalErrorResponse('live-trigger', err, 'Failed to process live failure trigger');
   }
 }

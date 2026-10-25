@@ -1,12 +1,50 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db, type CartEvent, type AbandonmentType } from '@recoverflow/core';
 import { globalRecoveryQueue } from '@recoverflow/jobs';
+import { enforceRateLimit } from '@/lib/apiGuards';
+import { authorizeRequest } from '@/lib/routeAuth';
+import { internalErrorResponse } from '@/lib/http';
+import { z } from 'zod';
+
+const SimulateRequestSchema = z.object({
+  type: z.enum(['PAYMENT_FAILED', 'CART_ABANDONED', 'CHECKOUT_DROPOFF', 'EXIT_INTENT', 'CHECKOUT_STEP']).optional(),
+  customerName: z.string().trim().max(100).optional(),
+  amount: z.number().positive().max(1000000).optional(),
+});
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const type: AbandonmentType = body.type || 'PAYMENT_FAILED';
-    const merchant = await db.getMerchant('merchant_default_01');
+    const rateLimitRes = await enforceRateLimit(req, 20, 60000);
+    if (rateLimitRes) return rateLimitRes;
+
+    const authRes = await authorizeRequest(req, 'recovery:execute', { allowAnonymousDemo: true });
+    if (!authRes.authorized) return authRes.response;
+    const { session } = authRes;
+
+    let rawBody: unknown = {};
+    try {
+      rawBody = await req.json();
+    } catch {
+      rawBody = {};
+    }
+
+    const validated = SimulateRequestSchema.safeParse(rawBody);
+
+    if (!validated.success) {
+      return NextResponse.json(
+        { error: 'Invalid simulation payload', issues: validated.error.issues },
+        { status: 400 }
+      );
+    }
+
+    const body = validated.data;
+    const type: AbandonmentType = (body.type as AbandonmentType) || 'PAYMENT_FAILED';
+
+    let merchant = await db.getMerchant(session.activeMerchantId);
+    if (!merchant && db.listMerchants) {
+      const all = await db.listMerchants();
+      merchant = all.find((m) => m.id === session.activeMerchantId) || all[0] || null;
+    }
 
     if (!merchant) {
       return NextResponse.json({ error: 'Merchant not found' }, { status: 404 });
@@ -14,14 +52,14 @@ export async function POST(req: NextRequest) {
 
     const randomId = Math.random().toString(36).slice(2, 7);
     const names = ['Liam Gallagher', 'Sophia Martinez', 'David Chen', 'Chloe Kensington', 'Alexander Wright'];
-    const selectedName = names[Math.floor(Math.random() * names.length)];
+    const selectedName = body.customerName || names[Math.floor(Math.random() * names.length)];
 
     const sampleProducts = [
       {
         id: `prod_${randomId}_1`,
         title: 'Merino Wool Structured Blazer',
         variantTitle: 'Midnight Navy / 40R',
-        price: 340.0,
+        price: body.amount ? body.amount * 0.8 : 340.0,
         quantity: 1,
         imageUrl: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=400',
       },
@@ -29,7 +67,7 @@ export async function POST(req: NextRequest) {
         id: `prod_${randomId}_2`,
         title: 'Handcrafted Vegetable-Tanned Cardholder',
         variantTitle: 'Saddle Tan',
-        price: 75.0,
+        price: body.amount ? body.amount * 0.2 : 75.0,
         quantity: 1,
         imageUrl: 'https://images.unsplash.com/photo-1627123424574-724758594e93?w=400',
       },
@@ -57,19 +95,15 @@ export async function POST(req: NextRequest) {
 
     await db.upsertCartEvent(syntheticCart);
 
-    // Trigger immediate recovery for simulation
-    const result = await globalRecoveryQueue.executePrimaryRecovery(syntheticCart.id);
+    // Schedule immediate recovery for simulation
+    await globalRecoveryQueue.scheduleRecovery(syntheticCart.id, type, 0);
 
     return NextResponse.json({
       success: true,
-      cartEvent: syntheticCart,
-      recoveryResult: result,
+      cart: syntheticCart,
+      message: `Simulated cart abandonment [${type}] for ${selectedName} ingested into recovery loop.`,
     });
   } catch (err: unknown) {
-    console.error('Simulation error:', err);
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Simulation failed' },
-      { status: 500 }
-    );
+    return internalErrorResponse('recovery/simulate', err, 'Failed to simulate cart abandonment');
   }
 }

@@ -30,27 +30,33 @@ export class DistributedMetaRateLimiter implements RateLimiter {
   async acquireSlot(merchantId: string, phoneId: string): Promise<boolean> {
     const key = `ratelimit:meta:${merchantId}:${phoneId}`;
     const now = Date.now();
-    const windowStart = now - 1000;
-
+    
     if (this.redis) {
       if (this.redis.status === 'wait') {
         await this.redis.connect();
       }
-      // Redis sliding window using sorted sets
-      const multi = this.redis.multi();
-      multi.zremrangebyscore(key, 0, windowStart);
-      multi.zcard(key);
-      const results = await multi.exec();
+      // Atomic Redis sliding window rate limiting via Lua script
+      const member = `${now}_${Math.random()}`;
+      const luaScript = `
+        local key = KEYS[1]
+        local now = tonumber(ARGV[1])
+        local window = tonumber(ARGV[2])
+        local limit = tonumber(ARGV[3])
+        local member = ARGV[4]
+        local clearBefore = now - window
 
-      const count = (results?.[1]?.[1] as number) || 0;
-      if (count < this.maxPerSecond) {
-        const addMulti = this.redis.multi();
-        addMulti.zadd(key, now, `${now}_${Math.random()}`);
-        addMulti.expire(key, 2);
-        await addMulti.exec();
-        return true;
-      }
-      return false;
+        redis.call('ZREMRANGEBYSCORE', key, 0, clearBefore)
+        local current = redis.call('ZCARD', key)
+        if current < limit then
+            redis.call('ZADD', key, now, member)
+            redis.call('EXPIRE', key, 2)
+            return 1
+        else
+            return 0
+        end
+      `;
+      const result = await this.redis.eval(luaScript, 1, key, now, 1000, this.maxPerSecond, member);
+      return result === 1;
     }
 
     // Local in-memory sliding window

@@ -9,7 +9,7 @@ test.describe('PayBack AI — Self-Verifiable Closing Moment (Task 3)', () => {
   });
 
   test('Audit Trail Explorer provides interactive, judge-operable step and auto-walk verification from genesis to latest', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/demo');
     await page.waitForLoadState('networkidle');
 
     // Navigate to Audit Trail tab

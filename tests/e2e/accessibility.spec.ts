@@ -4,7 +4,7 @@ import AxeBuilder from '@axe-core/playwright';
 test.describe('PayBack AI — Accessibility & ARIA Compliance Audit', () => {
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/demo');
     await page.waitForSelector('header');
   });
 

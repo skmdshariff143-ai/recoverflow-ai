@@ -13,6 +13,7 @@ export type UserRole = 'OWNER' | 'ADMIN' | 'RECOVERY_MANAGER' | 'SUPPORT_AGENT' 
 
 export interface UserSession {
   sessionId?: string;
+  runtimeMode?: 'DEMO' | 'TEST' | 'SANDBOX' | 'LIVE';
   userId: string;
   email: string;
   name: string;
@@ -111,6 +112,12 @@ const ROLE_HIERARCHY: Record<UserRole, number> = {
 
 export const DEFAULT_DEV_AUTH_SECRET = 'recoverflow_auth_secret_dev_32_bytes_min_sig';
 
+let perProcessSecret: string | null = null;
+
+export function resetPerProcessSecret(): void {
+  perProcessSecret = null;
+}
+
 /**
  * Validates auth secret entropy and enforces fail-closed behavior in SANDBOX / LIVE.
  */
@@ -118,17 +125,38 @@ export function validateAuthSecret(secret?: string, mode?: string): string {
   const currentMode = mode || getRuntimeMode();
   const candidate = secret || process.env.AUTH_SECRET;
 
-  if (currentMode === 'LIVE' || currentMode === 'SANDBOX') {
-    if (!candidate || candidate === DEFAULT_DEV_AUTH_SECRET || candidate.length < 32) {
-      throw new Error(
-        `INSECURE_AUTH_SECRET: In '${currentMode}' mode, AUTH_SECRET must be explicitly set and contain at least 32 characters of high-entropy secret.`
-      );
+  if (candidate && candidate.length > 0) {
+    if (currentMode === 'LIVE' || currentMode === 'SANDBOX') {
+      if (candidate === DEFAULT_DEV_AUTH_SECRET || candidate.length < 32) {
+        throw new Error(
+          `INSECURE_AUTH_SECRET: In '${currentMode}' mode, AUTH_SECRET must be explicitly set and contain at least 32 characters of high-entropy secret.`
+        );
+      }
     }
     return candidate;
   }
 
-  return candidate || DEFAULT_DEV_AUTH_SECRET;
+  // Candidate is unset or empty
+  if (currentMode === 'LIVE' || currentMode === 'SANDBOX') {
+    throw new Error(
+      `INSECURE_AUTH_SECRET: In '${currentMode}' mode, AUTH_SECRET must be explicitly set and contain at least 32 characters of high-entropy secret.`
+    );
+  }
+
+  // In DEMO or TEST runtime mode:
+  // If NODE_ENV !== 'production', allow DEFAULT_DEV_AUTH_SECRET
+  if (process.env.NODE_ENV !== 'production') {
+    return DEFAULT_DEV_AUTH_SECRET;
+  }
+
+  // In production build with DEMO/TEST runtime mode: generate random per-process secret
+  if (!perProcessSecret) {
+    perProcessSecret = randomBytes(32).toString('hex');
+  }
+  return perProcessSecret;
 }
+
+export const resolveAuthSecret = validateAuthSecret;
 
 /**
  * Check if a role satisfies a minimum role requirement in the hierarchy.
@@ -204,7 +232,15 @@ export function verifySessionToken(
     const raw = Buffer.from(payloadBase64, 'base64url').toString('utf-8');
     const session = JSON.parse(raw) as UserSession;
 
-    if (Date.now() > session.expiresAt) {
+    if (!session || !Number.isFinite(session.expiresAt) || !Number.isFinite(session.issuedAt) ||
+        session.issuedAt > Date.now() + 30000 ||
+        !['userId', 'email', 'name', 'organizationId', 'organizationSlug', 'activeMerchantId'].every(
+          (key) => typeof session[key as keyof UserSession] === 'string' && String(session[key as keyof UserSession]).length > 0,
+        ) || !Object.hasOwn(ROLE_PERMISSIONS, session.role)) {
+      return { valid: false, session: null, error: 'INVALID_SESSION_PAYLOAD' };
+    }
+
+    if (Date.now() >= session.expiresAt) {
       return { valid: false, session: null, error: 'EXPIRED_TOKEN' };
     }
 
@@ -380,8 +416,8 @@ export function extractTokenFromHeaders(
 
     const cookieHeader = webHeaders.get('cookie') || webHeaders.get('Cookie');
     if (cookieHeader) {
-      const match = cookieHeader.match(/(?:recoverflow_session|auth_token)=([^;]+)/);
-      if (match) return decodeURIComponent(match[1]);
+      const match = cookieHeader.match(/(?:^|;\s*)(?:recoverflow_session|auth_token)=([^;]+)/);
+      if (match) { try { return decodeURIComponent(match[1]); } catch { return null; } }
     }
     return null;
   }
@@ -403,8 +439,8 @@ export function extractTokenFromHeaders(
   const cookie = rec['cookie'] || rec['Cookie'];
   const cookieVal = Array.isArray(cookie) ? cookie[0] : cookie;
   if (cookieVal && typeof cookieVal === 'string') {
-    const match = cookieVal.match(/(?:recoverflow_session|auth_token)=([^;]+)/);
-    if (match) return decodeURIComponent(match[1]);
+    const match = cookieVal.match(/(?:^|;\s*)(?:recoverflow_session|auth_token)=([^;]+)/);
+    if (match) { try { return decodeURIComponent(match[1]); } catch { return null; } }
   }
 
   return null;

@@ -69,7 +69,13 @@ export async function createRedisTestHarness(): Promise<RedisTestContext> {
         // Ignore
       }
     }
-    await redis.quit();
+    if (redis.status !== 'end') {
+      try {
+        await redis.quit();
+      } catch {
+        // Ignore
+      }
+    }
   };
 
   return {

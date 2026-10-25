@@ -3,14 +3,14 @@ import { test, expect } from '@playwright/test';
 test.describe('PayBack AI — Interactive Workspaces & Drill-Down', () => {
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/demo');
     await page.waitForSelector('header');
     await page.waitForSelector('[data-testid="queue-row"]');
   });
 
   test('renders top-level KPI metrics panel with non-zero financial values', async ({ page }) => {
     // Check title
-    await expect(page).toHaveTitle(/PayBack AI/i);
+    await expect(page).toHaveTitle(/RecoverFlow AI/i);
 
     // Verify KPI metric cards render
     await expect(page.getByText('Total Revenue at Risk')).toBeVisible();

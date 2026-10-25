@@ -33,12 +33,14 @@ interface LiveRecoveryStreamProps {
         recovered?: number;
         conversionRate?: number;
         roiMultiple?: number;
+        roiMultiplier?: number;
       };
       email?: {
         sent?: number;
         recovered?: number;
         conversionRate?: number;
         roiMultiple?: number;
+        roiMultiplier?: number;
       };
     };
   } | null;
@@ -136,11 +138,13 @@ export function LiveRecoveryStream({ carts, stats, onRefresh }: LiveRecoveryStre
           <div className="text-xs uppercase tracking-wider font-medium text-zinc-400">Channel Split (WhatsApp)</div>
           <div className="mt-2 flex items-baseline gap-2">
             <span className="text-3xl font-bold text-green-400 tracking-tight">
-              {stats?.channelRoi?.whatsapp?.conversionRate || 66.7}%
+              {stats?.channelRoi?.whatsapp?.conversionRate != null ? `${stats.channelRoi.whatsapp.conversionRate}%` : 'No data yet'}
             </span>
-            <span className="text-xs font-semibold text-green-400 bg-green-500/10 px-1.5 py-0.5 rounded">
-              14.2x ROI
-            </span>
+            {stats?.channelRoi?.whatsapp?.roiMultiplier != null && (
+              <span className="text-xs font-semibold text-green-400 bg-green-500/10 px-1.5 py-0.5 rounded">
+                {stats.channelRoi.whatsapp.roiMultiplier}x ROI
+              </span>
+            )}
           </div>
           <div className="mt-1 text-xs text-zinc-500">Fastest rehydration channel</div>
           <div className="absolute right-3 top-3 text-green-500/20"><MessageSquare className="w-8 h-8" /></div>
@@ -150,11 +154,13 @@ export function LiveRecoveryStream({ carts, stats, onRefresh }: LiveRecoveryStre
           <div className="text-xs uppercase tracking-wider font-medium text-zinc-400">Avg Resolution Latency</div>
           <div className="mt-2 flex items-baseline gap-2">
             <span className="text-3xl font-bold text-amber-400 tracking-tight">
-              {stats?.avgResolutionMinutes || 24}m
+              {stats?.avgResolutionMinutes != null ? `${stats.avgResolutionMinutes}m` : 'No data yet'}
             </span>
-            <span className="text-xs font-semibold text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded">
-              High Urgency
-            </span>
+            {stats?.avgResolutionMinutes != null && (
+              <span className="text-xs font-semibold text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded">
+                {stats.avgResolutionMinutes < 30 ? 'High Urgency' : 'Normal Cadence'}
+              </span>
+            )}
           </div>
           <div className="mt-1 text-xs text-zinc-500">From drop-off to purchase</div>
           <div className="absolute right-3 top-3 text-amber-500/20"><Clock className="w-8 h-8" /></div>

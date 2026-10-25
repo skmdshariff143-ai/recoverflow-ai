@@ -37,6 +37,8 @@ import type {
   CreateRecoveryCaseAndEnqueueParams,
   IngestRazorpayWebhookParams,
   SearchRecoveryCasesParams,
+  CaseReviewInput,
+  CaseReviewResult,
 } from './DatabasePort';
 import { seedDemoDataset } from '../seed-data';
 
@@ -65,6 +67,7 @@ export class MemoryDatabase implements DatabasePort {
   public recoveryDecisions = new Map<string, RecoveryDecisionRecord>();
   public recoveryAttempts = new Map<string, RecoveryAttemptRecord>();
   public recoveryOutcomes = new Map<string, RecoveryOutcomeRecord>();
+  private caseReviews = new Map<string, Set<string>>();
 
   public outboxEvents = new Map<string, OutboxEventRecord>();
   public idempotencyKeys = new Map<string, IdempotencyKeyRecord>();
@@ -98,6 +101,7 @@ export class MemoryDatabase implements DatabasePort {
     this.recoveryDecisions.clear();
     this.recoveryAttempts.clear();
     this.recoveryOutcomes.clear();
+    this.caseReviews.clear();
     this.outboxEvents.clear();
     this.idempotencyKeys.clear();
     this.webhookEvents.clear();
@@ -117,7 +121,7 @@ export class MemoryDatabase implements DatabasePort {
           id: `pay_${cart.id}`,
           merchantId: cart.merchantId,
           externalPaymentId: `ext_${cart.cartToken}`,
-          amountPaise: cart.totalAmountMinor ? Number(cart.totalAmountMinor) : Math.round(cart.totalPrice * 100),
+          amountPaise: cart.totalAmountMinor ?? Math.round(cart.totalPrice * 100),
           currency: cart.currency || 'INR',
           status: cart.status === 'RECOVERED' ? 'CAPTURED' : 'FAILED',
           gateway: 'RAZORPAY',
@@ -131,11 +135,11 @@ export class MemoryDatabase implements DatabasePort {
           merchantId: cart.merchantId,
           paymentId: payment.id,
           customerId: cart.customerPhone || cart.customerEmail,
-          status: cart.status === 'RECOVERED' ? 'RECOVERED' : 'OPEN',
+          status: cart.status === 'RECOVERED' ? 'RECOVERED' : cart.status === 'REQUIRES_APPROVAL' ? 'APPROVAL_REQUIRED' : ['EXPIRED', 'OUT_OF_STOCK_ABORTED'].includes(cart.status) ? 'STOPPED' : 'DETECTED',
           attemptCount: cart.recoveryStage === 'QUEUED' ? 0 : 1,
           maxAttempts: 3,
           recoveryProbBps: 5500,
-          expectedValuePaise: payment.amountPaise,
+          expectedValuePaise: BigInt(payment.amountPaise) * 5500n / 10000n,
           createdAt: new Date(cart.createdAt),
           updatedAt: new Date(cart.updatedAt),
         };
@@ -201,11 +205,12 @@ export class MemoryDatabase implements DatabasePort {
     return null;
   }
 
-  async createUser(data: { email: string; name?: string }): Promise<UserRecord> {
+  async createUser(data: { email: string; name?: string; passwordHash?: string }): Promise<UserRecord> {
     const user: UserRecord = {
       id: `usr_${crypto.randomBytes(6).toString('hex')}`,
       email: data.email,
       name: data.name,
+      passwordHash: data.passwordHash,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -463,7 +468,7 @@ export class MemoryDatabase implements DatabasePort {
       id: `pay_${crypto.randomBytes(6).toString('hex')}`,
       merchantId: data.merchantId,
       externalPaymentId: data.externalPaymentId,
-      amountPaise: Number(data.amountPaise),
+      amountPaise: data.amountPaise,
       currency: data.currency,
       status: data.status || 'FAILED',
       gateway: data.gateway || 'RAZORPAY',
@@ -505,11 +510,11 @@ export class MemoryDatabase implements DatabasePort {
       merchantId: data.merchantId,
       paymentId: data.paymentId,
       customerId: data.customerId,
-      status: 'OPEN',
+      status: 'DETECTED',
       attemptCount: 0,
       maxAttempts: 3,
       recoveryProbBps: data.recoveryProbBps || 0,
-      expectedValuePaise: Number(data.expectedValuePaise || 0),
+      expectedValuePaise: data.expectedValuePaise ?? 0,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -544,7 +549,7 @@ export class MemoryDatabase implements DatabasePort {
     const updated: RecoveryCaseRecord = {
       ...rc,
       ...updates,
-      expectedValuePaise: updates.expectedValuePaise !== undefined ? Number(updates.expectedValuePaise) : rc.expectedValuePaise,
+      expectedValuePaise: updates.expectedValuePaise ?? rc.expectedValuePaise,
       updatedAt: new Date(),
     };
     this.recoveryCases.set(id, updated);
@@ -567,21 +572,32 @@ export class MemoryDatabase implements DatabasePort {
 
   async searchRecoveryCases(params: SearchRecoveryCasesParams): Promise<{ items: RecoveryCaseRecord[]; total: number }> {
     let list = Array.from(this.recoveryCases.values()).filter((rc) => rc.merchantId === params.merchantId);
+    if (params.activeOnly) list = list.filter((record) => !['RECOVERED', 'STOPPED'].includes(record.status));
     if (params.status) {
       list = list.filter((rc) => rc.status === params.status);
     }
     if (params.minExpectedValuePaise) {
-      const min = Number(params.minExpectedValuePaise);
-      list = list.filter((rc) => Number(rc.expectedValuePaise) >= min);
+      const min = BigInt(params.minExpectedValuePaise);
+      list = list.filter((rc) => BigInt(rc.expectedValuePaise) >= min);
     }
     if (params.search) {
       const q = params.search.toLowerCase();
       list = list.filter((rc) =>
         rc.id.toLowerCase().includes(q) ||
         rc.paymentId.toLowerCase().includes(q) ||
+        this.payments.get(rc.paymentId)?.externalPaymentId.toLowerCase().includes(q) ||
         rc.customerId?.toLowerCase().includes(q)
       );
     }
+    list.sort((a, b) => {
+      if (params.sortBy === 'expectedValuePaise') {
+        const currencyOrder = (this.payments.get(a.paymentId)?.currency || '').localeCompare(this.payments.get(b.paymentId)?.currency || '');
+        if (currencyOrder) return currencyOrder;
+        const diff = BigInt(b.expectedValuePaise) - BigInt(a.expectedValuePaise);
+        if (diff !== 0n) return diff > 0n ? 1 : -1;
+      }
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime() || a.id.localeCompare(b.id);
+    });
     const total = list.length;
     const offset = params.offset || 0;
     const limit = params.limit || 50;
@@ -592,6 +608,20 @@ export class MemoryDatabase implements DatabasePort {
   }
 
   // ── Unit of Work Atomic Transactions ─────────────────────────────────────
+
+  async reviewRecoveryCase(input: CaseReviewInput): Promise<CaseReviewResult> {
+    const record = this.recoveryCases.get(input.caseId);
+    if (!record || record.merchantId !== input.merchantId) return { outcome: 'not_found' };
+    const reviewers = this.caseReviews.get(record.id) || new Set<string>();
+    if (reviewers.has(input.userId)) return { outcome: 'already_reviewed', status: record.status, approvals: reviewers.size };
+    if (record.status !== 'APPROVAL_REQUIRED') return { outcome: 'not_pending', status: record.status };
+    reviewers.add(input.userId);
+    this.caseReviews.set(record.id, reviewers);
+    record.status = input.action === 'reject' ? 'STOPPED' : reviewers.size >= 2 ? 'ELIGIBILITY_CHECKED' : 'APPROVAL_REQUIRED';
+    record.updatedAt = new Date();
+    await this.appendAuditEvent({ merchantId: input.merchantId, userId: input.userId, actorType: 'HUMAN', action: `REVIEW_${input.action.toUpperCase()}`, entityType: 'RECOVERY_CASE', entityId: record.id, payloadHash: crypto.createHash('sha256').update(JSON.stringify(input)).digest('hex'), metadata: { reason: input.reason, status: record.status, approvals: reviewers.size } });
+    return { outcome: 'recorded', status: record.status, approvals: reviewers.size };
+  }
 
   async createRecoveryCaseAndEnqueue(params: CreateRecoveryCaseAndEnqueueParams): Promise<{
     payment: PaymentRecord;
@@ -670,7 +700,7 @@ export class MemoryDatabase implements DatabasePort {
       recoveryCaseId: data.recoveryCaseId,
       recommendedAction: data.recommendedAction,
       probRecoveryBps: data.probRecoveryBps,
-      expectedValuePaise: Number(data.expectedValuePaise),
+      expectedValuePaise: data.expectedValuePaise,
       featuresSnapshot: data.featuresSnapshot,
       aiAdvisoryAnalysis: data.aiAdvisoryAnalysis,
       isHaltedBySafety: data.isHaltedBySafety || false,
@@ -714,8 +744,8 @@ export class MemoryDatabase implements DatabasePort {
       id: `out_${crypto.randomBytes(6).toString('hex')}`,
       recoveryCaseId: data.recoveryCaseId,
       isRecovered: data.isRecovered,
-      recoveredAmountPaise: Number(data.recoveredAmountPaise),
-      feeAmountPaise: Number(data.feeAmountPaise || 0),
+      recoveredAmountPaise: data.recoveredAmountPaise,
+      feeAmountPaise: data.feeAmountPaise ?? 0,
       observedVia: data.observedVia,
       verifiedAt: new Date(),
       createdAt: new Date(),
@@ -978,7 +1008,9 @@ export class MemoryDatabase implements DatabasePort {
     payloadHash: string;
     metadata?: Record<string, unknown>;
   }): Promise<AuditEventRecord> {
-    const latest = await this.getLatestAuditEvent(data.merchantId || undefined);
+    // No await between reading the head and appending: preserve a single chain
+    // when multiple in-process requests arrive in the same event-loop turn.
+    const latest = Array.from(this.auditEvents.values()).filter((event) => !data.merchantId || event.merchantId === data.merchantId).at(-1);
     const previousHash = latest ? latest.currentHash : '0'.repeat(64);
     const currentHash = crypto
       .createHash('sha256')
@@ -999,7 +1031,7 @@ export class MemoryDatabase implements DatabasePort {
       payloadHash: data.payloadHash,
       currentHash,
       metadata: data.metadata,
-      createdAt: new Date(),
+      createdAt: new Date(Math.max(Date.now(), latest ? new Date(latest.createdAt).getTime() + 1 : 0)),
     };
     this.auditEvents.set(created.id, created);
     return created;
@@ -1016,11 +1048,12 @@ export class MemoryDatabase implements DatabasePort {
     return latest;
   }
 
-  async listAuditEvents(params: { merchantId?: string; entityType?: string; entityId?: string; limit?: number }): Promise<AuditEventRecord[]> {
+  async listAuditEvents(params: { merchantId?: string; entityType?: string; entityId?: string; limit?: number; order?: 'asc' | 'desc' }): Promise<AuditEventRecord[]> {
     let list = Array.from(this.auditEvents.values());
     if (params.merchantId) list = list.filter((e) => e.merchantId === params.merchantId);
     if (params.entityType) list = list.filter((e) => e.entityType === params.entityType);
     if (params.entityId) list = list.filter((e) => e.entityId === params.entityId);
+    list.sort((a, b) => (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()) * (params.order === 'desc' ? -1 : 1));
     return list.slice(0, params.limit || 100);
   }
 

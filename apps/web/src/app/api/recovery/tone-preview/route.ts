@@ -1,20 +1,59 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { runRecoveryAgent } from '@recoverflow/agents';
-import { db, type AbandonmentType } from '@recoverflow/core';
+import { db, type AbandonmentType, type CartItem } from '@recoverflow/core';
 import { buildResponsiveCartEmailHtml } from '@recoverflow/jobs';
+import { enforceRateLimit } from '@/lib/apiGuards';
+import { authorizeRequest } from '@/lib/routeAuth';
+import { internalErrorResponse } from '@/lib/http';
+import { z } from 'zod';
+
+const TonePreviewSchema = z.object({
+  brandVoiceCasualVsFormal: z.number().min(0).max(1).optional(),
+  brandVoiceUrgencyVsGentle: z.number().min(0).max(1).optional(),
+  discountCeilingPercentage: z.number().min(0).max(100).optional(),
+  brandToneGuidelines: z.string().trim().max(1000).optional(),
+  dropOffReason: z.string().trim().max(100).optional(),
+});
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const merchant = await db.getMerchant('merchant_default_01');
+    const rateLimitRes = await enforceRateLimit(req, 20, 60000);
+    if (rateLimitRes) return rateLimitRes;
+
+    const authRes = await authorizeRequest(req, 'policy:view', { allowAnonymousDemo: true });
+    if (!authRes.authorized) return authRes.response;
+    const { session } = authRes;
+
+    let rawBody: unknown = {};
+    try {
+      rawBody = await req.json();
+    } catch {
+      rawBody = {};
+    }
+
+    const validated = TonePreviewSchema.safeParse(rawBody);
+
+    if (!validated.success) {
+      return NextResponse.json(
+        { error: 'Invalid tone preview parameters', issues: validated.error.issues },
+        { status: 400 }
+      );
+    }
+
+    const body = validated.data;
+    let merchant = await db.getMerchant(session.activeMerchantId);
+    if (!merchant && db.listMerchants) {
+      const all = await db.listMerchants();
+      merchant = all.find((m) => m.id === session.activeMerchantId) || all[0] || null;
+    }
 
     const brandVoiceCasualVsFormal = body.brandVoiceCasualVsFormal ?? 0.5;
     const brandVoiceUrgencyVsGentle = body.brandVoiceUrgencyVsGentle ?? 0.5;
     const discountCeilingPercentage = body.discountCeilingPercentage ?? 15.0;
     const guidelines = body.brandToneGuidelines || merchant?.brandToneGuidelines || 'Polite, clear, and reassuring.';
-    const dropOffReason: AbandonmentType = body.dropOffReason || 'CHECKOUT_STEP';
+    const dropOffReason: AbandonmentType = (body.dropOffReason as AbandonmentType) || 'CHECKOUT_STEP';
 
-    const sampleItems = [
+    const sampleItems: CartItem[] = [
       {
         id: 'sample_preview_01',
         title: 'Minimalist Italian Leather Tote',
@@ -51,8 +90,8 @@ export async function POST(req: NextRequest) {
       items: sampleItems,
       totalPrice: 260.0,
       currency: 'USD',
-      checkoutUrl,
       discountCode: recoveryOutput.suggestedDiscountCode,
+      checkoutUrl,
       messageBody: recoveryOutput.messageBody,
     });
 
@@ -60,12 +99,11 @@ export async function POST(req: NextRequest) {
       success: true,
       recoveryOutput,
       emailHtmlPreview,
+      guidelinesUsed: guidelines,
+      discountOffered: recoveryOutput.suggestedDiscountCode ? discountCeilingPercentage : 0,
+      offerCode: recoveryOutput.suggestedDiscountCode,
     });
   } catch (err: unknown) {
-    console.error('Tone preview error:', err);
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Tone preview failed' },
-      { status: 500 }
-    );
+    return internalErrorResponse('recovery/tone-preview', err, 'Tone preview generation failed');
   }
 }

@@ -5,7 +5,7 @@ test.describe('PayBack AI — Real Razorpay Test-Mode Connection (Task 1)', () =
   test.beforeEach(async ({ page }) => {
     // Clear live webhook store before test
     await page.request.delete('/api/webhooks/razorpay');
-    await page.goto('/');
+    await page.goto('/demo');
     await page.waitForSelector('header');
   });
 

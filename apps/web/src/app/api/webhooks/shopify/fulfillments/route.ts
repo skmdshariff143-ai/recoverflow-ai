@@ -3,10 +3,12 @@ import {
   verifyShopifyHmac,
   globalIdempotency,
   db,
+  getRuntimeMode,
   type FulfillmentRecord,
   type FulfillmentTransitStatus,
   type OrderRecord,
 } from '@recoverflow/core';
+import { internalErrorResponse } from '@/lib/http';
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,10 +17,19 @@ export async function POST(req: NextRequest) {
     const storeDomain = req.headers.get('x-shopify-shop-domain') || 'aurora-apparel.myshopify.com';
 
     // Retrieve merchant
-    const merchant =
+    const mode = getRuntimeMode();
+    let merchant =
       (await db.getMerchantByStoreUrl(`https://${storeDomain}`)) ||
-      (await db.getMerchantByShopDomain(storeDomain)) ||
-      (await db.getMerchant('merchant_default_01'));
+      (await db.getMerchantByShopDomain(storeDomain));
+
+    if (!merchant) {
+      if (mode === 'DEMO' || mode === 'TEST') {
+        merchant = await db.getMerchant('merchant_default_01');
+      } else {
+        console.warn('[Shopify Fulfillment] Unknown shop domain in LIVE/SANDBOX mode; ignoring webhook without action');
+        return NextResponse.json({ received: true, ignored: true }, { status: 200 });
+      }
+    }
 
     if (!merchant) {
       return NextResponse.json({ error: 'Merchant not registered' }, { status: 404 });
@@ -115,7 +126,7 @@ export async function POST(req: NextRequest) {
         customerPhone,
         customerName: payload.customer ? `${payload.customer.first_name || ''} ${payload.customer.last_name || ''}`.trim() : undefined,
         currency: payload.currency || 'USD',
-        totalPrice: parseFloat(payload.total_price || '0') || 100.0,
+        totalPrice: parseFloat(payload.total_price || '0') || 0,
         financialStatus: 'PAID',
         fulfillmentStatus: transitStatus === 'DELIVERED' ? 'FULFILLED' : 'PARTIALLY_FULFILLED',
         items: (payload.line_items || []).map((li: Record<string, unknown>, idx: number) => ({
@@ -143,10 +154,6 @@ export async function POST(req: NextRequest) {
       estimatedDeliveryAt: estimatedDeliveryAt.toISOString(),
     });
   } catch (err: unknown) {
-    console.error('Shopify fulfillments webhook error:', err);
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Internal fulfillment error' },
-      { status: 500 }
-    );
+    return internalErrorResponse('webhooks/shopify/fulfillments', err, 'Internal fulfillment error');
   }
 }

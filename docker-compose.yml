@@ -1,71 +1,46 @@
-version: '3.8'
-
+# Local infrastructure. Use managed services and secret storage for deployment.
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: recoverflow-postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: recoverflow_dev_password
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-recoverflow_local_only}
       POSTGRES_DB: recoverflow
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+    ports: ['127.0.0.1:5432:5432']
+    volumes: ['postgres_data:/var/lib/postgresql/data']
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d recoverflow']
       interval: 5s
       timeout: 5s
-      retries: 5
-
+      retries: 10
   redis:
     image: redis:7-alpine
-    container_name: recoverflow-redis
+    command: ['redis-server', '--appendonly', 'yes']
     restart: unless-stopped
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
+    ports: ['127.0.0.1:6379:6379']
+    volumes: ['redis_data:/data']
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ['CMD', 'redis-cli', 'ping']
       interval: 5s
       timeout: 5s
-      retries: 5
-
+      retries: 10
+  # Optional web container. Default compose starts infrastructure only.
   web:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: recoverflow-web
-    restart: unless-stopped
+    profiles: ['console']
+    build: .
+    init: true
     depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
     environment:
-      DATABASE_URL: postgresql://postgres:recoverflow_dev_password@postgres:5432/recoverflow
+      RECOVERFLOW_RUNTIME_MODE: SANDBOX
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-recoverflow_local_only}@postgres:5432/recoverflow
       REDIS_URL: redis://redis:6379
-      PORT: 3000
-    ports:
-      - "3000:3000"
-
-  worker:
-    build:
-      context: .
-      dockerfile: Dockerfile.worker
-    container_name: recoverflow-worker
-    restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    environment:
-      DATABASE_URL: postgresql://postgres:recoverflow_dev_password@postgres:5432/recoverflow
-      REDIS_URL: redis://redis:6379
-
+      AUTH_SECRET: ${AUTH_SECRET:-}
+      APP_URL: ${APP_URL:-http://localhost:3000}
+    command: ['sh', '-c', 'npm run db:migrate:deploy && npm start']
+    ports: ['127.0.0.1:3000:3000']
 volumes:
   postgres_data:
   redis_data:
