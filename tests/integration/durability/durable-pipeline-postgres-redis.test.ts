@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { createPostgresTestHarness, type PostgresTestContext } from '@recoverflow/core';
 import { createRedisTestHarness, type RedisTestContext } from '@recoverflow/jobs';
 
@@ -9,6 +9,11 @@ describe('RecoverFlow AI — Full Production Durability Pipeline (PostgreSQL 16 
   beforeAll(async () => {
     pgHarness = await createPostgresTestHarness();
     redisHarness = await createRedisTestHarness();
+  });
+
+  beforeEach(async () => {
+    await pgHarness.cleanup();
+    await redisHarness.cleanup();
   });
 
   afterAll(async () => {
@@ -62,9 +67,9 @@ describe('RecoverFlow AI — Full Production Durability Pipeline (PostgreSQL 16 
     const job = await queue.add(
       'dispatch-recovery',
       { recoveryCaseId: tx.recoveryCase.id },
-      { jobId: `outbox:${claimed[0].id}` }
+      { jobId: `outbox_${claimed[0].id}` }
     );
-    expect(job.id).toBe(`outbox:${claimed[0].id}`);
+    expect(job.id).toBe(`outbox_${claimed[0].id}`);
 
     // 4. Mark published with worker lock check
     const published = await pgHarness.db.markOutboxEventPublished(claimed[0].id, workerId);
