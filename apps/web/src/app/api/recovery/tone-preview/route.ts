@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { runRecoveryAgent } from '@recoverflow/agents';
 import { db, type AbandonmentType, type CartItem } from '@recoverflow/core';
 import { buildResponsiveCartEmailHtml } from '@recoverflow/jobs';
+import { enforceRateLimit } from '@/lib/apiGuards';
+import { authorizeRequest } from '@/lib/routeAuth';
+import { internalErrorResponse } from '@/lib/http';
 import { z } from 'zod';
 
 const TonePreviewSchema = z.object({
@@ -14,7 +17,20 @@ const TonePreviewSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    const rawBody = await req.json().catch(() => ({}));
+    const rateLimitRes = await enforceRateLimit(req, 20, 60000);
+    if (rateLimitRes) return rateLimitRes;
+
+    const authRes = await authorizeRequest(req, 'policy:view', { allowAnonymousDemo: true });
+    if (!authRes.authorized) return authRes.response;
+    const { session } = authRes;
+
+    let rawBody: unknown = {};
+    try {
+      rawBody = await req.json();
+    } catch {
+      rawBody = {};
+    }
+
     const validated = TonePreviewSchema.safeParse(rawBody);
 
     if (!validated.success) {
@@ -25,7 +41,11 @@ export async function POST(req: NextRequest) {
     }
 
     const body = validated.data;
-    const merchant = await db.getMerchant('merchant_default_01');
+    let merchant = await db.getMerchant(session.activeMerchantId);
+    if (!merchant && db.listMerchants) {
+      const all = await db.listMerchants();
+      merchant = all.find((m) => m.id === session.activeMerchantId) || all[0] || null;
+    }
 
     const brandVoiceCasualVsFormal = body.brandVoiceCasualVsFormal ?? 0.5;
     const brandVoiceUrgencyVsGentle = body.brandVoiceUrgencyVsGentle ?? 0.5;
@@ -84,10 +104,6 @@ export async function POST(req: NextRequest) {
       offerCode: recoveryOutput.suggestedDiscountCode,
     });
   } catch (err: unknown) {
-    console.error('Tone preview error:', err);
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Tone preview failed' },
-      { status: 500 }
-    );
+    return internalErrorResponse('recovery/tone-preview', err, 'Tone preview generation failed');
   }
 }

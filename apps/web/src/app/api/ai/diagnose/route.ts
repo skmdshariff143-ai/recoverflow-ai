@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { diagnoseGatewayErrorWithGemini } from '@recoverflow/agents';
 import { enforceRateLimit } from '@/lib/apiGuards';
+import { authorizeRequest } from '@/lib/routeAuth';
+import { internalErrorResponse } from '@/lib/http';
 import { z } from 'zod';
 
 const RequestSchema = z.object({
@@ -12,7 +14,16 @@ export async function POST(req: NextRequest) {
     const rateLimitRes = await enforceRateLimit(req, 20, 60000);
     if (rateLimitRes) return rateLimitRes;
 
-    const body = await req.json();
+    const authRes = await authorizeRequest(req, 'support:intervene', { allowAnonymousDemo: true });
+    if (!authRes.authorized) return authRes.response;
+
+    let body: unknown = {};
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON request body' }, { status: 400 });
+    }
+
     const validated = RequestSchema.safeParse(body);
 
     if (!validated.success) {
@@ -25,9 +36,6 @@ export async function POST(req: NextRequest) {
     const diagnosis = await diagnoseGatewayErrorWithGemini(validated.data.rawGatewayError);
     return NextResponse.json(diagnosis);
   } catch (err: unknown) {
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Internal diagnostic error' },
-      { status: 500 },
-    );
+    return internalErrorResponse('ai/diagnose', err, 'Internal diagnostic error');
   }
 }

@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db, type CartEvent, type AbandonmentType } from '@recoverflow/core';
 import { globalRecoveryQueue } from '@recoverflow/jobs';
+import { enforceRateLimit } from '@/lib/apiGuards';
+import { authorizeRequest } from '@/lib/routeAuth';
+import { internalErrorResponse } from '@/lib/http';
 import { z } from 'zod';
 
 const SimulateRequestSchema = z.object({
@@ -11,7 +14,20 @@ const SimulateRequestSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    const rawBody = await req.json().catch(() => ({}));
+    const rateLimitRes = await enforceRateLimit(req, 20, 60000);
+    if (rateLimitRes) return rateLimitRes;
+
+    const authRes = await authorizeRequest(req, 'recovery:execute', { allowAnonymousDemo: true });
+    if (!authRes.authorized) return authRes.response;
+    const { session } = authRes;
+
+    let rawBody: unknown = {};
+    try {
+      rawBody = await req.json();
+    } catch {
+      rawBody = {};
+    }
+
     const validated = SimulateRequestSchema.safeParse(rawBody);
 
     if (!validated.success) {
@@ -23,7 +39,12 @@ export async function POST(req: NextRequest) {
 
     const body = validated.data;
     const type: AbandonmentType = (body.type as AbandonmentType) || 'PAYMENT_FAILED';
-    const merchant = await db.getMerchant('merchant_default_01');
+
+    let merchant = await db.getMerchant(session.activeMerchantId);
+    if (!merchant && db.listMerchants) {
+      const all = await db.listMerchants();
+      merchant = all.find((m) => m.id === session.activeMerchantId) || all[0] || null;
+    }
 
     if (!merchant) {
       return NextResponse.json({ error: 'Merchant not found' }, { status: 404 });
@@ -83,10 +104,6 @@ export async function POST(req: NextRequest) {
       message: `Simulated cart abandonment [${type}] for ${selectedName} ingested into recovery loop.`,
     });
   } catch (err: unknown) {
-    console.error('Simulation error:', err);
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Simulation generation failed' },
-      { status: 500 }
-    );
+    return internalErrorResponse('recovery/simulate', err, 'Failed to simulate cart abandonment');
   }
 }
