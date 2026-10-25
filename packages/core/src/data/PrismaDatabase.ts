@@ -578,6 +578,26 @@ export class PrismaDatabase implements DatabasePort {
     outbox: OutboxEventRecord;
   }> {
     return this.prisma.$transaction(async (tx) => {
+      if (params.payment.customerId) {
+        await tx.customer.upsert({
+          where: { id: params.payment.customerId },
+          create: {
+            id: params.payment.customerId,
+            merchantId: params.payment.merchantId,
+          },
+          update: {},
+        });
+      }
+      if (params.recoveryCase.customerId && params.recoveryCase.customerId !== params.payment.customerId) {
+        await tx.customer.upsert({
+          where: { id: params.recoveryCase.customerId },
+          create: {
+            id: params.recoveryCase.customerId,
+            merchantId: params.payment.merchantId,
+          },
+          update: {},
+        });
+      }
       const p = await tx.payment.create({
         data: {
           merchantId: params.payment.merchantId,
@@ -861,13 +881,14 @@ export class PrismaDatabase implements DatabasePort {
   async claimOutboxEvents(workerId: string, batchSize = 20, lockTtlMs = 30000): Promise<OutboxEventRecord[]> {
     const now = new Date();
     const expiredCutoff = new Date(Date.now() - lockTtlMs);
+    const leaseExpiresAt = new Date(Date.now() + lockTtlMs);
 
     try {
       const updatedEvents: any[] = await this.prisma.$queryRaw`
         WITH candidates AS (
           SELECT id FROM "OutboxEvent"
           WHERE (status = 'PENDING' AND "availableAt" <= ${now})
-             OR (status = 'PROCESSING' AND "lockedAt" <= ${expiredCutoff})
+             OR (status = 'PROCESSING' AND ("leaseExpiresAt" <= ${now} OR ("leaseExpiresAt" IS NULL AND "lockedAt" <= ${expiredCutoff})))
           ORDER BY "createdAt" ASC
           LIMIT ${batchSize}
           FOR UPDATE SKIP LOCKED
@@ -876,6 +897,7 @@ export class PrismaDatabase implements DatabasePort {
         SET status = 'PROCESSING',
             "lockedBy" = ${workerId},
             "lockedAt" = ${now},
+            "leaseExpiresAt" = ${leaseExpiresAt},
             "attemptCount" = "attemptCount" + 1,
             "updatedAt" = ${now}
         WHERE id IN (SELECT id FROM candidates)
