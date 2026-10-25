@@ -79,13 +79,20 @@ export async function POST(req: NextRequest) {
       ? body.judgeNote.trim()
       : 'Judge Live Demo Injection';
 
+    const rawId = body.subscriptionId && body.subscriptionId.trim()
+      ? body.subscriptionId.trim()
+      : body.paymentId && body.paymentId.trim()
+      ? body.paymentId.trim()
+      : `pay_judge_${Math.random().toString(36).slice(2, 8)}`;
+
+    const isSubscription = rawId.startsWith('sub_') || category === 'mandate_revoked' || category === 'invalid_mandate';
     const method = body.method || 'card';
-    const subId = body.subscriptionId || `sub_live_${Date.now()}`;
-    const paymentId = body.paymentId || `pay_live_${Date.now()}`;
+    const subId = rawId;
+    const paymentId = rawId;
     const nowSec = Math.floor(Date.now() / 1000);
 
     // 4. Construct Synthetic Event Payload
-    const webhookPayload: RazorpayWebhookPayload = category === 'mandate_revoked'
+    const webhookPayload: RazorpayWebhookPayload = isSubscription
       ? {
           entity: 'event',
           account_id: 'acc_rzp_live_buildathon',

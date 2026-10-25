@@ -8,5 +8,5 @@ export default defineConfig({
   reporter: [['list'], ['html', { outputFolder: 'playwright-report', open: 'never' }]],
   use: { baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://127.0.0.1:3005', storageState: process.env.PLAYWRIGHT_STORAGE_STATE || undefined, trace: 'retain-on-failure', screenshot: 'only-on-failure', viewport: { width: 1440, height: 900 } },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
-  webServer: process.env.PLAYWRIGHT_BASE_URL ? undefined : { command: 'npm run start --workspace=@recoverflow/web -- -p 3005', url: 'http://127.0.0.1:3005', reuseExistingServer: false, timeout: 120000, env: { RECOVERFLOW_RUNTIME_MODE: 'DEMO', RECOVERFLOW_ALLOW_ANON_DEMO: 'true', PORT: '3005' } },
+  webServer: process.env.PLAYWRIGHT_BASE_URL ? undefined : { command: 'npm run start --workspace=@recoverflow/web -- -p 3005', url: 'http://127.0.0.1:3005', reuseExistingServer: false, timeout: 120000, env: { RECOVERFLOW_RUNTIME_MODE: 'DEMO', RECOVERFLOW_ALLOW_ANON_DEMO: 'true', AUTH_SECRET: 'dev-e2e-auth-secret-min-32-chars-long-12345', PORT: '3005' } },
 });
