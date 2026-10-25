@@ -126,9 +126,7 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
-    const rateLimitRes = await enforceRateLimit(req, 30, 60000);
-    if (rateLimitRes) return rateLimitRes;
-
+    
     const authRes = await authorizeRequest(req, 'audit:view', { allowAnonymousDemo: true });
     if (!authRes.authorized) return authRes.response;
 
@@ -148,9 +146,7 @@ export async function GET(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
-    const rateLimitRes = await enforceRateLimit(req, 10, 60000);
-    if (rateLimitRes) return rateLimitRes;
-
+    
     const requiredPermission = ['LIVE', 'SANDBOX'].includes(process.env.RECOVERFLOW_RUNTIME_MODE || '')
       ? 'integration:manage'
       : 'recovery:execute';
