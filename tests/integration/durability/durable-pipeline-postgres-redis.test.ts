@@ -13,7 +13,6 @@ describe('RecoverFlow AI — Full Production Durability Pipeline (PostgreSQL 16 
 
   beforeEach(async () => {
     await pgHarness.cleanup();
-    await redisHarness.cleanup();
   });
 
   afterAll(async () => {
