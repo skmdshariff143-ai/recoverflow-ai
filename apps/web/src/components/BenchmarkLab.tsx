@@ -19,7 +19,7 @@ const PromiseToPayTracker = dynamic(() => import('../components/PromiseToPayTrac
 const AuditTrailExplorer = dynamic(() => import('../components/AuditTrailExplorer').then((m) => m.AuditTrailExplorer), { ssr: false });
 const MethodologyGuide = dynamic(() => import('../components/MethodologyGuide').then((m) => m.MethodologyGuide), { ssr: false });
 const JudgeModeModal = dynamic(() => import('../components/JudgeModeModal').then((m) => m.JudgeModeModal), { ssr: false });
-const CommandPalette = dynamic(() => import('../components/CommandPalette').then((m) => m.CommandPalette), { ssr: false });
+import { CommandPalette } from '../components/CommandPalette';
 const BlindBotReplayModal = dynamic(() => import('../components/BlindBotReplayModal').then((m) => m.BlindBotReplayModal), { ssr: false });
 const JudgeCheatSheetModal = dynamic(() => import('../components/JudgeCheatSheetModal').then((m) => m.JudgeCheatSheetModal), { ssr: false });
 const GuideMeTourModal = dynamic(() => import('../components/GuideMeTourModal').then((m) => m.GuideMeTourModal), { ssr: false });
