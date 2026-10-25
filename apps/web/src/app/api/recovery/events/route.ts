@@ -19,10 +19,6 @@ export async function GET(req: NextRequest) {
     const { session } = authRes;
 
     let merchant = await db.getMerchant(session.activeMerchantId);
-    if (!merchant && db.listMerchants) {
-      const all = await db.listMerchants();
-      merchant = all.find((m) => m.id === session.activeMerchantId) || all[0] || null;
-    }
 
     if (!merchant) {
       merchant = {
@@ -40,30 +36,102 @@ export async function GET(req: NextRequest) {
       };
     }
 
-    const carts = await db.listCartEvents(merchant.id);
-    const messages = await db.listMessageLogs(merchant.id);
-    const suppressions = await globalSuppressionService.listSuppressions(merchant.id);
+    const carts = await db.listCartEvents(session.activeMerchantId);
+    const messages = await db.listMessageLogs(session.activeMerchantId);
+    const suppressions = await globalSuppressionService.listSuppressions(session.activeMerchantId);
 
-    // Compute live metrics
+    // Compute live metrics from real records
     let recoveredGmv = 0;
     let abandonedGmv = 0;
     let recoveredCount = 0;
+    const resolutionTimesMs: number[] = [];
+    const recoveredCartIds = new Set<string>();
 
     for (const c of carts) {
       if (c.status === 'RECOVERED') {
         recoveredGmv += c.totalPrice;
         recoveredCount++;
+        recoveredCartIds.add(c.id);
+
+        const createdMs = c.createdAt ? new Date(c.createdAt).getTime() : 0;
+        const resolvedMs = c.recoveredAt
+          ? new Date(c.recoveredAt).getTime()
+          : c.updatedAt
+          ? new Date(c.updatedAt).getTime()
+          : 0;
+        if (createdMs > 0 && resolvedMs > createdMs) {
+          resolutionTimesMs.push(resolvedMs - createdMs);
+        }
       } else {
         abandonedGmv += c.totalPrice;
       }
     }
 
     const totalCarts = carts.length;
-    const recoveryRatePercent = totalCarts > 0 ? ((recoveredCount / totalCarts) * 100).toFixed(1) : '0.0';
+    const recoveryRatePercent = totalCarts > 0 ? parseFloat(((recoveredCount / totalCarts) * 100).toFixed(1)) : 0;
 
-    // Channel stats
-    const whatsappSent = messages.filter((m) => m.channel === 'WHATSAPP' && m.direction === 'OUTBOUND').length;
-    const emailSent = messages.filter((m) => m.channel === 'EMAIL' && m.direction === 'OUTBOUND').length;
+    const avgResolutionMinutes = resolutionTimesMs.length > 0
+      ? Math.round(resolutionTimesMs.reduce((sum, v) => sum + v, 0) / (resolutionTimesMs.length * 60000))
+      : null;
+
+    // Real Channel Attribution from message logs
+    const outboundMessages = messages.filter((m) => m.direction === 'OUTBOUND');
+    const whatsappMessages = outboundMessages.filter((m) => m.channel === 'WHATSAPP');
+    const emailMessages = outboundMessages.filter((m) => m.channel === 'EMAIL');
+
+    const whatsappSent = whatsappMessages.length;
+    const emailSent = emailMessages.length;
+
+    const whatsappRecoveredCarts = new Set<string>();
+    for (const m of whatsappMessages) {
+      const cid = m.cartEventId || m.cartId;
+      if (cid && recoveredCartIds.has(cid)) {
+        whatsappRecoveredCarts.add(cid);
+      }
+    }
+
+    const emailRecoveredCarts = new Set<string>();
+    for (const m of emailMessages) {
+      const cid = m.cartEventId || m.cartId;
+      if (cid && recoveredCartIds.has(cid)) {
+        emailRecoveredCarts.add(cid);
+      }
+    }
+
+    const whatsappRecovered = whatsappRecoveredCarts.size;
+    const emailRecovered = emailRecoveredCarts.size;
+
+    const whatsappGmv = carts.filter((c) => whatsappRecoveredCarts.has(c.id)).reduce((s, c) => s + c.totalPrice, 0);
+    const emailGmv = carts.filter((c) => emailRecoveredCarts.has(c.id)).reduce((s, c) => s + c.totalPrice, 0);
+
+    const whatsappCost = whatsappSent * 0.05;
+    const emailCost = emailSent * 0.001;
+
+    const whatsappRoiMultiplier = whatsappCost > 0 && whatsappGmv > 0
+      ? parseFloat((whatsappGmv / whatsappCost).toFixed(1))
+      : null;
+    const emailRoiMultiplier = emailCost > 0 && emailGmv > 0
+      ? parseFloat((emailGmv / emailCost).toFixed(1))
+      : null;
+
+    const channelRoi = {
+      whatsapp: whatsappSent > 0
+        ? {
+            sent: whatsappSent,
+            recovered: whatsappRecovered,
+            conversionRate: parseFloat(((whatsappRecovered / whatsappSent) * 100).toFixed(1)),
+            roiMultiplier: whatsappRoiMultiplier,
+          }
+        : null,
+      email: emailSent > 0
+        ? {
+            sent: emailSent,
+            recovered: emailRecovered,
+            conversionRate: parseFloat(((emailRecovered / emailSent) * 100).toFixed(1)),
+            roiMultiplier: emailRoiMultiplier,
+          }
+        : null,
+    };
 
     return NextResponse.json({
       source: 'DEMO',
@@ -76,22 +144,9 @@ export async function GET(req: NextRequest) {
         recoveredCount,
         recoveredGmv,
         abandonedGmv: abandonedGmv + recoveredGmv,
-        recoveryRatePercent: parseFloat(recoveryRatePercent),
-        channelRoi: {
-          whatsapp: {
-            sent: Math.max(whatsappSent, 12),
-            recovered: Math.max(recoveredCount, 8),
-            conversionRate: 66.7,
-            roiMultiplier: 14.2,
-          },
-          email: {
-            sent: Math.max(emailSent, 6),
-            recovered: 2,
-            conversionRate: 33.3,
-            roiMultiplier: 6.8,
-          },
-        },
-        avgResolutionMinutes: 24,
+        recoveryRatePercent,
+        channelRoi,
+        avgResolutionMinutes,
       },
     });
   } catch (err: unknown) {

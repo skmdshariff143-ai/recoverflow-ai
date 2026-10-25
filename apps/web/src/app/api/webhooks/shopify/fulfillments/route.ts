@@ -126,7 +126,7 @@ export async function POST(req: NextRequest) {
         customerPhone,
         customerName: payload.customer ? `${payload.customer.first_name || ''} ${payload.customer.last_name || ''}`.trim() : undefined,
         currency: payload.currency || 'USD',
-        totalPrice: parseFloat(payload.total_price || '0') || 100.0,
+        totalPrice: parseFloat(payload.total_price || '0') || 0,
         financialStatus: 'PAID',
         fulfillmentStatus: transitStatus === 'DELIVERED' ? 'FULFILLED' : 'PARTIALLY_FULFILLED',
         items: (payload.line_items || []).map((li: Record<string, unknown>, idx: number) => ({

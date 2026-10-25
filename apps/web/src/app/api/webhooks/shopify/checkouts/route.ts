@@ -101,7 +101,7 @@ export async function POST(req: NextRequest) {
       customerEmail,
       customerName: customerName || 'Valued Shopper',
       currency: payload.currency || 'USD',
-      totalPrice: parseFloat(payload.total_price || '0') || 150.0,
+      totalPrice: parseFloat(payload.total_price || '0') || 0,
       items: items.length > 0 ? items : [
         {
           id: 'item_sample',
