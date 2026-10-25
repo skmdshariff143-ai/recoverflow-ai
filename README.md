@@ -14,7 +14,15 @@ npm run db:generate
 npm run dev
 ```
 
-Open [localhost:3000](http://localhost:3000), choose **Explore the workspace**, then **Open demo workspace**. No provider keys, PostgreSQL, or Redis are required. `RECOVERFLOW_RUNTIME_MODE=DEMO` is the default. All demo operators share the in-process sample workspace; changes reset on a server restart. Run a single web process for this mode.
+Open [localhost:3000](http://localhost:3000), choose **Explore the workspace**, then **Open demo workspace**. No provider keys, PostgreSQL, or Redis are required. `RECOVERFLOW_RUNTIME_MODE=DEMO` is the default. All demo operators share the in-process sample workspace.
+
+> **Shared-Sandbox Evaluation Notice**: In the public or local demo, all evaluators share an in-memory sample sandbox. If another user has modified items, or to restore the baseline evaluation dataset at any time, press **`Shift+R`** to reset the demo state instantly.
+
+### How to get a session for real use
+For production or staging use:
+1. Export `DATABASE_URL`, `OPERATOR_EMAIL`, `OPERATOR_PASSWORD`, `WORKSPACE_SLUG`, and `MERCHANT_URL`.
+2. Run `npm run operator:provision` to create your owner credentials and merchant record atomically.
+3. Navigate to `/login` and authenticate with your email, password, and workspace slug. Durable modes require an exact `APP_URL` and `AUTH_SECRET` (min 32 characters).
 
 The console includes:
 
@@ -86,4 +94,4 @@ scripts                   Provisioning, evaluation, workers
 
 Console handlers authorize on the server. Database adapters preserve integer minor amounts; API financial values are decimal strings. PostgreSQL reviews serialize access and commit the review, case state, and audit event together. The legacy evaluation routes remain isolated behind runtime gating until their provider contracts are ready for tenant-scoped activation.
 
-[Deployment](docs/DEPLOYMENT.md) · [Release readiness](docs/RELEASE_READINESS.md) · [Security design](docs/SECURITY.md) · [Model methodology](MODEL.md) · [License](LICENSE)
+[Deployment](docs/DEPLOYMENT.md) · [Release readiness](docs/RELEASE_READINESS.md) · [Security architecture](SECURITY.md) · [Model methodology](MODEL.md) · [License](LICENSE)
