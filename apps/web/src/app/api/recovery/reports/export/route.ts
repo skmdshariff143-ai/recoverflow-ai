@@ -1,13 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@recoverflow/core';
+import { enforceRateLimit } from '@/lib/apiGuards';
+import { authorizeRequest } from '@/lib/routeAuth';
+import { internalErrorResponse } from '@/lib/http';
 
 export async function GET(req: NextRequest) {
   try {
+    const rateLimitRes = await enforceRateLimit(req, 20, 60000);
+    if (rateLimitRes) return rateLimitRes;
+
+    const authRes = await authorizeRequest(req, 'audit:export', { allowAnonymousDemo: true });
+    if (!authRes.authorized) return authRes.response;
+    const { session } = authRes;
+
     const { searchParams } = new URL(req.url);
     const format = searchParams.get('format') || 'csv';
 
-    const carts = await db.listCartEvents();
-    const merchant = (await db.getMerchant("merchant_default_01")) || (db.listMerchants ? (await db.listMerchants())[0] : null);
+    let merchant = await db.getMerchant(session.activeMerchantId);
+    if (!merchant && db.listMerchants) {
+      const all = await db.listMerchants();
+      merchant = all.find((m) => m.id === session.activeMerchantId) || all[0] || null;
+    }
+
+    const carts = await db.listCartEvents(merchant?.id || session.activeMerchantId);
 
     const totalCartsCount = carts.length || 100;
     const recoveredCarts = carts.filter((c) => c.status === 'RECOVERED');
@@ -79,10 +94,6 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (err: unknown) {
-    console.error('Report export error:', err);
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Export failed' },
-      { status: 500 }
-    );
+    return internalErrorResponse('recovery/reports/export', err, 'Export failed');
   }
 }

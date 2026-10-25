@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db, globalSuppressionService } from '@recoverflow/core';
+import { authorizeRequest } from '@/lib/routeAuth';
+import { internalErrorResponse } from '@/lib/http';
+import { toPublicMerchant } from '@/lib/publicMerchant';
 import { z } from 'zod';
 
 const UpdateMerchantToneSchema = z.object({
@@ -9,21 +12,33 @@ const UpdateMerchantToneSchema = z.object({
   brandToneGuidelines: z.string().trim().max(1000).optional(),
 });
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const merchant = (await db.getMerchant('merchant_default_01')) || {
-      id: 'merchant_default_01',
-      storeUrl: 'https://aurora-apparel.myshopify.com',
-      storeName: 'Aurora Luxury Apparel',
-      webhookSecret: 'shpss_test_secret_key_99182',
-      brandToneGuidelines: 'Helpful, conversational, and direct. Focus on product value.',
-      brandVoiceCasualVsFormal: 0.7,
-      brandVoiceUrgencyVsGentle: 0.35,
-      discountCeilingPercentage: 15.0,
-      minMarginPercentage: 20.0,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+    const authRes = await authorizeRequest(req, 'policy:view', { allowAnonymousDemo: true });
+    if (!authRes.authorized) return authRes.response;
+    const { session } = authRes;
+
+    let merchant = await db.getMerchant(session.activeMerchantId);
+    if (!merchant && db.listMerchants) {
+      const all = await db.listMerchants();
+      merchant = all.find((m) => m.id === session.activeMerchantId) || all[0] || null;
+    }
+
+    if (!merchant) {
+      merchant = {
+        id: session.activeMerchantId,
+        storeUrl: 'https://aurora-apparel.myshopify.com',
+        storeName: 'Aurora Luxury Apparel',
+        webhookSecret: 'shpss_test_secret_key_99182',
+        brandToneGuidelines: 'Helpful, conversational, and direct. Focus on product value.',
+        brandVoiceCasualVsFormal: 0.7,
+        brandVoiceUrgencyVsGentle: 0.35,
+        discountCeilingPercentage: 15.0,
+        minMarginPercentage: 20.0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+    }
 
     const carts = await db.listCartEvents(merchant.id);
     const messages = await db.listMessageLogs(merchant.id);
@@ -52,16 +67,7 @@ export async function GET() {
 
     return NextResponse.json({
       source: 'DEMO',
-      merchant: {
-        id: merchant.id,
-        storeName: merchant.storeName,
-        storeUrl: merchant.storeUrl,
-        brandToneGuidelines: merchant.brandToneGuidelines,
-        brandVoiceCasualVsFormal: merchant.brandVoiceCasualVsFormal,
-        brandVoiceUrgencyVsGentle: merchant.brandVoiceUrgencyVsGentle,
-        discountCeilingPercentage: merchant.discountCeilingPercentage,
-        minMarginPercentage: merchant.minMarginPercentage,
-      },
+      merchant: toPublicMerchant(merchant),
       carts,
       messages,
       suppressions,
@@ -89,13 +95,16 @@ export async function GET() {
       },
     });
   } catch (err: unknown) {
-    console.error('Events route error:', err);
-    return NextResponse.json({ error: 'Failed to fetch events' }, { status: 500 });
+    return internalErrorResponse('recovery/events:GET', err, 'Failed to fetch events');
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
+    const authRes = await authorizeRequest(req, 'policy:modify', { allowAnonymousDemo: true });
+    if (!authRes.authorized) return authRes.response;
+    const { session } = authRes;
+
     const rawBody = await req.json().catch(() => ({}));
     const validated = UpdateMerchantToneSchema.safeParse(rawBody);
 
@@ -107,15 +116,19 @@ export async function POST(req: NextRequest) {
     }
 
     const body = validated.data;
-    const updated = await db.updateMerchantTone('merchant_default_01', {
+    const updated = await db.updateMerchantTone(session.activeMerchantId, {
       brandVoiceCasualVsFormal: body.brandVoiceCasualVsFormal,
       brandVoiceUrgencyVsGentle: body.brandVoiceUrgencyVsGentle,
       discountCeilingPercentage: body.discountCeilingPercentage,
       brandToneGuidelines: body.brandToneGuidelines,
     });
 
-    return NextResponse.json({ success: Boolean(updated), source: 'DEMO' });
-  } catch {
-    return NextResponse.json({ error: 'Failed to update merchant settings' }, { status: 500 });
+    return NextResponse.json({
+      success: Boolean(updated),
+      source: 'DEMO',
+      merchant: toPublicMerchant(updated),
+    });
+  } catch (err: unknown) {
+    return internalErrorResponse('recovery/events:POST', err, 'Failed to update merchant settings');
   }
 }

@@ -8,6 +8,8 @@ import {
   globalSimulatorAdapter,
   InvalidSimulatorReferenceError,
 } from '@recoverflow/core';
+import { authorizeRequest } from '@/lib/routeAuth';
+import { internalErrorResponse } from '@/lib/http';
 
 export async function GET(
   req: NextRequest,
@@ -16,22 +18,34 @@ export async function GET(
   try {
     const { reference } = await params;
 
-    if (!reference || reference.trim() === '') {
-      return NextResponse.json({ error: 'Transaction reference is required' }, { status: 400 });
+    const trimmedRef = reference ? reference.trim() : '';
+    if (!trimmedRef || !/^[A-Za-z0-9_-]{1,64}$/.test(trimmedRef)) {
+      return NextResponse.json(
+        { error: 'Invalid reference: must match /^[A-Za-z0-9_-]{1,64}$/' },
+        { status: 400 }
+      );
     }
 
     const requestedAdapter = req.nextUrl.searchParams.get('adapter') ?? req.headers.get('x-recovery-adapter');
+    const isRazorpay = requestedAdapter === 'razorpay_test_mode' || trimmedRef.startsWith('plink_');
+
+    // The Razorpay adapter path requires a real authenticated session; simulator allows demo
+    const authRes = await authorizeRequest(req, 'recovery:execute', {
+      allowAnonymousDemo: !isRazorpay,
+    });
+    if (!authRes.authorized) return authRes.response;
+
     let adapter;
-    if (requestedAdapter === 'razorpay_test_mode' || reference.startsWith('plink_')) {
+    if (isRazorpay) {
       adapter = new RazorpayTestModeAdapter();
     } else {
       adapter = globalSimulatorAdapter;
     }
 
-    const queryResult = await adapter.getStatus(reference);
+    const queryResult = await adapter.getStatus(trimmedRef);
 
     return NextResponse.json({
-      reference,
+      reference: trimmedRef,
       status: queryResult.status,
       settledAmountPaise: queryResult.settledAmountPaise,
       razorpayStatusRaw: queryResult.razorpayStatusRaw,
@@ -78,9 +92,6 @@ export async function GET(
         { status: 422 },
       );
     }
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Failed to query status' },
-      { status: 500 },
-    );
+    return internalErrorResponse('recovery/status', err, 'Failed to query status');
   }
 }
