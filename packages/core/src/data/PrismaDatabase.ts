@@ -251,7 +251,7 @@ export class PrismaDatabase implements DatabasePort {
         id: merchant.id,
         organizationId: merchant.organizationId,
         storeName: merchant.storeName,
-        storeUrl: merchant.storeUrl,
+        storeUrl: merchant.storeUrl || ('https://' + (merchant.shopDomain || merchant.id) + '.myshopify.com'),
         shopDomain: merchant.shopDomain,
         webhookSecret: merchant.webhookSecret || 'whsec_default',
         brandVoiceCasualVsFormal: merchant.brandVoiceCasualVsFormal ?? 0.3,
