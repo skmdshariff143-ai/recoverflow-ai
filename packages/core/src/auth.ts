@@ -112,6 +112,12 @@ const ROLE_HIERARCHY: Record<UserRole, number> = {
 
 export const DEFAULT_DEV_AUTH_SECRET = 'recoverflow_auth_secret_dev_32_bytes_min_sig';
 
+let perProcessSecret: string | null = null;
+
+export function resetPerProcessSecret(): void {
+  perProcessSecret = null;
+}
+
 /**
  * Validates auth secret entropy and enforces fail-closed behavior in SANDBOX / LIVE.
  */
@@ -119,17 +125,38 @@ export function validateAuthSecret(secret?: string, mode?: string): string {
   const currentMode = mode || getRuntimeMode();
   const candidate = secret || process.env.AUTH_SECRET;
 
-  if (currentMode === 'LIVE' || currentMode === 'SANDBOX') {
-    if (!candidate || candidate === DEFAULT_DEV_AUTH_SECRET || candidate.length < 32) {
-      throw new Error(
-        `INSECURE_AUTH_SECRET: In '${currentMode}' mode, AUTH_SECRET must be explicitly set and contain at least 32 characters of high-entropy secret.`
-      );
+  if (candidate && candidate.length > 0) {
+    if (currentMode === 'LIVE' || currentMode === 'SANDBOX') {
+      if (candidate === DEFAULT_DEV_AUTH_SECRET || candidate.length < 32) {
+        throw new Error(
+          `INSECURE_AUTH_SECRET: In '${currentMode}' mode, AUTH_SECRET must be explicitly set and contain at least 32 characters of high-entropy secret.`
+        );
+      }
     }
     return candidate;
   }
 
-  return candidate || DEFAULT_DEV_AUTH_SECRET;
+  // Candidate is unset or empty
+  if (currentMode === 'LIVE' || currentMode === 'SANDBOX') {
+    throw new Error(
+      `INSECURE_AUTH_SECRET: In '${currentMode}' mode, AUTH_SECRET must be explicitly set and contain at least 32 characters of high-entropy secret.`
+    );
+  }
+
+  // In DEMO or TEST runtime mode:
+  // If NODE_ENV !== 'production', allow DEFAULT_DEV_AUTH_SECRET
+  if (process.env.NODE_ENV !== 'production') {
+    return DEFAULT_DEV_AUTH_SECRET;
+  }
+
+  // In production build with DEMO/TEST runtime mode: generate random per-process secret
+  if (!perProcessSecret) {
+    perProcessSecret = randomBytes(32).toString('hex');
+  }
+  return perProcessSecret;
 }
+
+export const resolveAuthSecret = validateAuthSecret;
 
 /**
  * Check if a role satisfies a minimum role requirement in the hierarchy.
