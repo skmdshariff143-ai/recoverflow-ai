@@ -11,7 +11,7 @@ export function proxy(request: NextRequest) {
   if (durable && path.startsWith('/api/') && !path.startsWith('/api/console') && !['/api/auth/session', '/api/health', '/api/ready'].includes(path)) {
     return NextResponse.json({ error: 'This legacy integration endpoint is available only in the isolated demo. Live provider activation requires the tenant-scoped integration rollout.' }, { status: 503 });
   }
-  if (!durable && (path.startsWith('/api/razorpay/') || path.startsWith('/api/auth/shopify') || path === '/api/merchant/voice-clone')) {
+  if (!durable && (path === '/api/razorpay/subscriptions/halt' || path.startsWith('/api/auth/shopify'))) {
     return NextResponse.json({ error: 'External provider actions are disabled in demo mode.' }, { status: 403 });
   }
   if (!durable && path === '/api/recovery/execute' && request.headers.get('x-recovery-adapter') === 'razorpay_test_mode') {
