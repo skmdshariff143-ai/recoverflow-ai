@@ -42,12 +42,12 @@ export async function authorizeRequest(
   permission: Permission,
   options?: AuthorizeOptions
 ): Promise<AuthorizeResult> {
-  const token = extractTokenFromHeaders(req.headers as any);
+  const token = extractTokenFromHeaders(req.headers);
 
   // If ANY credential was provided (Bearer token or cookie):
   if (token) {
     try {
-      const session = await readSession(req.headers as any);
+      const session = await readSession(req.headers);
       if (!session) {
         return {
           authorized: false,
@@ -71,9 +71,7 @@ export async function authorizeRequest(
 
       // For state-changing methods authenticated by cookie, enforce CSRF/same-origin protection
       const isStateChanging = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method.toUpperCase());
-      const rawCookie = typeof (req.headers as any).get === 'function'
-        ? (req.headers as Headers).get('cookie')
-        : (req.headers as any)['cookie'] || (req.headers as any)['Cookie'];
+      const rawCookie = req.headers.get('cookie') || req.headers.get('Cookie');
 
       if (isStateChanging && rawCookie) {
         try {

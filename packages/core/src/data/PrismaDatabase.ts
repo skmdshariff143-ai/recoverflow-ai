@@ -7,7 +7,7 @@
  */
 
 import crypto from 'crypto';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, type OutboxEvent } from '@prisma/client';
 import type {
   Merchant,
   CartEvent,
@@ -23,6 +23,7 @@ import type {
 import type { UserRole } from '../auth';
 import type {
   DatabasePort,
+  UpdateRecoveryCaseParams,
   OrganizationRecord,
   UserRecord,
   MembershipRecord,
@@ -466,7 +467,7 @@ export class PrismaDatabase implements DatabasePort {
   }
 
   async updateRecoveryCase(
-    paramsOrId: any,
+    paramsOrId: UpdateRecoveryCaseParams | string,
     legacyUpdates?: Partial<RecoveryCaseRecord>,
     legacyMerchantId?: string
   ): Promise<RecoveryCaseRecord | null> {
@@ -678,8 +679,7 @@ export class PrismaDatabase implements DatabasePort {
                 riskScore: 1.0,
               },
             });
-            const conflictError = new Error('INTEGRITY_CONFLICT: Webhook payload hash mismatch for provider event ID');
-            (conflictError as any).statusCode = 409;
+            const conflictError = Object.assign(new Error('INTEGRITY_CONFLICT: Webhook payload hash mismatch for provider event ID'), { statusCode: 409 });
             throw conflictError;
           }
         }
@@ -884,7 +884,7 @@ export class PrismaDatabase implements DatabasePort {
     const leaseExpiresAt = new Date(Date.now() + lockTtlMs);
 
     try {
-      const updatedEvents: any[] = await this.prisma.$queryRaw`
+      const updatedEvents = await this.prisma.$queryRaw<OutboxEvent[]>`
         WITH candidates AS (
           SELECT id FROM "OutboxEvent"
           WHERE (status = 'PENDING' AND "availableAt" <= ${now})
@@ -912,7 +912,7 @@ export class PrismaDatabase implements DatabasePort {
         eventType: e.eventType,
         payload: typeof e.payload === 'string' ? JSON.parse(e.payload) : e.payload,
         idempotencyKey: e.idempotencyKey,
-        status: e.status,
+        status: e.status as OutboxEventRecord['status'],
         attemptCount: e.attemptCount,
         maxAttempts: e.maxAttempts,
         availableAt: e.availableAt,
@@ -1105,8 +1105,8 @@ export class PrismaDatabase implements DatabasePort {
           },
         });
         return { acquired: true };
-      } catch (err: any) {
-        if (err.code === 'P2002') {
+      } catch (err: unknown) {
+        if (typeof err === 'object' && err !== null && 'code' in err && (err as { code: string }).code === 'P2002') {
           return { acquired: false };
         }
         throw err;

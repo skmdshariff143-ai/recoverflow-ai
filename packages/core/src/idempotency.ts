@@ -200,7 +200,7 @@ export class IdempotencyManager {
     return { status: 'new' };
   }
 
-  public check(key: string, request?: unknown): { status: 'new' | 'replay' | 'conflict'; receipt?: any } {
+  public check(key: string, request?: unknown): { status: 'new' | 'replay' | 'conflict'; receipt?: unknown } {
     const prefixedKey = `idemp:${key}`;
     const now = Date.now();
     const existing = this.memoryStore.get(prefixedKey);
