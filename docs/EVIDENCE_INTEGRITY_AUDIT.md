@@ -15,7 +15,7 @@
 | `docs/LIVE_RAZORPAY_EVIDENCE.md` | "Live Razorpay Test-Mode Integration Evidence" | Manually drafted JSON with 2025 timestamps and fabricated webhook signature | **Unverified Example / Fixture** | Delete fabricated timestamps and signatures; execute genuine HTTP calls to preview deployment in Phase 7. |
 | `docs/LIVE_GEMINI_EVIDENCE.md` | "Live Gemini AI Provenance & Integration Evidence" | Manually drafted JSON with 2025 timestamps | **Unverified Example** | Execute live HTTP POST calls to `/api/ai/diagnose` and `/api/ai/draft-message` on deployed preview in Phase 6. |
 | `src/app/api/recovery/webhook` | "Razorpay Webhook Verification" | Public webhook endpoint removed; system operates on outbound API dispatch and proactive status polling | **Removed Public Route** | Cleanly removed public endpoint and secrets; preserved internal telemetry actor `gateway_webhook`. |
-| `src/lib/server/idempotencyStore.ts` | "Idempotency Store" | In-memory `Map` with TTL | **Single-Instance Prototype Fixture** | Scope honestly as best-effort single-instance memory; document that multi-instance Vercel serverless requires Redis. |
+| `packages/core/src/idempotency.ts` | "Idempotency Store" | In-memory `Map` with TTL | **Single-Instance Prototype Fixture** | Scope honestly as best-effort single-instance memory; document that multi-instance Vercel serverless requires Redis. |
 | `README.md` & `docs/` | Test Count Claims | Stale counts (116, 126, 131) across various documents | **Stale Metrics Drift** | Harmonize to exact Vitest execution output from single source of truth. |
 | Codebase & UI | Regulatory Claims | Mentions of "RBI-compliant" / "100% compliant" | **Unsupported Regulatory Claim** | Eliminate all claims of regulatory certification or legal compliance. |
 

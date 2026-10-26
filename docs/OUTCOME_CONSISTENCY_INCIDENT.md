@@ -1,4 +1,4 @@
-﻿# Incident Report: Serverless In-Memory Outcome Consistency Contradiction
+# Incident Report: Serverless In-Memory Outcome Consistency Contradiction
 
 > **Incident Identifier**: INC-2026-08-30-OUTCOME-OBSERVER  
 > **Target Environment**: Production (`https://recoverflow-ai-kohl.vercel.app`)  
@@ -50,7 +50,7 @@ The following empirical reproduction was executed against production (`https://r
 ## 3. Technical Root Cause Analysis
 
 1. **Module-Level In-Memory Map**:
-   In `src/lib/adapters/recoveryAdapter.ts`, `DeterministicSimulatorAdapter` held transaction receipts in:
+   In `packages/core/src/adapters/recoveryAdapter.ts`, `DeterministicSimulatorAdapter` held transaction receipts in:
    ```typescript
    private transactionStore = new Map<string, RecoveryExecutionResult>();
    ```

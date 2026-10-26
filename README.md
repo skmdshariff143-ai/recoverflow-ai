@@ -94,4 +94,10 @@ scripts                   Provisioning, evaluation, workers
 
 Console handlers authorize on the server. Database adapters preserve integer minor amounts; API financial values are decimal strings. PostgreSQL reviews serialize access and commit the review, case state, and audit event together. The legacy evaluation routes remain isolated behind runtime gating until their provider contracts are ready for tenant-scoped activation.
 
-[Deployment](docs/DEPLOYMENT.md) · [Release readiness](docs/RELEASE_READINESS.md) · [Security architecture](SECURITY.md) · [Model methodology](MODEL.md) · [License](LICENSE)
+
+
+## Known limitations
+
+RecoverFlow AI documents its architectural trade-offs, including in-memory fallbacks when Redis is unconfigured, unanchored internal hash chains, and application-level tenant scoping. See [SECURITY.md (Section 6: Known Limitations)](SECURITY.md#6-known-limitations).
+
+[Deployment](docs/DEPLOYMENT.md) · [Release readiness](docs/RELEASE_READINESS.md) · [Security architecture & Known limitations](SECURITY.md#6-known-limitations) · [Model methodology](MODEL.md) · [License](LICENSE)

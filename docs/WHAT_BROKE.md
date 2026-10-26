@@ -23,7 +23,7 @@ This document provides transparent, specific accounts of real technical obstacle
   2. **Proactive Outcome Observation**: Revenue is credited *only* after `outcomeObserverManager` verifies an explicit `captured` or `paid` status from the gateway.
   3. **Removed Public Webhook Endpoint**: Completely deleted the public `POST /api/recovery/webhook` route (returns HTTP 404), replacing inbound push with deterministic outbound API status polling (`GET /api/recovery/status/:id`) and internal telemetry actors (`outcome_observer`, `gateway_webhook`).
 - **Test Preventing Regression**:  
-  `src/lib/engine/__tests__/closedLoopProductFlow.test.ts` asserts that payment link creation returns `settledAmountPaise: 0`, and `src/lib/engine/__tests__/outcomeObserver.test.ts` validates that only verified captured outcomes update recovered balances.
+  `tests/payback/lib_engine_closedLoopProductFlow.test.ts` asserts that payment link creation returns `settledAmountPaise: 0`, and `tests/payback/lib_engine_outcomeObserver.test.ts` validates that only verified captured outcomes update recovered balances.
 
 ---
 
@@ -87,7 +87,7 @@ This document provides transparent, specific accounts of real technical obstacle
   const recencyDecay = Math.exp(-diffDays / 14);
   ```
 - **Test Preventing Regression**:  
-  `src/lib/engine/__tests__/closedLoopProductFlow.test.ts` tests end-to-end scoring, approval gating, and execution on partial/enterprise records without NaN exceptions.
+  `tests/payback/lib_engine_closedLoopProductFlow.test.ts` tests end-to-end scoring, approval gating, and execution on partial/enterprise records without NaN exceptions.
 
 ---
 
@@ -100,7 +100,7 @@ This document provides transparent, specific accounts of real technical obstacle
 - **How It Was Fixed**:  
   Implemented `verifyLedgerIntegrity()` in `hashChainLedger.ts` which iterates through the entire chain, recomputing SHA-256 digests over canonical JSON payloads and reporting `tamperedIndex` alongside detailed error descriptions.
 - **Test Preventing Regression**:  
-  `src/lib/engine/__tests__/hashChainLedger.test.ts` explicitly asserts `tamperedIndex: 1` when mutating, deleting, reordering, or inserting blocks.
+  `tests/payback/lib_engine_hashChainLedger.test.ts` explicitly asserts `tamperedIndex: 1` when mutating, deleting, reordering, or inserting blocks.
 
 ---
 
@@ -119,4 +119,4 @@ This document provides transparent, specific accounts of real technical obstacle
   3. **Tamper Rejection (Fail Closed)**: Forged or modified references fail checksum verification and return `status: "failed"`, `liveSettledAmountPaise: 0`, and `syntheticOutcomeAmountPaise: 0`.  
   4. **Conflict Detection**: `OutcomeObservationManager` detects contradictory provider signals for the same intervention and routes them to `OUTCOME_CONFLICT` without double-crediting revenue.
 - **Test Preventing Regression**:  
-  `src/lib/adapters/__tests__/recoveryAdapter.test.ts` asserts stateless reconstruction across fresh unshared instances, tamper rejection, and 25 parallel concurrent requests; `scripts/verify-outcome-consistency.ts` audits live deployed hosts.
+  `tests/payback/lib_adapters_recoveryAdapter.test.ts` asserts stateless reconstruction across fresh unshared instances, tamper rejection, and 25 parallel concurrent requests; `scripts/verify-outcome-consistency.ts` audits live deployed hosts.

@@ -26,7 +26,7 @@ Verified locally against Next.js 16.3.5. Test outcomes are evidence for the exer
 | Check | Result |
 | --- | --- |
 | ESLint and TypeScript | Passed |
-| Unit/application contracts | 465 passed across 79 files |
+| Unit/application contracts | 601 passed across 93 files |
 | Health/readiness contracts | 2 passed |
 | Offline advisory-agent scenarios | 50 evaluated successfully |
 | Synthetic artifact integrity | Passed |
