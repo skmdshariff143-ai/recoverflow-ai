@@ -6,16 +6,18 @@
  * Route: DELETE /api/webhooks/razorpay
  *
  * Accepts real and test-mode webhook events from Razorpay, validates cryptographic
- * HMAC SHA-256 signatures, transforms payloads into the engine's canonical schema,
- * and registers them in the live cohort queue.
+ * HMAC SHA-256 signatures, provides delivery idempotency and replay protection,
+ * transforms payloads into the engine's canonical schema, and registers them in the live cohort queue.
  */
 
+import crypto from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import {
   verifyRazorpayWebhookSignature,
   mapRazorpayWebhookToFailedPayment,
   type RazorpayWebhookPayload,
   liveWebhookStore,
+  globalIdempotency,
 } from '@recoverflow/core';
 import { enforceRateLimit } from '@/lib/apiGuards';
 import { authorizeRequest, isAnonymousDemoEnabled } from '@/lib/routeAuth';
@@ -40,7 +42,8 @@ export async function POST(req: NextRequest) {
     const signature = req.headers.get('x-razorpay-signature');
     const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
 
-    // 1. Signature Verification
+    // 1. Signature Verification (HMAC-SHA256)
+    // Critical: Rejected BEFORE any deduplication lookup runs
     if (signature) {
       if (!secret) {
         return NextResponse.json(
@@ -68,11 +71,29 @@ export async function POST(req: NextRequest) {
       console.log(`[Razorpay Webhook] Unsigned event accepted in demo mode.`);
     }
 
-    // 2. Parse JSON Payload
+    // 2. Delivery Identifier & Idempotency / Replay Protection
+    // Reads x-razorpay-event-id header, falling back to sha256(rawBody)
+    const eventIdHeader = req.headers.get('x-razorpay-event-id');
+    const deliveryId = eventIdHeader?.trim()
+      ? eventIdHeader.trim()
+      : crypto.createHash('sha256').update(rawBody, 'utf-8').digest('hex');
+    const idempotencyKey = `razorpay:webhook:${deliveryId}`;
+
+    const acquired = await globalIdempotency.acquire(idempotencyKey, 86400);
+    if (!acquired) {
+      console.log(`[Razorpay Webhook] Duplicate delivery detected for event '${deliveryId}'. Replay ignored.`);
+      return NextResponse.json(
+        { received: true, duplicate: true },
+        { status: 200 }
+      );
+    }
+
+    // 3. Parse JSON Payload
     let payload: RazorpayWebhookPayload;
     try {
       payload = JSON.parse(rawBody);
     } catch {
+      await globalIdempotency.release(idempotencyKey);
       return NextResponse.json(
         { error: 'Invalid JSON payload structure' },
         { status: 400 }
@@ -80,6 +101,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (!payload || typeof payload !== 'object' || !payload.event) {
+      await globalIdempotency.release(idempotencyKey);
       return NextResponse.json(
         { error: 'Invalid webhook payload: missing event' },
         { status: 400 }
@@ -88,8 +110,9 @@ export async function POST(req: NextRequest) {
 
     console.log(`[Razorpay Webhook] Processing event: '${payload.event}'`);
 
-    // 3. Strict allowlist of supported recovery events
+    // 4. Strict allowlist of supported recovery events
     if (!SUPPORTED_EVENTS.has(payload.event)) {
+      await globalIdempotency.release(idempotencyKey);
       return NextResponse.json(
         { error: `Unsupported or unknown webhook event: '${payload.event}'` },
         { status: 400 }
@@ -98,10 +121,10 @@ export async function POST(req: NextRequest) {
 
     const countBefore = liveWebhookStore.getCount();
 
-    // 4. Map to Canonical FailedPayment Schema
+    // 5. Map to Canonical FailedPayment Schema
     const failedPayment = mapRazorpayWebhookToFailedPayment(payload);
 
-    // 5. Save to In-Memory Live Cohort Store
+    // 6. Save to In-Memory Live Cohort Store
     liveWebhookStore.addEvent(failedPayment);
     const countAfter = liveWebhookStore.getCount();
 
