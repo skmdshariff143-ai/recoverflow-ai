@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { LogOut, Menu, Search, Building2 } from 'lucide-react';
-import type { UserSession } from '../../../../../packages/core/src/auth';
+import type { UserSession } from '@recoverflow/core';
 import { api } from '../console/WorkspaceProvider';
 
 export function AppHeader({ session, onOpenCommandPalette, onOpenNavigation }: { session: UserSession; onOpenCommandPalette: () => void; onOpenNavigation: () => void }) {

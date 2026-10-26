@@ -1,7 +1,7 @@
 import { db } from './database';
-import { getRuntimeMode } from '../../../../../packages/core/src/data/databaseFactory';
-import type { UserSession } from '../../../../../packages/core/src/auth';
-import type { RecoveryCaseRecord } from '../../../../../packages/core/src/data/DatabasePort';
+import { getRuntimeMode } from '@recoverflow/core';
+import type { UserSession } from '@recoverflow/core';
+import type { RecoveryCaseRecord } from '@recoverflow/core';
 import { maskIdentifier, summarizeCases, type ConsoleCase, type ConsoleSnapshot } from '../console-types';
 import { ApiError } from './access';
 

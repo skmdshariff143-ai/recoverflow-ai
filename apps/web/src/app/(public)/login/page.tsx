@@ -3,7 +3,7 @@ import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { readSession } from '@/lib/server/access';
 import { LoginForm } from '@/components/console/LoginForm';
-import { getRuntimeMode } from '../../../../../../packages/core/src/data/databaseFactory';
+import { getRuntimeMode } from '@recoverflow/core';
 
 export const metadata: Metadata = {
   title: 'Sign In',

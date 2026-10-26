@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
-import type { UserSession } from '../../../../../packages/core/src/auth';
+import type { UserSession } from '@recoverflow/core';
 import { AppSidebar } from './AppSidebar';
 import { AppHeader } from './AppHeader';
 import { GlobalCommandPalette } from './GlobalCommandPalette';

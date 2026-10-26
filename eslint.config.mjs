@@ -16,6 +16,23 @@ const eslintConfig = defineConfig([
       "@typescript-eslint/no-require-imports": "off",
     },
   },
+  {
+    files: ["apps/**/*", "packages/**/*"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["**/packages/**", "**/agents/**"],
+              message:
+                "Do not use relative paths reaching into another package. Import via workspace package names (e.g. '@recoverflow/core', '@recoverflow/agents').",
+            },
+          ],
+        },
+      ],
+    },
+  },
   globalIgnores([
     ".next/**",
     "apps/**/.next/**",

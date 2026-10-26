@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/server/database';
-import { createSessionToken, verifySessionToken, DEMO_PERSONA_SESSIONS, extractTokenFromHeaders, hashSessionToken } from '../../../../../../../packages/core/src/auth';
-import { getRuntimeMode } from '../../../../../../../packages/core/src/data/databaseFactory';
-import { verifyPassword } from '../../../../../../../packages/core/src/password';
+import { createSessionToken, verifySessionToken, DEMO_PERSONA_SESSIONS, extractTokenFromHeaders, hashSessionToken } from '@recoverflow/core';
+import { getRuntimeMode } from '@recoverflow/core';
+import { verifyPassword } from '@recoverflow/core';
 import { route, ApiError, readSession } from '@/lib/server/access';
 import { limitLogin } from '@/lib/server/login-limit';
 

@@ -42,7 +42,7 @@ import { checkSafetyRules } from './safetyFilter';
 import { calculateNextContactTime } from './quietHours';
 import { evaluateApprovalStatus } from './approvalGate';
 import { selectIntervention } from './interventions';
-import { scorePaymentWithTrainedModel } from '../../agents/src/trainModel';
+import { scorePaymentWithTrainedModel } from './trainModel';
 import type { FrozenPotentialOutcomes } from './outcomeEnvironment';
 
 export type RecoveryState =

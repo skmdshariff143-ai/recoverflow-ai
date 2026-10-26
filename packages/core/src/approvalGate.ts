@@ -10,7 +10,7 @@
  */
 
 import type { FailedPayment, ApprovalStatus } from './index';
-import type { PaymentScore } from '../../agents/src/scoreRecovery';
+import type { PaymentScore } from './scoreRecovery';
 
 /** High expected value threshold (500,000 paise = ₹5,000) for batch auto-approval simulation. */
 export const HIGH_VALUE_AUTO_APPROVE_EV_THRESHOLD_PAISE = 500_000;

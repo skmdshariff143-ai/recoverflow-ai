@@ -1,4 +1,4 @@
-import type { UserSession } from '../../../../packages/core/src/auth';
+import type { UserSession } from '@recoverflow/core';
 
 export interface ConsoleCase {
   id: string; paymentId: string; customer: string; status: string; amountMinor: string; currency: string;
