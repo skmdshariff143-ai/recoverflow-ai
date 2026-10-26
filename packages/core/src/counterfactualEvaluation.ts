@@ -122,6 +122,7 @@ export function evaluateCohortPolicies(
     budget,
     referenceDate: refDate,
     scoringModel: 'trained_logistic',
+    simulateAutoApproval: true,
   });
 
   let rfRecoveredPaise = 0;

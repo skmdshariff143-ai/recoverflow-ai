@@ -192,6 +192,7 @@ export function compareModelCalibration(
   const heuristicPipeline = processRecoveryPipeline(payments, {
     ...options,
     scoringModel: 'heuristic',
+    simulateAutoApproval: true,
   });
   const heuristicExecuted = executeBatchInterventions(heuristicPipeline.items, options);
   const heuristicCalib = computeCalibrationReport(heuristicExecuted);
@@ -206,6 +207,7 @@ export function compareModelCalibration(
   const trainedPipeline = processRecoveryPipeline(payments, {
     ...options,
     scoringModel: 'trained_logistic',
+    simulateAutoApproval: true,
   });
   const trainedExecuted = executeBatchInterventions(trainedPipeline.items, options);
   const trainedCalib = computeCalibrationReport(trainedExecuted);

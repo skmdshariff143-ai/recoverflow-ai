@@ -206,6 +206,7 @@ export interface PipelineOptions {
   budget?: number;
   simulationSeed?: number;
   scoringModel?: 'heuristic' | 'trained_logistic';
+  simulateAutoApproval?: boolean;
   autoApproveHighValueWithHighEV?: boolean;
   referenceDate?: Date;
   clock?: Clock;

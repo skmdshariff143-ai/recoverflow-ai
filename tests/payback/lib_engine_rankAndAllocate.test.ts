@@ -192,7 +192,7 @@ describe('processRecoveryPipeline', () => {
     const raw = readFileSync(fixturePath, 'utf-8');
     const payments: FailedPayment[] = JSON.parse(raw);
 
-    const result = processRecoveryPipeline(payments, { budget: 40 });
+    const result = processRecoveryPipeline(payments, { budget: 40, simulateAutoApproval: true });
 
     console.log('\n┌────────────────────────────────────────────────────────┐');
     console.log('│  PayBack AI Pipeline Status Breakdown (100-record run) │');

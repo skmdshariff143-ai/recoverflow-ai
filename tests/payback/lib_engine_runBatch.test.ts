@@ -25,6 +25,8 @@ describe('runRecoveryBatch', () => {
       budget: 40,
       simulationSeed: 42,
       disputeRate: 0.03,
+      referenceDate: BENCHMARK_REFERENCE_DATETIME_MIDDAY,
+      simulateAutoApproval: true,
     });
 
     console.log('\n╔════════════════════════════════════════════════════════════════════════════╗');

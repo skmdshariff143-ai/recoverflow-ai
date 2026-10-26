@@ -4,8 +4,9 @@
  * Validates:
  *  1. Standard-value invoices never require manual approval.
  *  2. High-value invoices with low expected value remain in 'pending' status.
- *  3. High-value invoices with high expected value (>= ₹5,000) are conditionally auto-approved in simulation.
- *  4. Strict policy (autoApproveHighEV: false) requires manual sign-off on all high-value items.
+ *  3. High-value invoices with high expected value (>= ₹5,000) are conditionally auto-approved in simulation (DEMO/TEST only).
+ *  4. Strict policy (simulateAutoApproval: false) requires manual sign-off on all high-value items.
+ *  5. SANDBOX and LIVE modes fail closed to manual review (auto-approval completely blocked).
  */
 
 import { describe, it, expect } from 'vitest';
@@ -64,7 +65,7 @@ describe('evaluateApprovalStatus', () => {
     const payment = makeMockPayment('high_value', 1_000_000); // ₹10,000
     const score = makeMockScore(200_000); // ₹2,000 EV (< ₹5,000 threshold)
 
-    const result = evaluateApprovalStatus(payment, score, { autoApproveHighEV: true });
+    const result = evaluateApprovalStatus(payment, score, { simulateAutoApproval: true, runtimeMode: 'TEST' });
     expect(result.status).toBe('pending');
     expect(result.note).toContain('requires explicit merchant authorization');
   });
@@ -73,16 +74,66 @@ describe('evaluateApprovalStatus', () => {
     const payment = makeMockPayment('high_value', 2_000_000); // ₹20,000
     const score = makeMockScore(HIGH_VALUE_AUTO_APPROVE_EV_THRESHOLD_PAISE + 10_000); // > ₹5,000 EV
 
-    const result = evaluateApprovalStatus(payment, score, { autoApproveHighEV: true });
+    const result = evaluateApprovalStatus(payment, score, { simulateAutoApproval: true, runtimeMode: 'TEST' });
     expect(result.status).toBe('approved');
     expect(result.note).toContain('conditionally auto-approved');
   });
 
-  it('high-value invoice remains "pending" if autoApproveHighEV is disabled', () => {
+  it('high-value invoice remains "pending" if simulateAutoApproval is disabled', () => {
     const payment = makeMockPayment('high_value', 5_000_000); // ₹50,000
     const score = makeMockScore(3_000_000); // ₹30,000 EV
 
-    const result = evaluateApprovalStatus(payment, score, { autoApproveHighEV: false });
+    const result = evaluateApprovalStatus(payment, score, { simulateAutoApproval: false, runtimeMode: 'TEST' });
     expect(result.status).toBe('pending');
+  });
+
+  // Task d: Runtime mode check across DEMO, TEST, SANDBOX, LIVE
+  it('enforces fail-closed manual review in SANDBOX and LIVE modes, and permits simulation auto-approval in DEMO and TEST modes', () => {
+    const payment = makeMockPayment('high_value', 2_000_000); // ₹20,000 (high value)
+    const score = makeMockScore(HIGH_VALUE_AUTO_APPROVE_EV_THRESHOLD_PAISE + 100_000); // ₹6,000 EV
+
+    // 1. LIVE mode: MUST remain 'pending' even with simulateAutoApproval: true
+    const liveResult = evaluateApprovalStatus(payment, score, {
+      simulateAutoApproval: true,
+      runtimeMode: 'LIVE',
+    });
+    expect(liveResult.status).toBe('pending');
+    expect(liveResult.note).toContain('LIVE mode');
+
+    // 2. SANDBOX mode: MUST remain 'pending' even with simulateAutoApproval: true
+    const sandboxResult = evaluateApprovalStatus(payment, score, {
+      simulateAutoApproval: true,
+      runtimeMode: 'SANDBOX',
+    });
+    expect(sandboxResult.status).toBe('pending');
+    expect(sandboxResult.note).toContain('SANDBOX mode');
+
+    // 3. DEMO mode: auto-approves when simulateAutoApproval is true
+    const demoApproved = evaluateApprovalStatus(payment, score, {
+      simulateAutoApproval: true,
+      runtimeMode: 'DEMO',
+    });
+    expect(demoApproved.status).toBe('approved');
+
+    // 4. DEMO mode: defaults to 'pending' when simulateAutoApproval is false
+    const demoPending = evaluateApprovalStatus(payment, score, {
+      simulateAutoApproval: false,
+      runtimeMode: 'DEMO',
+    });
+    expect(demoPending.status).toBe('pending');
+
+    // 5. TEST mode: auto-approves when simulateAutoApproval is true
+    const testApproved = evaluateApprovalStatus(payment, score, {
+      simulateAutoApproval: true,
+      runtimeMode: 'TEST',
+    });
+    expect(testApproved.status).toBe('approved');
+
+    // 6. TEST mode: defaults to 'pending' when simulateAutoApproval is false
+    const testPending = evaluateApprovalStatus(payment, score, {
+      simulateAutoApproval: false,
+      runtimeMode: 'TEST',
+    });
+    expect(testPending.status).toBe('pending');
   });
 });

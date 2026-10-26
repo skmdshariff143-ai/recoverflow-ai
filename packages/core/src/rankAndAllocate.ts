@@ -35,7 +35,7 @@ export function processRecoveryPipeline(
   const budget = options.budget ?? DEFAULT_RECOVERY_BUDGET;
   const clock = options.clock ?? defaultClock;
   const refDate = options.referenceDate ?? clock.now();
-  const autoApprove = options.autoApproveHighValueWithHighEV ?? true;
+  const simulateAutoApproval = options.simulateAutoApproval ?? options.autoApproveHighValueWithHighEV ?? false;
   const useTrainedModel = options.scoringModel === 'trained_logistic';
 
   const stoppedItems: PipelineItem[] = [];
@@ -67,7 +67,7 @@ export function processRecoveryPipeline(
 
     // Step 2: High-Value Approval Gate
     const approval = evaluateApprovalStatus(payment, score, {
-      autoApproveHighEV: autoApprove,
+      simulateAutoApproval,
     });
 
     const intervention = selectIntervention(payment.failure_category);

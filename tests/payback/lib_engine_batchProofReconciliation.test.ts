@@ -28,7 +28,7 @@ describe('Batch Recovery Proof & Invariant Reconciliation', () => {
 
   it('proves that the batch financial waterfall balances with exact integer-paise reconciliation', () => {
     const payments = generateSyntheticPayments({ seed: 42, totalRecords: 100 });
-    const result = runRecoveryBatch(payments, { budget: 40, simulationSeed: 42, referenceDate: BENCHMARK_REFERENCE_DATETIME_MIDDAY });
+    const result = runRecoveryBatch(payments, { budget: 40, simulationSeed: 42, referenceDate: BENCHMARK_REFERENCE_DATETIME_MIDDAY, simulateAutoApproval: true });
 
     const totalAtRiskPaise = payments.reduce((acc, p) => acc + p.amount, 0);
 
@@ -52,7 +52,7 @@ describe('Batch Recovery Proof & Invariant Reconciliation', () => {
 
   it('proves that all 5 batch partitions are mutually exclusive and satisfy both core financial equations', () => {
     const payments = generateSyntheticPayments({ seed: 42, totalRecords: 100 });
-    const result = runRecoveryBatch(payments, { budget: 40, simulationSeed: 42, referenceDate: BENCHMARK_REFERENCE_DATETIME_MIDDAY });
+    const result = runRecoveryBatch(payments, { budget: 40, simulationSeed: 42, referenceDate: BENCHMARK_REFERENCE_DATETIME_MIDDAY, simulateAutoApproval: true });
 
     const totalAtRiskPaise = payments.reduce((acc, p) => acc + p.amount, 0);
 
