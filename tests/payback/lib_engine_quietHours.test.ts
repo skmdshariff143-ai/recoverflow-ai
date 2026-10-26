@@ -9,6 +9,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { BENCHMARK_REFERENCE_DATE_STRING } from '@recoverflow/core';
 import {
   isInsideQuietHours,
   calculateNextContactTime,
@@ -21,16 +22,16 @@ describe('quietHours', () => {
   // ── 1. getLocalTimeParts ────────────────────────────────────────
 
   it('correctly parses time components in Asia/Kolkata (UTC+5:30)', () => {
-    // 2025-08-30T10:00:00Z -> 15:30 in Asia/Kolkata
-    const date = new Date('2025-08-30T10:00:00Z');
+    // Benchmark reference midday -> 15:30 in Asia/Kolkata
+    const date = new Date(`${BENCHMARK_REFERENCE_DATE_STRING}T10:00:00Z`);
     const parts = getLocalTimeParts(date, 'Asia/Kolkata');
     expect(parts.hour).toBe(15);
     expect(parts.minute).toBe(30);
   });
 
   it('correctly parses time components in America/New_York (UTC-4 in August EDT)', () => {
-    // 2025-08-30T10:00:00Z -> 06:00 EDT
-    const date = new Date('2025-08-30T10:00:00Z');
+    // Benchmark reference midday -> 06:00 EDT
+    const date = new Date(`${BENCHMARK_REFERENCE_DATE_STRING}T10:00:00Z`);
     const parts = getLocalTimeParts(date, 'America/New_York');
     expect(parts.hour).toBe(6);
     expect(parts.minute).toBe(0);
@@ -46,7 +47,7 @@ describe('quietHours', () => {
     };
 
     // 23:30 IST (18:00 UTC) -> inside quiet hours
-    const night = new Date('2025-08-30T18:00:00Z');
+    const night = new Date(`${BENCHMARK_REFERENCE_DATE_STRING}T18:00:00Z`);
     expect(isInsideQuietHours(night, window)).toBe(true);
 
     // 04:30 IST (23:00 UTC previous day) -> inside quiet hours
@@ -54,7 +55,7 @@ describe('quietHours', () => {
     expect(isInsideQuietHours(earlyMorning, window)).toBe(true);
 
     // 14:30 IST (09:00 UTC) -> outside quiet hours
-    const afternoon = new Date('2025-08-30T09:00:00Z');
+    const afternoon = new Date(`${BENCHMARK_REFERENCE_DATE_STRING}T09:00:00Z`);
     expect(isInsideQuietHours(afternoon, window)).toBe(false);
   });
 
@@ -66,11 +67,11 @@ describe('quietHours', () => {
     };
 
     // 14:00 BST (13:00 UTC in August) -> inside
-    const inside = new Date('2025-08-30T13:00:00Z');
+    const inside = new Date(`${BENCHMARK_REFERENCE_DATE_STRING}T13:00:00Z`);
     expect(isInsideQuietHours(inside, window)).toBe(true);
 
     // 10:00 BST (09:00 UTC) -> outside
-    const outside = new Date('2025-08-30T09:00:00Z');
+    const outside = new Date(`${BENCHMARK_REFERENCE_DATE_STRING}T09:00:00Z`);
     expect(isInsideQuietHours(outside, window)).toBe(false);
   });
 
@@ -82,7 +83,7 @@ describe('quietHours', () => {
       end: 7,
       timezone: 'Asia/Kolkata',
     };
-    const midday = new Date('2025-08-30T08:30:00Z'); // 14:00 IST
+    const midday = new Date(`${BENCHMARK_REFERENCE_DATE_STRING}T08:30:00Z`); // 14:00 IST
     const nextTime = calculateNextContactTime(midday, window);
 
     expect(nextTime.getTime()).toBe(midday.getTime());
@@ -97,7 +98,7 @@ describe('quietHours', () => {
     ];
 
     // Test across every hour of a 24-hour cycle
-    const base = new Date('2025-08-30T00:00:00Z');
+    const base = new Date(`${BENCHMARK_REFERENCE_DATE_STRING}T00:00:00Z`);
 
     for (const win of windows) {
       for (let h = 0; h < 24; h++) {

@@ -41,6 +41,8 @@
  */
 
 import type { FailedPayment, FailureCategory } from './payment-types';
+import type { Clock } from './utils/clock';
+import { defaultClock } from './utils/clock';
 import { calculateExpectedValuePaise, probabilityToBps } from './financial';
 
 // ─── Category Base Recovery Rates ────────────────────────────────────
@@ -106,16 +108,16 @@ export const SCORING_WEIGHTS = {
   W_ATTEMPT_MAX:    0.25,
 } as const;
 
-// ─── Default Reference Date ──────────────────────────────────────────
-// Matches the synthetic data generator's reference date for consistency.
-
-const DEFAULT_REFERENCE_DATE = new Date('2025-08-30T00:00:00Z');
+// ─── Reference Date Default ──────────────────────────────────────────
+// Resolved dynamically via injected Clock or explicit referenceDate.
 
 // ─── Public Types ───────────────────────────────────────────────────
 
 export interface ScoringConfig {
-  /** Reference date for recency calculation. Default: 2025-08-30. */
+  /** Reference date for recency calculation. Defaults to clock.now(). */
   referenceDate?: Date;
+  /** Injected clock abstraction. Defaults to defaultClock. */
+  clock?: Clock;
   /** Scoring model algorithm to apply. Default: 'heuristic'. */
   modelType?: 'heuristic' | 'trained_logistic';
 }
@@ -157,7 +159,8 @@ export function scorePayment(
   payment: FailedPayment,
   config: ScoringConfig = {},
 ): PaymentScore {
-  const refDate = config.referenceDate ?? DEFAULT_REFERENCE_DATE;
+  const clock = config.clock ?? defaultClock;
+  const refDate = config.referenceDate ?? clock.now();
   const W = SCORING_WEIGHTS;
 
   // ── Feature extraction ──────────────────────────────────────────

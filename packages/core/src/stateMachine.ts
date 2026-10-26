@@ -222,9 +222,10 @@ export function initRecoveryWorkflow(
  */
 export function stepWorkflowDiagnosisAndEligibility(
   workflow: RecoveryWorkflowInstance,
-  options: { referenceDate?: Date; autoApproveHighEV?: boolean } = {},
+  options: { referenceDate?: Date; clock?: Clock; autoApproveHighEV?: boolean } = {},
 ): void {
-  const refDate = options.referenceDate ?? new Date('2025-08-30T10:00:00Z');
+  const clock = options.clock ?? defaultClock;
+  const refDate = options.referenceDate ?? clock.now();
   const autoApprove = options.autoApproveHighEV ?? false;
 
   // Step to DIAGNOSED

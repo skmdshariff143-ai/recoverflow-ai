@@ -20,10 +20,19 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import {
-  scorePayment,
-  scorePaymentBatch,
+  scorePayment as rawScorePayment,
+  scorePaymentBatch as rawScorePaymentBatch,
   CATEGORY_BASE_RATES,
+  BENCHMARK_REFERENCE_DATE,
+  BENCHMARK_REFERENCE_DATE_STRING,
 } from '@recoverflow/core';
+
+// Test code passes fixed benchmark reference date explicitly
+const scorePayment = (payment: FailedPayment, config?: Parameters<typeof rawScorePayment>[1]) =>
+  rawScorePayment(payment, { referenceDate: BENCHMARK_REFERENCE_DATE, ...config });
+
+const scorePaymentBatch = (payments: FailedPayment[], config?: Parameters<typeof rawScorePaymentBatch>[1]) =>
+  rawScorePaymentBatch(payments, { referenceDate: BENCHMARK_REFERENCE_DATE, ...config });
 import { calculateExpectedValuePaise, probabilityToBps } from '@recoverflow/core';
 import type { FailedPayment, FailureCategory } from '@recoverflow/core';
 
@@ -80,7 +89,7 @@ describe('scorePayment', () => {
     const bestCase = makePayment({
       failure_category: 'duplicate_attempt',
       attempt_count: 0,
-      failure_timestamp: '2025-08-30T00:00:00.000Z', // same as reference
+      failure_timestamp: `${BENCHMARK_REFERENCE_DATE_STRING}T00:00:00.000Z`, // same as reference
     });
     const worstCase = makePayment({
       failure_category: 'permanent_account_closure',
@@ -224,6 +233,32 @@ describe('scorePayment', () => {
     const sOld = scorePayment(old);
 
     expect(sRecent.recovery_probability).toBeGreaterThan(sOld.recovery_probability);
+  });
+
+
+  it('produces different recency contribution when referenceDate changes, and identical result for same date', () => {
+    const payment = makePayment({
+      failure_timestamp: `${BENCHMARK_REFERENCE_DATE_STRING}T00:00:00.000Z`,
+    });
+
+    const date1 = new Date(`${BENCHMARK_REFERENCE_DATE_STRING}T00:00:00.000Z`);
+    const date2 = new Date(`${BENCHMARK_REFERENCE_DATE_STRING}T00:00:00.000Z`);
+    date2.setDate(date2.getDate() + 30); // 30 days later
+
+    const score1 = rawScorePayment(payment, { referenceDate: date1 });
+    const score1Duplicate = rawScorePayment(payment, { referenceDate: date1 });
+    const score2 = rawScorePayment(payment, { referenceDate: date2 });
+
+    const recency1 = score1.explanation.find((f: { factor: string; contribution: number }) => f.factor === 'recency')!;
+    const recency1Dup = score1Duplicate.explanation.find((f: { factor: string; contribution: number }) => f.factor === 'recency')!;
+    const recency2 = score2.explanation.find((f: { factor: string; contribution: number }) => f.factor === 'recency')!;
+
+    expect(recency1.contribution).toBe(recency1Dup.contribution);
+    expect(score1.recovery_probability).toBe(score1Duplicate.recovery_probability);
+
+    expect(recency1.contribution).not.toBe(recency2.contribution);
+    expect(recency1.contribution).toBeGreaterThan(recency2.contribution);
+    expect(score1.recovery_probability).toBeGreaterThan(score2.recovery_probability);
   });
 
   // ── 8. Prior attempts penalty ──────────────────────────────────

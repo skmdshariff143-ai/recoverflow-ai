@@ -200,11 +200,14 @@ export interface BatchExecutionResult {
   calibration: CalibrationReport;
 }
 
+import type { Clock } from './utils/clock';
+
 export interface PipelineOptions {
   budget?: number;
   simulationSeed?: number;
   scoringModel?: 'heuristic' | 'trained_logistic';
   autoApproveHighValueWithHighEV?: boolean;
   referenceDate?: Date;
+  clock?: Clock;
   disputeRate?: number;
 }

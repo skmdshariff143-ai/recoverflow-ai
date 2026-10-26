@@ -3,6 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { BENCHMARK_REFERENCE_DATE_STRING } from '@recoverflow/core';
 import {
   buildHashChainedLedger,
   verifyLedgerIntegrity,
@@ -17,7 +18,7 @@ describe('Tamper-Evident SHA-256 Hash-Chained Audit Ledger', () => {
     {
       id: 'aud_000001',
       payment_id: 'pay_001',
-      timestamp: '2025-08-30T10:00:01Z',
+      timestamp: `${BENCHMARK_REFERENCE_DATE_STRING}T10:00:01Z`,
       stage: 'feature_scoring',
       decision: 'Scored recovery probability: 78.5%',
       reason: 'Bank downtime high recoverable baseline',
@@ -26,7 +27,7 @@ describe('Tamper-Evident SHA-256 Hash-Chained Audit Ledger', () => {
     {
       id: 'aud_000002',
       payment_id: 'pay_001',
-      timestamp: '2025-08-30T10:00:02Z',
+      timestamp: `${BENCHMARK_REFERENCE_DATE_STRING}T10:00:02Z`,
       stage: 'safety_filter',
       decision: 'Eligible for recovery',
       reason: 'No opt-out flag; within 3 attempts limit',
@@ -34,7 +35,7 @@ describe('Tamper-Evident SHA-256 Hash-Chained Audit Ledger', () => {
     {
       id: 'aud_000003',
       payment_id: 'pay_001',
-      timestamp: '2025-08-30T10:00:03Z',
+      timestamp: `${BENCHMARK_REFERENCE_DATE_STRING}T10:00:03Z`,
       stage: 'intervention_execution',
       decision: 'Payment recovered',
       reason: 'Captured ₹5,000 via automated gateway retry',

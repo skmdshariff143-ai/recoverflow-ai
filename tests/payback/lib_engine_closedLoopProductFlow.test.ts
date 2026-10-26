@@ -17,6 +17,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { BENCHMARK_REFERENCE_DATE_STRING, BENCHMARK_REFERENCE_DATETIME_MIDDAY } from '@recoverflow/core';
 import type { FailedPayment } from '@recoverflow/core';
 import {
   initRecoveryWorkflow,
@@ -43,7 +44,7 @@ const MOCK_HIGH_VALUE_PAYMENT: FailedPayment = {
   attempt_count: 0,
   opt_out: false,
   quiet_hours_window: { start: 21, end: 8, timezone: 'Asia/Kolkata' },
-  failure_timestamp: '2025-08-30T10:00:00Z',
+  failure_timestamp: `${BENCHMARK_REFERENCE_DATE_STRING}T10:00:00Z`,
   customer_payment_history: {
     on_time_payment_rate: 0.95,
     broken_promise_count: 0,
@@ -80,7 +81,7 @@ describe('Closed-Loop Workflow Product Flow Verification', () => {
     });
 
     // ── 2. Stepping Diagnosis & Eligibility ──────────────────────────
-    stepWorkflowDiagnosisAndEligibility(workflow, { autoApproveHighEV: false });
+    stepWorkflowDiagnosisAndEligibility(workflow, { referenceDate: BENCHMARK_REFERENCE_DATETIME_MIDDAY, autoApproveHighEV: false });
 
     // Invariant: High-value enterprise payment must stop for approval
     expect(workflow.currentState).toBe('APPROVAL_REQUIRED');
@@ -198,7 +199,7 @@ describe('Closed-Loop Workflow Product Flow Verification', () => {
     expect(safetyCheck.stop_detail).toContain('opted out');
 
     const workflow = initRecoveryWorkflow(MOCK_OPTED_OUT_PAYMENT);
-    stepWorkflowDiagnosisAndEligibility(workflow);
+    stepWorkflowDiagnosisAndEligibility(workflow, { referenceDate: BENCHMARK_REFERENCE_DATETIME_MIDDAY });
     expect(workflow.currentState).toBe('STOPPED');
     expect(workflow.terminalReason).toContain('opted out');
   });

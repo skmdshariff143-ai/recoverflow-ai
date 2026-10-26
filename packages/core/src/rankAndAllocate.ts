@@ -17,6 +17,7 @@ import { checkSafetyRules } from './safetyFilter';
 import { evaluateApprovalStatus } from './approvalGate';
 import { calculateNextContactTime } from './quietHours';
 import { selectIntervention } from './interventions';
+import { defaultClock } from './utils/clock';
 
 export const DEFAULT_RECOVERY_BUDGET = 40;
 
@@ -32,7 +33,8 @@ export function processRecoveryPipeline(
   options: PipelineOptions = {},
 ): BatchPipelineSummary {
   const budget = options.budget ?? DEFAULT_RECOVERY_BUDGET;
-  const refDate = options.referenceDate ?? new Date('2025-08-30T10:00:00Z');
+  const clock = options.clock ?? defaultClock;
+  const refDate = options.referenceDate ?? clock.now();
   const autoApprove = options.autoApproveHighValueWithHighEV ?? true;
   const useTrainedModel = options.scoringModel === 'trained_logistic';
 

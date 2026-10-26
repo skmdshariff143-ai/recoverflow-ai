@@ -10,6 +10,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { BENCHMARK_REFERENCE_DATE_STRING } from '@recoverflow/core';
 import { executeBatchInterventions } from '@recoverflow/core';
 import type { PipelineItem, FailedPayment } from '@recoverflow/core';
 import type { PaymentScore } from '@recoverflow/core';
@@ -66,7 +67,7 @@ function createMockPipelineItem(overrides: MockItemOverrides = {}): PipelineItem
     stop_detail: overrides.stop_detail,
     approval_status: overrides.approval_status ?? 'not_required',
     suggested_intervention: overrides.suggested_intervention ?? 'retry',
-    scheduled_contact_time: overrides.scheduled_contact_time ?? '2025-08-30T10:00:00Z',
+    scheduled_contact_time: overrides.scheduled_contact_time ?? `${BENCHMARK_REFERENCE_DATE_STRING}T10:00:00Z`,
     rank: overrides.rank ?? 1,
   };
 }
