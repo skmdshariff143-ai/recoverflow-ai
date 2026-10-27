@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
     });
     if (!authRes.authorized) return authRes.response;
 
-    let body: any = {};
+    let body: { subscriptionId?: unknown; action?: unknown; reason?: unknown } = {};
     try {
       body = await req.json();
     } catch {

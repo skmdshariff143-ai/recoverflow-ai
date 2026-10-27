@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from './database';
-import { extractTokenFromHeaders, verifySessionToken, hashSessionToken, hasPermission, type Permission, type UserSession } from '../../../../../packages/core/src/auth';
-import { getRuntimeMode } from '../../../../../packages/core/src/data/databaseFactory';
+import { extractTokenFromHeaders, verifySessionToken, hashSessionToken, hasPermission, type Permission, type UserSession } from '@recoverflow/core';
+import { getRuntimeMode } from '@recoverflow/core';
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) { super(message); }

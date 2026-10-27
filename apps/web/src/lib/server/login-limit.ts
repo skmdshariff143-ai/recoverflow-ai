@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import Redis from 'ioredis';
-import { checkRateLimit } from '../../../../../packages/core/src/rateLimiter';
-import { getRuntimeMode } from '../../../../../packages/core/src/data/databaseFactory';
+import { checkRateLimit } from '@recoverflow/core';
+import { getRuntimeMode } from '@recoverflow/core';
 import { ApiError } from './access';
 
 let redis: Redis | undefined;

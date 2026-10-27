@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
     });
     if (!authRes.authorized) return authRes.response;
 
-    let body: any = {};
+    let body: { planName?: unknown; amountRupees?: unknown; customerEmail?: unknown } = {};
     try {
       body = await req.json();
     } catch {
@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
       const auth = Buffer.from(`${keyId}:${keySecret}`).toString('base64');
 
       // 1. Create Plan upstream
-      let planData: any;
+      let planData: { id: string } | null = null;
       try {
         const planRes = await fetch('https://api.razorpay.com/v1/plans', {
           method: 'POST',
@@ -117,6 +117,12 @@ export async function POST(req: NextRequest) {
         );
       }
 
+      if (!planData?.id) {
+        return NextResponse.json(
+          { error: "Failed to create plan upstream" },
+          { status: 502 }
+        );
+      }
       generatedPlanId = planData.id;
 
       // 2. Create Subscription upstream

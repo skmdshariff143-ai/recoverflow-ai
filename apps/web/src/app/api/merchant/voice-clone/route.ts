@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
       sampleDurationSeconds = Math.max(5, Math.min(60, Math.round(buffer.length / 16000)));
     } else {
       // JSON payload mode
-      let body: any = {};
+      let body: { label?: string; durationSeconds?: number } = {};
       try {
         body = await req.json();
       } catch {

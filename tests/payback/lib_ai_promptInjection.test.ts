@@ -29,7 +29,7 @@ describe('AI Security Boundary & Prompt Injection Resilience', () => {
     }
   });
 
-  it('Architectural Invariant Test: src/lib/ai/ MUST NEVER import payment adapters or ledger stores', () => {
+  it('Architectural Invariant Test: packages/agents/src/ MUST NEVER import payment adapters or ledger stores', () => {
     const aiClientSource = fs.readFileSync(
       path.resolve(process.cwd(), 'packages/agents/src/geminiClient.ts'),
       'utf8',

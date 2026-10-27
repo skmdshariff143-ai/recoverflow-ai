@@ -13,7 +13,7 @@ import {
   Search,
   Filter,
 } from 'lucide-react';
-import { formatPaiseToINR } from '@recoverflow/core';
+import { formatPaiseToINR, BENCHMARK_REFERENCE_DATE_STRING } from '@recoverflow/core';
 
 export interface MockPromiseRecord {
   promiseId: string;
@@ -56,7 +56,7 @@ const INITIAL_PROMISES: MockPromiseRecord[] = [
     customerId: 'cust_0394',
     customerName: 'Customer cust_0394',
     promisedAmountPaise: 4122471,
-    promisedDueDate: '2025-08-30T20:00:00Z',
+    promisedDueDate: `${BENCHMARK_REFERENCE_DATE_STRING}T20:00:00Z`,
     status: 'due',
     contactChannel: 'sms',
     notes: 'Agreed to manual UPI link payment by evening.',

@@ -21,6 +21,7 @@ import { checkSafetyRules } from './safetyFilter';
 import { scorePayment } from './scoreRecovery';
 import type { FrozenPotentialOutcomes } from './outcomeEnvironment';
 import { sumPaise } from './financial';
+import { BENCHMARK_REFERENCE_DATETIME_MIDDAY } from './utils/clock';
 
 export type PolicyType =
   | 'payback_ai'
@@ -112,7 +113,7 @@ export function evaluateCohortPolicies(
   options: PipelineOptions = {},
 ): ComprehensiveEvaluationReport {
   const budget = options.budget ?? 40;
-  const refDate = options.referenceDate ?? new Date('2025-08-30T10:00:00Z');
+  const refDate = options.referenceDate ?? options.clock?.now() ?? BENCHMARK_REFERENCE_DATETIME_MIDDAY;
   const totalAmountAtRiskPaise = sumPaise(payments.map((p) => p.amount));
 
   // ── 1. PayBack AI Dynamic Prioritization Policy ─────────────────
@@ -121,6 +122,7 @@ export function evaluateCohortPolicies(
     budget,
     referenceDate: refDate,
     scoringModel: 'trained_logistic',
+    simulateAutoApproval: true,
   });
 
   let rfRecoveredPaise = 0;

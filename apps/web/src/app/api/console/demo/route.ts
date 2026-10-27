@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db, hostedDemo } from '@/lib/server/database';
-import { getRuntimeMode } from '../../../../../../../packages/core/src/data/databaseFactory';
-import { checkRateLimit } from '../../../../../../../packages/core/src/rateLimiter';
+import { getRuntimeMode } from '@recoverflow/core';
+import { checkRateLimit } from '@recoverflow/core';
 import { route, requireSession, ApiError } from '@/lib/server/access';
 export const POST = route(async (request) => {
   const session = await requireSession(request, 'recovery:execute');

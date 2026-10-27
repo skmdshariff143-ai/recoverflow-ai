@@ -20,7 +20,7 @@ While the existing codebase demonstrates solid modularity (clean TypeScript inte
 ## 2. Forensic Findings & Risk Analysis
 
 ### Finding 1: Circular Calibration Defect in Outcome Simulation (CRITICAL)
-- **Source Code**: `src/lib/engine/executeIntervention.ts` (lines 86–92)
+- **Source Code**: `packages/core/src/executeIntervention.ts` (lines 86–92)
   ```typescript
   const outcomeProb = item.score.recovery_probability;
   const isSuccess = rng() < outcomeProb;
@@ -40,7 +40,7 @@ While the existing codebase demonstrates solid modularity (clean TypeScript inte
 ---
 
 ### Finding 3: Single-Shot Simulation vs Closed-Loop Multi-Cycle State Machine
-- **Source Code**: `src/lib/engine/executeIntervention.ts`
+- **Source Code**: `packages/core/src/executeIntervention.ts`
 - **Analysis**: Current execution evaluates a single simulated attempt per payment. If the attempt fails, it marks `retry_scheduled` or `stopped`, but does not simulate a continuous closed-loop state machine (`DETECTED -> DIAGNOSED -> ELIGIBILITY_CHECKED -> APPROVAL_REQUIRED / SCHEDULED -> EXECUTING -> OUTCOME_OBSERVED -> RETRY / RECOVERED / PROMISE_TO_PAY / STOPPED`).
 - **Required Correction**: Implement a genuine multi-cycle state machine with idempotent transitions, backoff scheduling, alternative interventions (e.g. switching from retry to payment link reminder), and a Promise-to-Pay lifecycle tracker.
 
@@ -63,14 +63,14 @@ While the existing codebase demonstrates solid modularity (clean TypeScript inte
 ---
 
 ### Finding 6: Memory-Only Audit Log vs Append-Only Hash-Chained Ledger
-- **Source Code**: `src/lib/engine/auditTrail.ts`
+- **Source Code**: `packages/core/src/auditTrail.ts`
 - **Analysis**: Audit records are dynamically computed in React memory (`useMemo`) during render rather than being an immutable, append-only, SHA-256 hash-chained ledger.
 - **Required Correction**: Implement a cryptographic SHA-256 event hash chain with tamper detection (`verifyLedgerIntegrity`) and exportable signed-style batch reports.
 
 ---
 
 ### Finding 7: Monetary Integer-Paise Precision & Currency Segregation
-- **Source Code**: `src/lib/engine/scoreRecovery.ts`, `src/lib/engine/runBatch.ts`
+- **Source Code**: `packages/core/src/scoreRecovery.ts`, `packages/core/src/runBatch.ts`
 - **Analysis**: While amounts in the synthetic generator are in paise (`100_000`), various components perform floating-point divisions (`/ 100`) and format with `.toFixed(2)` before arithmetic summation.
 - **Required Correction**: Enforce strict integer-paise representation throughout all engine calculations:
   $$\text{expectedValuePaise} = \text{round}\left(\frac{\text{amountAtRiskPaise} \times \text{probabilityBps}}{10,000}\right)$$
@@ -79,7 +79,7 @@ While the existing codebase demonstrates solid modularity (clean TypeScript inte
 ---
 
 ### Finding 8: Absence of a Baseline Control Policy Comparison
-- **Source Code**: `src/lib/engine/calibration.ts`
+- **Source Code**: `packages/core/src/calibration.ts`
 - **Analysis**: PayBack AI is only benchmarked against itself (heuristic vs logistic), but not against a standard industry **Control Policy** (e.g. Fixed Retry Schedule / Retry-All without EV prioritization).
 - **Required Correction**: Implement counterfactual policy evaluation comparing PayBack AI against a Fixed Retry Control on the exact same frozen potential outcomes.
 

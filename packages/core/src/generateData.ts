@@ -1,3 +1,4 @@
+import { BENCHMARK_REFERENCE_DATE } from './utils/clock';
 /**
  * PayBack AI — Synthetic Failed-Payment Data Generator.
  *
@@ -181,7 +182,7 @@ function buildRecord(
   const currency: Currency = CURRENCIES[Math.floor(rand() * CURRENCIES.length)];
 
   // Failure timestamp: random time in past 30 days from a fixed reference.
-  const referenceDate = new Date('2025-08-30T00:00:00Z');
+  const referenceDate = BENCHMARK_REFERENCE_DATE;
   const offset = Math.floor(rand() * 30 * 24 * 60 * 60 * 1000);
   const failureTimestamp = new Date(referenceDate.getTime() - offset).toISOString();
 

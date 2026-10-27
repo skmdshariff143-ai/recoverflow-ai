@@ -26,10 +26,10 @@ Here is the 10-step journey of how RecoverFlow AI was built, broken, rebuilt, an
 
 ## 🛠️ The 10-Step Engineering Narrative
 
-### Step 1: The Core Boundary & Decoupling `src/lib/ai/` from `src/lib/engine/`
+### Step 1: The Core Boundary & Decoupling `packages/agents/src/` from `packages/core/src/`
 We began by splitting the codebase into two strictly separated domains:
-- `src/lib/ai/`: Contains LLM client code (Google Gemini). Its sole responsibilities are unstructured log normalization and drafting customer reminder copy. It has **zero imports** from payment adapters, state machines, or database stores.
-- `src/lib/engine/`: Pure, framework-agnostic TypeScript containing scoring logic, safety gates, budget allocation, and cryptographic hashing. It runs identically in Node.js, edge workers, and browsers with zero LLM dependencies.
+- `packages/agents/src/`: Contains LLM client code (Google Gemini). Its sole responsibilities are unstructured log normalization and drafting customer reminder copy. It has **zero imports** from payment adapters, state machines, or database stores.
+- `packages/core/src/`: Pure, framework-agnostic TypeScript containing scoring logic, safety gates, budget allocation, and cryptographic hashing. It runs identically in Node.js, edge workers, and browsers with zero LLM dependencies.
 
 ### Step 2: Eliminating Floating-Point Drift with Branded Integer-Paise Math
 In high-volume billing, JavaScript's IEEE-754 numbers produce floating-point artifacts like `0.1 + 0.2 = 0.30000000000000004`. Over thousands of daily retries, minor fractions accumulate into reconciling discrepancies on bank balance sheets.  

@@ -8,12 +8,29 @@ const eslintConfig = defineConfig([
   {
     settings: { next: { rootDir: 'apps/web/' } },
     rules: {
-      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-explicit-any": "warn",
       "@typescript-eslint/no-unused-vars": [
         "warn",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }
       ],
       "@typescript-eslint/no-require-imports": "off",
+    },
+  },
+  {
+    files: ["apps/**/*", "packages/**/*"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["**/packages/**", "**/agents/**"],
+              message:
+                "Do not use relative paths reaching into another package. Import via workspace package names (e.g. '@recoverflow/core', '@recoverflow/agents').",
+            },
+          ],
+        },
+      ],
     },
   },
   globalIgnores([

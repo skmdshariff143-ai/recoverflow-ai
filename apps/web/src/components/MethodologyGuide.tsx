@@ -97,7 +97,7 @@ export function MethodologyGuide() {
               Strict AI vs Non-AI Responsibility Boundary
             </h3>
             <p className="text-xs text-slate-500">
-              Enforced by physical module separation in code: <code className="bg-slate-100 text-indigo-700 px-1.5 py-0.5 rounded font-mono text-[11px]">src/lib/ai/</code> has <strong>zero write access</strong> to payment state, ledger hashes, or execution triggers.
+              Enforced by physical module separation in code: <code className="bg-slate-100 text-indigo-700 px-1.5 py-0.5 rounded font-mono text-[11px]">packages/agents/src/</code> has <strong>zero write access</strong> to payment state, ledger hashes, or execution triggers.
             </p>
           </div>
 
@@ -137,7 +137,7 @@ export function MethodologyGuide() {
                 <span className="text-[10px] text-slate-400">
                   Zero state mutations • Zero direct dispatch • Pure functional responses
                 </span>
-                <span className="text-[9px] font-mono text-slate-500">src/lib/ai/geminiClient.ts</span>
+                <span className="text-[9px] font-mono text-slate-500">packages/agents/src/geminiClient.ts</span>
               </div>
 
               {/* Right: Deterministic Core */}
@@ -195,11 +195,11 @@ export function MethodologyGuide() {
                 </li>
                 <li className="flex items-start gap-2">
                   <Scale className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-                  <span><strong>Safety Filter &amp; Attempt Caps:</strong> Hard-coded stopping rules execute prior to any model or queue ranking (<code className="font-mono text-[11px]">src/lib/engine/safetyFilter.ts</code>).</span>
+                  <span><strong>Safety Filter &amp; Attempt Caps:</strong> Hard-coded stopping rules execute prior to any model or queue ranking (<code className="font-mono text-[11px]">packages/core/src/safetyFilter.ts</code>).</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <Scale className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-                  <span><strong>State Transitions:</strong> Only deterministic engine actors and authenticated human reviewers can transition state (<code className="font-mono text-[11px]">src/lib/engine/stateMachine.ts</code>).</span>
+                  <span><strong>State Transitions:</strong> Only deterministic engine actors and authenticated human reviewers can transition state (<code className="font-mono text-[11px]">packages/core/src/stateMachine.ts</code>).</span>
                 </li>
               </ul>
             </div>
@@ -266,7 +266,7 @@ export function MethodologyGuide() {
               </div>
               <div className="pt-2 border-t border-amber-200/60 font-mono text-[10px] text-amber-900 bg-amber-100/50 p-2 rounded">
                 <span className="font-bold block text-slate-900">Guarding Regression Test:</span>
-                <code>src/lib/engine/__tests__/counterfactualEvaluation.test.ts</code>
+                <code>tests/payback/lib_engine_counterfactualEvaluation.test.ts</code>
               </div>
             </div>
 
@@ -286,7 +286,7 @@ export function MethodologyGuide() {
               </div>
               <div className="pt-2 border-t border-indigo-200/60 font-mono text-[10px] text-indigo-900 bg-indigo-100/50 p-2 rounded">
                 <span className="font-bold block text-slate-900">Guarding Regression Test:</span>
-                <code>src/lib/engine/__tests__/closedLoopProductFlow.test.ts</code>
+                <code>tests/payback/lib_engine_closedLoopProductFlow.test.ts</code>
               </div>
             </div>
 

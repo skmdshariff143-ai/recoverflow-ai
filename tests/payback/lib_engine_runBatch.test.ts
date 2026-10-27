@@ -11,7 +11,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
-import { runRecoveryBatch } from '@recoverflow/core';
+import { runRecoveryBatch, BENCHMARK_REFERENCE_DATETIME_MIDDAY } from '@recoverflow/core';
 import type { FailedPayment } from '@recoverflow/core';
 
 describe('runRecoveryBatch', () => {
@@ -25,6 +25,8 @@ describe('runRecoveryBatch', () => {
       budget: 40,
       simulationSeed: 42,
       disputeRate: 0.03,
+      referenceDate: BENCHMARK_REFERENCE_DATETIME_MIDDAY,
+      simulateAutoApproval: true,
     });
 
     console.log('\n╔════════════════════════════════════════════════════════════════════════════╗');

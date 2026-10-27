@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getRuntimeMode } from '../../../../../../../packages/core/src/data/databaseFactory';
-import type { TestSubscription } from '../../../../../../../packages/core/src/subscriptionStore';
-import { checkRateLimit } from '../../../../../../../packages/core/src/rateLimiter';
+import { getRuntimeMode } from '@recoverflow/core';
+import type { TestSubscription } from '@recoverflow/core';
+import { checkRateLimit } from '@recoverflow/core';
 import { route, ApiError } from '@/lib/server/access';
 
 const state = globalThis as unknown as { recoverflowDemoSubscriptions?: TestSubscription[] };

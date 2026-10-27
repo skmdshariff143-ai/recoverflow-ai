@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import Redis from 'ioredis';
-import { getRuntimeMode } from '../../../../../../packages/core/src/data/databaseFactory';
+import { getRuntimeMode } from '@recoverflow/core';
 import { db } from '@/lib/server/database';
-import { validateAuthSecret } from '../../../../../../packages/core/src/auth';
+import { validateAuthSecret } from '@recoverflow/core';
 
 export async function GET() {
   const subsystems: Record<string, { status: string; latencyMs?: number }> = {};

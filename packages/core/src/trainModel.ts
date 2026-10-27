@@ -14,6 +14,8 @@ import type { FailedPayment } from './payment-types';
 import { CATEGORY_BASE_RATES } from './scoreRecovery';
 import type { PaymentScore, ScoreExplanationFactor } from './scoreRecovery';
 import { calculateExpectedValuePaise, probabilityToBps } from './financial';
+import type { Clock } from './utils/clock';
+import { defaultClock } from './utils/clock';
 
 export interface ModelWeights {
   category_base_rate: number;
@@ -89,16 +91,16 @@ export interface TrainOptions {
   iterations?: number;
   l2Lambda?: number;
   referenceDate?: Date;
+  clock?: Clock;
 }
-
-const DEFAULT_REFERENCE_DATE = new Date('2025-08-30T00:00:00Z');
 
 /**
  * Extract normalized numerical feature vector from a payment.
  */
 export function extractFeatureVector(
   payment: FailedPayment,
-  refDate: Date = DEFAULT_REFERENCE_DATE,
+  refDate?: Date,
+  clock?: Clock,
 ): { features: ModelWeights; rawValues: Record<string, number> } {
   const baseRate = CATEGORY_BASE_RATES[payment.failure_category] ?? 0.5;
   const history = payment.customer_payment_history;
@@ -112,8 +114,9 @@ export function extractFeatureVector(
   // 3. Recency exponential decay [0, 1]
   const rawObj = payment as unknown as { failure_timestamp?: string; created_at?: string };
   const tsStr = payment.failure_timestamp ?? rawObj.created_at;
-  const failureTime = tsStr ? new Date(tsStr).getTime() : refDate.getTime();
-  const diffDays = isNaN(failureTime) ? 0 : Math.max(0, (refDate.getTime() - failureTime) / (1000 * 60 * 60 * 24));
+  const actualRefDate = refDate ?? clock?.now() ?? defaultClock.now();
+  const failureTime = tsStr ? new Date(tsStr).getTime() : actualRefDate.getTime();
+  const diffDays = isNaN(failureTime) ? 0 : Math.max(0, (actualRefDate.getTime() - failureTime) / (1000 * 60 * 60 * 24));
   const recencyDecay = Math.exp(-diffDays / 14);
 
   // 4. Tenure fraction [0, 1] (saturated at 36 months)
@@ -168,7 +171,8 @@ export function trainLogisticRecoveryModel(
   const lr = options.learningRate ?? 0.15;
   const iterations = options.iterations ?? 400;
   const lambda = options.l2Lambda ?? 0.005;
-  const refDate = options.referenceDate ?? DEFAULT_REFERENCE_DATE;
+  const clock = options.clock ?? defaultClock;
+  const refDate = options.referenceDate ?? clock.now();
 
   const featureKeys: (keyof ModelWeights)[] = [
     'category_base_rate',
@@ -318,9 +322,11 @@ export const DEFAULT_TRAINED_MODEL: TrainedModelArtifact = {
 export function scorePaymentWithTrainedModel(
   payment: FailedPayment,
   model: TrainedModelArtifact = DEFAULT_TRAINED_MODEL,
-  refDate: Date = DEFAULT_REFERENCE_DATE,
+  refDate?: Date,
+  clock?: Clock,
 ): PaymentScore {
-  const { features, rawValues } = extractFeatureVector(payment, refDate);
+  const resolvedRefDate = refDate ?? clock?.now() ?? defaultClock.now();
+  const { features, rawValues } = extractFeatureVector(payment, resolvedRefDate);
   const w = model.weights;
 
   // Logit linear combination

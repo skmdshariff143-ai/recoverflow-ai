@@ -42,7 +42,7 @@ import { checkSafetyRules } from './safetyFilter';
 import { calculateNextContactTime } from './quietHours';
 import { evaluateApprovalStatus } from './approvalGate';
 import { selectIntervention } from './interventions';
-import { scorePaymentWithTrainedModel } from '../../agents/src/trainModel';
+import { scorePaymentWithTrainedModel } from './trainModel';
 import type { FrozenPotentialOutcomes } from './outcomeEnvironment';
 
 export type RecoveryState =
@@ -222,10 +222,11 @@ export function initRecoveryWorkflow(
  */
 export function stepWorkflowDiagnosisAndEligibility(
   workflow: RecoveryWorkflowInstance,
-  options: { referenceDate?: Date; autoApproveHighEV?: boolean } = {},
+  options: { referenceDate?: Date; clock?: Clock; simulateAutoApproval?: boolean; autoApproveHighEV?: boolean } = {},
 ): void {
-  const refDate = options.referenceDate ?? new Date('2025-08-30T10:00:00Z');
-  const autoApprove = options.autoApproveHighEV ?? false;
+  const clock = options.clock ?? defaultClock;
+  const refDate = options.referenceDate ?? clock.now();
+  const simulateAutoApproval = options.simulateAutoApproval ?? options.autoApproveHighEV ?? false;
 
   // Step to DIAGNOSED
   const score = scorePaymentWithTrainedModel(workflow.payment, undefined, refDate);
@@ -254,7 +255,7 @@ export function stepWorkflowDiagnosisAndEligibility(
   }
 
   // Check Approval Gate for high-value enterprise invoices
-  const approval = evaluateApprovalStatus(workflow.payment, score, { autoApproveHighEV: autoApprove });
+  const approval = evaluateApprovalStatus(workflow.payment, score, { simulateAutoApproval });
   if (approval.status === 'pending') {
     transitionWorkflowState(workflow, 'APPROVAL_REQUIRED', 'system_engine', 'HIGH_VALUE_REVIEW_REQUIRED', {
       amount: workflow.payment.amount,

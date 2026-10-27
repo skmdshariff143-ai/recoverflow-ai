@@ -62,3 +62,12 @@ export class FixedClock implements Clock {
 }
 
 export const defaultClock: Clock = new SystemClock();
+
+/**
+ * Canonical benchmark reference date string.
+ * This is the SINGLE definition of '2025-08-30' across the repository.
+ */
+export const BENCHMARK_REFERENCE_DATE_STRING = '2025-08-30';
+export const BENCHMARK_REFERENCE_DATE = new Date(`${BENCHMARK_REFERENCE_DATE_STRING}T00:00:00Z`);
+export const BENCHMARK_REFERENCE_DATETIME = BENCHMARK_REFERENCE_DATE;
+export const BENCHMARK_REFERENCE_DATETIME_MIDDAY = new Date(`${BENCHMARK_REFERENCE_DATE_STRING}T10:00:00Z`);

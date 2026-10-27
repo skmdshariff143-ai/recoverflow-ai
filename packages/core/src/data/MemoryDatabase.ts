@@ -21,6 +21,7 @@ import type {
 import type { UserRole } from '../auth';
 import type {
   DatabasePort,
+  UpdateRecoveryCaseParams,
   OrganizationRecord,
   UserRecord,
   MembershipRecord,
@@ -113,7 +114,7 @@ export class MemoryDatabase implements DatabasePort {
   }
 
   public seedDefaults(): void {
-    seedDemoDataset(this as unknown as any, { clearExisting: false });
+    seedDemoDataset(this, { clearExisting: false });
     // Seed initial recovery cases and payments for demo carts
     for (const cart of this.cartEvents.values()) {
       if (!this.payments.has(`pay_${cart.id}`)) {
@@ -530,7 +531,7 @@ export class MemoryDatabase implements DatabasePort {
   }
 
   async updateRecoveryCase(
-    paramsOrId: any,
+    paramsOrId: UpdateRecoveryCaseParams | string,
     legacyUpdates?: Partial<RecoveryCaseRecord>,
     legacyMerchantId?: string
   ): Promise<RecoveryCaseRecord | null> {
