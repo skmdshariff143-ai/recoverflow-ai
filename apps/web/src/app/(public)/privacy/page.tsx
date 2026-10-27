@@ -4,14 +4,14 @@ import { ArrowLeft, Shield, Lock, Eye, Database } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy',
-  description: 'Detailed privacy disclosures regarding merchant data handling, payment failure telemetry, AI advisory boundaries, and cryptographic audit records.',
+  description: 'Data handling disclosures regarding synthetic evaluation benchmarks, Razorpay test mode telemetry, stateless Gemini AI advisory queries, and prototype session state.',
   alternates: {
     canonical: '/privacy',
   },
 };
 
 export default function PrivacyPolicyPage() {
-  const lastUpdated = 'October 21, 2026';
+  const lastUpdated = 'October 27, 2026';
 
   return (
     <div className="min-h-screen bg-[#060c16] text-slate-100 selection:bg-emerald-500/30 selection:text-emerald-200">
@@ -25,7 +25,7 @@ export default function PrivacyPolicyPage() {
           Back to RecoverFlow AI
         </Link>
         <span className="text-[10px] uppercase font-mono tracking-wider text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 px-2.5 py-1 rounded-full">
-          Transparency & Data Governance
+          Transparency &amp; Prototype Governance
         </span>
       </header>
 
@@ -40,10 +40,15 @@ export default function PrivacyPolicyPage() {
             Privacy Policy
           </h1>
           <p className="text-xs font-mono text-slate-400">
-            Effective Date: {lastUpdated} &bull; Document Version: 2.1-production
+            Effective Date: {lastUpdated} &bull; Document Version: 2.2-prototype
           </p>
+
+          <div className="rounded-xl border border-sky-500/30 bg-sky-500/10 p-4 text-xs text-sky-200 leading-relaxed">
+            <strong>Demonstration &amp; Prototype Notice:</strong> RecoverFlow AI is an independent project by Shaik Mahammad Shariff created for architectural benchmarking and technical evaluation. It is not an incorporated commercial service and has not been reviewed by legal counsel.
+          </div>
+
           <p className="text-sm leading-relaxed text-slate-300">
-            RecoverFlow AI (&ldquo;RecoverFlow,&rdquo; &ldquo;we,&rdquo; &ldquo;us,&rdquo; or &ldquo;our&rdquo;) provides an intelligent merchant operations console and recovery orchestration service. This Privacy Policy details the exact categories of data processed through our software, our technical safeguards, our bounded AI governance principles, and your privacy rights.
+            This Privacy Policy details the data handling practices of RecoverFlow AI, an independent project by Shaik Mahammad Shariff. This document transparently explains the exact categories of synthetic and test data processed through this demonstration software, our technical safeguards, our bounded AI governance principles, and how inquiries may be directed.
           </p>
         </div>
 
@@ -64,7 +69,7 @@ export default function PrivacyPolicyPage() {
               <span>Bounded AI Advisory</span>
             </div>
             <p className="text-xs text-slate-400 leading-relaxed">
-              Gemini 2.5 advisory models provide diagnostic input only. Customer PII is never submitted to train public foundation models.
+              Diagnostic failure categorization and reminder drafting. Prompts are sent to the Google Gemini API, whose own terms govern data handling. Do not enter personal data.
             </p>
           </div>
           <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4 space-y-2">
@@ -80,22 +85,22 @@ export default function PrivacyPolicyPage() {
 
         {/* Section 1 */}
         <section className="space-y-4 border-t border-slate-800/80 pt-8">
-          <h2 className="text-xl font-semibold text-white">1. Information We Collect and Process</h2>
+          <h2 className="text-xl font-semibold text-white">1. Information We Process</h2>
           <p className="text-sm leading-relaxed text-slate-300">
-            RecoverFlow AI functions primarily as a Data Processor on behalf of merchant subscribers (the Data Controllers). In providing recovery orchestration, we process:
+            RecoverFlow AI operates as a technical demonstration and research prototype. We do not collect or store live customer payment cards, bank account numbers, or real consumer banking credentials. The software processes:
           </p>
           <ul className="list-disc pl-5 space-y-2 text-xs leading-relaxed text-slate-400">
             <li>
-              <strong className="text-slate-200">Merchant Operator Credentials:</strong> Work email address, cryptographically hashed passwords (scrypt/PBKDF2), role assignment (Admin, Operator, Auditor, Compliance Officer), and tenant workspace identifiers.
+              <strong className="text-slate-200">Synthetic Benchmark Datasets:</strong> Pre-generated synthetic cohorts of payment failure events (e.g., synthetic checkout identifiers, simulated error codes, and minor unit amounts in paise) used to evaluate scoring algorithms and expected value rankings.
             </li>
             <li>
-              <strong className="text-slate-200">Payment Failure Telemetry:</strong> Transaction identifiers, failure error codes, gateway timestamps, payment method category (e.g., card, UPI, bank mandate), and transaction amounts in minor currency units (e.g., paise).
+              <strong className="text-slate-200">Test Gateway Telemetry:</strong> In interactive verification, test-mode payment events received via Razorpay test mode (<code className="font-mono text-emerald-300">rzp_test_*</code>) webhooks. No real money or live transactions are ever processed.
             </li>
             <li>
-              <strong className="text-slate-200">Customer Communication Metadata:</strong> Customer phone number (for WhatsApp/SMS recovery links) or email address, masked cart tokens, and customer-directed suppression flags.
+              <strong className="text-slate-200">AI Advisory Telemetry:</strong> Transient error summaries and recovery reminder prompts evaluated through Google Gemini API endpoints (<code className="font-mono text-emerald-300">gemini-2.5-flash</code>). Prompts are sent to the Google Gemini API, whose own terms govern data handling. Do not enter personal data.
             </li>
             <li>
-              <strong className="text-slate-200">Audit & Decision Trail:</strong> Operator decision logs, dual-custody signatures, Thompson Sampling policy allocations, and timestamps stored in our immutable append-only ledger.
+              <strong className="text-slate-200">Evaluation Session State:</strong> Local authenticated session cookies and navigation caches used exclusively to authenticate operators exploring the demonstration console.
             </li>
           </ul>
         </section>
@@ -124,7 +129,7 @@ export default function PrivacyPolicyPage() {
             </div>
           </div>
           <p className="text-xs leading-relaxed text-slate-400">
-            Because our cookies are strictly necessary to deliver the authenticated service requested by the operator, no decorative or intrusive cookie consent banners are displayed.
+            Because our cookies are strictly necessary to deliver the authenticated session requested by the operator exploring the demo, no decorative or intrusive cookie consent banners are displayed.
           </p>
         </section>
 
@@ -136,7 +141,7 @@ export default function PrivacyPolicyPage() {
           </p>
           <ul className="list-disc pl-5 space-y-2 text-xs leading-relaxed text-slate-400">
             <li>
-              <strong className="text-slate-200">No Model Training:</strong> Telemetry and customer communication excerpts sent to advisory inference APIs are processed statelessly and are never retained by our AI providers to train foundation models.
+              <strong className="text-slate-200">Third-Party AI Terms:</strong> Prompts are sent to the Google Gemini API, whose own terms govern data handling. Do not enter personal data.
             </li>
             <li>
               <strong className="text-slate-200">Deterministic Supremacy:</strong> Machine learning models never execute financial transfers or grant discounts unilaterally. Every discount ceiling, quiet-hours suppression window, and high-value recovery is enforced by deterministic code gates and dual human authorization.
@@ -146,60 +151,61 @@ export default function PrivacyPolicyPage() {
 
         {/* Section 4 */}
         <section className="space-y-4 border-t border-slate-800/80 pt-8">
-          <h2 className="text-xl font-semibold text-white">4. Data Retention, Suppression &amp; Deletion</h2>
+          <h2 className="text-xl font-semibold text-white">4. Data Retention and Erasure</h2>
           <p className="text-sm leading-relaxed text-slate-300">
-            We retain operational case data in accordance with statutory accounting standards and merchant policies:
+            Because RecoverFlow AI is a non-commercial demonstration prototype:
           </p>
           <ul className="list-disc pl-5 space-y-2 text-xs leading-relaxed text-slate-400">
             <li>
-              <strong className="text-slate-200">Customer Opt-Out &amp; Suppression:</strong> Customers who opt out via communications or webhook signals are immediately registered in the suppression table (<code className="font-mono text-emerald-300">/api/recovery/suppress</code>), halting any future outreach.
+              <strong className="text-slate-200">Session and Ephemeral Records:</strong> In-memory test sessions and simulated ledger entries are ephemeral and can be reset or purged at any time during test cycles.
             </li>
             <li>
-              <strong className="text-slate-200">Audit Ledger Retention:</strong> Cryptographic verification records are preserved for up to 7 years to meet statutory auditing requirements for commercial transactions.
+              <strong className="text-slate-200">Simulated Opt-Out &amp; Suppression:</strong> The prototype supports demonstration customer suppression via (<code className="font-mono text-emerald-300">/api/recovery/suppress</code>), showing how customer outreach halt logic functions.
             </li>
             <li>
-              <strong className="text-slate-200">Right of Erasure (GDPR / DPDP Act):</strong> Merchants can trigger customer data redaction requests, replacing contact identifiers with SHA-256 pseudonymized hashes while preserving ledger integrity.
+              <strong className="text-slate-200">Data Deletion Inquiries:</strong> Any inquiries regarding sample data or prototype state may be directed to the project operator.
             </li>
           </ul>
         </section>
 
         {/* Section 5 */}
         <section className="space-y-4 border-t border-slate-800/80 pt-8">
-          <h2 className="text-xl font-semibold text-white">5. Sub-processors and Infrastructure</h2>
+          <h2 className="text-xl font-semibold text-white">5. Technology Infrastructure &amp; Services</h2>
           <p className="text-sm leading-relaxed text-slate-300">
-            RecoverFlow AI utilizes industry-recognized cloud infrastructure and integration gateways:
+            The RecoverFlow AI demonstration utilizes the following developer and cloud environments:
           </p>
           <div className="grid gap-3 sm:grid-cols-2 text-xs text-slate-400">
             <div className="rounded-lg border border-slate-800 p-3 bg-slate-900/30">
               <span className="font-semibold text-slate-200 block mb-1">Hosting &amp; Compute</span>
-              Vercel Inc. &amp; Managed PostgreSQL (AWS / GCP ISO-27001 certified regions)
+              Vercel Inc. (Next.js Application Hosting)
             </div>
             <div className="rounded-lg border border-slate-800 p-3 bg-slate-900/30">
-              <span className="font-semibold text-slate-200 block mb-1">Payment Gateways</span>
-              Razorpay Software Pvt Ltd &amp; Stripe Inc. (PCI-DSS Level 1 compliant)
+              <span className="font-semibold text-slate-200 block mb-1">Payment Gateway Simulation</span>
+              Razorpay Software Pvt Ltd (Test Mode Sandbox: <code className="font-mono text-emerald-300">rzp_test_*</code>)
             </div>
             <div className="rounded-lg border border-slate-800 p-3 bg-slate-900/30">
-              <span className="font-semibold text-slate-200 block mb-1">Outbound Communication</span>
-              Meta Cloud API (WhatsApp) &amp; Resend / Twilio (TLS 1.3 encrypted)
+              <span className="font-semibold text-slate-200 block mb-1">Advisory Intelligence</span>
+              Google Cloud Gemini API (<code className="font-mono text-emerald-300">gemini-2.5-flash</code> stateless inference)
             </div>
             <div className="rounded-lg border border-slate-800 p-3 bg-slate-900/30">
-              <span className="font-semibold text-slate-200 block mb-1">Advisory Inference</span>
-              Google Cloud Vertex AI / Gemini API (Enterprise privacy tier)
+              <span className="font-semibold text-slate-200 block mb-1">Local &amp; Edge Storage</span>
+              In-memory idempotency caches and ephemeral evaluation databases
             </div>
           </div>
         </section>
 
         {/* Section 6 */}
         <section className="space-y-4 border-t border-slate-800/80 pt-8">
-          <h2 className="text-xl font-semibold text-white">6. Contact and Privacy Rights</h2>
+          <h2 className="text-xl font-semibold text-white">6. Contact and Inquiries</h2>
           <p className="text-sm leading-relaxed text-slate-300">
-            To exercise your rights of access, correction, suppression, or deletion, or to submit questions regarding our data practices, contact:
+            For questions, feedback, or data inquiries regarding this demonstration project, please contact the project operator:
           </p>
           <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4 text-xs font-mono space-y-1 text-slate-300">
-            <div>RecoverFlow AI Data Governance Team</div>
-            <div>Email: <a href="mailto:privacy@recoverflow.ai" className="text-emerald-400 hover:underline">privacy@recoverflow.ai</a></div>
+            <div className="font-sans font-semibold text-white">Shaik Mahammad Shariff</div>
+            <div className="text-slate-400 font-sans text-xs">Operator &bull; RecoverFlow AI (Independent Project)</div>
+            <div>Email: <a href="mailto:sk.md.shariff143@gmail.com" className="text-emerald-400 hover:underline">sk.md.shariff143@gmail.com</a></div>
             <div className="text-slate-400 font-sans text-[11px] pt-1">
-              For merchant-specific inquiries, please contact your designated platform workspace administrator.
+              Jurisdiction: Andhra Pradesh, India
             </div>
           </div>
         </section>
