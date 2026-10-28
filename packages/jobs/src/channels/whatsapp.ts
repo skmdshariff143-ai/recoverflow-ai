@@ -83,7 +83,19 @@ export async function sendWhatsAppMessage(payload: WhatsAppMessagePayload): Prom
     ? buildAttributedCheckoutUrl(payload.ctaUrl, payload.discountCode)
     : undefined;
 
-  if (((process.env.RECOVERFLOW_RUNTIME_MODE || (process.env.NODE_ENV === 'test' ? 'TEST' : 'DEMO')).toUpperCase() === 'DEMO') || !token || !phoneId || token === 'EAAG_test_token_mock') {
+  const mode = (process.env.RECOVERFLOW_RUNTIME_MODE || (process.env.NODE_ENV === 'test' ? 'TEST' : 'DEMO')).toUpperCase();
+  const isDurableMode = mode === 'LIVE' || mode === 'SANDBOX';
+
+  if (!token || !phoneId) {
+    if (isDurableMode) {
+      return {
+        success: false,
+        error: `CREDENTIALS_UNCONFIGURED: WhatsApp API token or Phone Number ID is missing in '${mode}' mode.`,
+      };
+    }
+  }
+
+  if (mode === 'DEMO' || !token || !phoneId || token === 'EAAG_test_token_mock') {
     // Return simulated success with realistic external message ID for development/demo
     return {
       success: true,

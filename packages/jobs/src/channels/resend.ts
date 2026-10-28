@@ -22,6 +22,19 @@ export interface EmailSendResult {
   simulated?: boolean;
 }
 
+function escapeHtml(str: string): string {
+  return str.replace(/[&<>"']/g, (m) => {
+    switch (m) {
+      case '&': return '&amp;';
+      case '<': return '&lt;';
+      case '>': return '&gt;';
+      case '"': return '&quot;';
+      case "'": return '&#39;';
+      default: return m;
+    }
+  });
+}
+
 /**
  * Builds a responsive, high-converting HTML cart recovery email.
  */
@@ -36,20 +49,25 @@ export function buildResponsiveCartEmailHtml(payload: EmailRecoveryPayload): str
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://recoverflow-ai-kohl.vercel.app';
   const ogImageUrl = `${baseUrl}/api/og/cart?title=${encodedTitle}&customer=${encodedCustomer}&store=${encodedStore}&total=${encodedTotal}${encodedDiscount}`;
 
+  const safeName = escapeHtml(name);
+  const safeStoreName = escapeHtml(payload.storeName);
+  const safeMessageBody = payload.messageBody ? escapeHtml(payload.messageBody) : null;
+  const safeDiscountCode = payload.discountCode ? escapeHtml(payload.discountCode) : null;
+
   const itemsHtml = payload.items
     .map(
       (item) => `
     <tr style="border-bottom: 1px solid #27272a;">
       <td style="padding: 14px 8px; width: 68px;">
-        <img src="${item.imageUrl || 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=120'}" alt="${item.title}" style="width: 60px; height: 60px; border-radius: 8px; object-fit: cover; display: block;" />
+        <img src="${item.imageUrl ? escapeHtml(item.imageUrl) : 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=120'}" alt="${escapeHtml(item.title)}" style="width: 60px; height: 60px; border-radius: 8px; object-fit: cover; display: block;" />
       </td>
       <td style="padding: 14px 12px; color: #f4f4f5; font-size: 14px;">
-        <div style="font-weight: 600;">${item.title}</div>
-        ${item.variantTitle ? `<div style="font-size: 12px; color: #a1a1aa; margin-top: 2px;">${item.variantTitle}</div>` : ''}
+        <div style="font-weight: 600;">${escapeHtml(item.title)}</div>
+        ${item.variantTitle ? `<div style="font-size: 12px; color: #a1a1aa; margin-top: 2px;">${escapeHtml(item.variantTitle)}</div>` : ''}
         <div style="font-size: 12px; color: #71717a; margin-top: 2px;">Qty: ${item.quantity}</div>
       </td>
       <td style="padding: 14px 8px; color: #10b981; font-weight: 600; font-size: 14px; text-align: right;">
-        ${payload.currency} ${(item.price * item.quantity).toFixed(2)}
+        ${escapeHtml(payload.currency)} ${(item.price * item.quantity).toFixed(2)}
       </td>
     </tr>`
     )
@@ -61,7 +79,7 @@ export function buildResponsiveCartEmailHtml(payload: EmailRecoveryPayload): str
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Complete your order at ${payload.storeName}</title>
+  <title>Complete your order at ${safeStoreName}</title>
 </head>
 <body style="margin: 0; padding: 0; background-color: #09090b; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #09090b; padding: 40px 16px;">
@@ -71,7 +89,7 @@ export function buildResponsiveCartEmailHtml(payload: EmailRecoveryPayload): str
           <!-- Header -->
           <tr>
             <td align="center" style="padding-bottom: 24px;">
-              <h1 style="margin: 0; color: #f4f4f5; font-size: 20px; font-weight: 700; letter-spacing: -0.5px;">${payload.storeName}</h1>
+              <h1 style="margin: 0; color: #f4f4f5; font-size: 20px; font-weight: 700; letter-spacing: -0.5px;">${safeStoreName}</h1>
             </td>
           </tr>
           <!-- OG Cart Hero Card -->
@@ -83,19 +101,19 @@ export function buildResponsiveCartEmailHtml(payload: EmailRecoveryPayload): str
           <!-- Body Text -->
           <tr>
             <td style="color: #d4d4d8; font-size: 15px; line-height: 24px; padding-bottom: 20px;">
-              <p style="margin: 0 0 12px 0;">Hello ${name},</p>
-              <p style="margin: 0;">${payload.messageBody || "We noticed you left something special in your cart. We've temporarily reserved your selection so you don't lose out."}</p>
+              <p style="margin: 0 0 12px 0;">Hello ${safeName},</p>
+              <p style="margin: 0;">${safeMessageBody || "We noticed you left something special in your cart. We've temporarily reserved your selection so you don't lose out."}</p>
             </td>
           </tr>
           ${
-            payload.discountCode
+            safeDiscountCode
               ? `
           <!-- Discount Pill -->
           <tr>
             <td align="center" style="padding-bottom: 24px;">
               <div style="background-color: rgba(16, 185, 129, 0.1); border: 1px dashed #10b981; border-radius: 8px; padding: 12px 20px; display: inline-block;">
                 <span style="color: #a1a1aa; font-size: 13px;">Special courtesy applied:</span>
-                <span style="color: #10b981; font-weight: 700; font-size: 16px; margin-left: 8px; letter-spacing: 1px;">${payload.discountCode}</span>
+                <span style="color: #10b981; font-weight: 700; font-size: 16px; margin-left: 8px; letter-spacing: 1px;">${safeDiscountCode}</span>
               </div>
             </td>
           </tr>`

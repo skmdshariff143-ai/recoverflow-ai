@@ -84,12 +84,19 @@ export function verifyWhatsAppSignature(
 /**
  * Normalizes phone numbers to standard E.164 format.
  */
-export function normalizePhone(phone: string): string {
+export function normalizePhone(phone: string, defaultCountryCode?: string): string {
   const cleaned = phone.replace(/[^0-9+]/g, '');
   if (cleaned.startsWith('+')) {
     return cleaned;
   }
+  if (defaultCountryCode) {
+    const prefix = defaultCountryCode.startsWith('+') ? defaultCountryCode : `+${defaultCountryCode}`;
+    return `${prefix}${cleaned}`;
+  }
   if (cleaned.length === 10) {
+    if (/^[6-9]/.test(cleaned) && (process.env.DEFAULT_COUNTRY_CODE === '91' || process.env.MERCHANT_CURRENCY === 'INR')) {
+      return `+91${cleaned}`;
+    }
     return `+1${cleaned}`;
   }
   if (cleaned.length === 11 && cleaned.startsWith('1')) {
