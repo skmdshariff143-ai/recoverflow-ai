@@ -50,3 +50,5 @@ next-env.d.ts
 /.npm-cache/
 .vercel
 .env*
+
+.vercel

@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen overflow-hidden bg-[#060c16] text-slate-100">
+    <div className="min-h-screen overflow-hidden bg-[#080b10] text-slate-100">
       <header className="mx-auto flex h-24 max-w-7xl items-center justify-between gap-4 px-6 lg:px-10">
         <Link href="/" className="flex items-center gap-3 text-base font-semibold tracking-tight">
           <span className="rounded-xl bg-emerald-400 p-2 text-slate-950">

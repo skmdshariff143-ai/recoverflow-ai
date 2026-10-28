@@ -53,6 +53,7 @@ The system employs two distinct authorization layers:
 - **Tenant Isolation**:
   - In `DEMO` and `TEST` modes, webhooks without an explicit shop domain or phone mapping fall back to the demo store for evaluation purposes.
   - In `SANDBOX` and `LIVE` modes, incoming payloads from unknown shop domains or telephone numbers return `HTTP 200` with `{ received: true, ignored: true }` (to satisfy retry policies) without performing any writes, dispatching any messages, or modifying GDPR records.
+  - **Release Boundary Gate**: As documented in `DEPLOYMENT.md`, legacy external provider routes (`/api/webhooks/*`, `/api/live-trigger`) are actively gated by `proxy.ts` (returning HTTP 503) in durable deployments until individual tenant credentials and provider webhooks are formally provisioned.
 
 ---
 

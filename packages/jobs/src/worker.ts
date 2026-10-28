@@ -62,7 +62,10 @@ export function startDistributedWorkers(connectionUrl?: string, rateLimiter?: Di
     QUEUE_NAMES.IMMEDIATE,
     async (job: Job<CartJobData>) => {
       console.log(`[Immediate Worker] Processing payment recovery job ${job.id} for cart ${job.data.cartEventId}`);
-      await limiter.waitForSlot(job.data.merchantId || 'default', job.data.cartEventId);
+      const merchantId = job.data.merchantId || 'default';
+      const merchant = await db.getMerchant(merchantId);
+      const phoneId = merchant?.whatsappPhoneId || 'default';
+      await limiter.waitForSlot(merchantId, phoneId);
       return globalRecoveryQueue.executePrimaryRecovery(job.data.cartEventId);
     },
     { connection, concurrency: 5 }
@@ -73,7 +76,10 @@ export function startDistributedWorkers(connectionUrl?: string, rateLimiter?: Di
     QUEUE_NAMES.STANDARD,
     async (job: Job<CartJobData>) => {
       console.log(`[Standard Worker] Processing cart recovery job ${job.id} for cart ${job.data.cartEventId}`);
-      await limiter.waitForSlot(job.data.merchantId || 'default', job.data.cartEventId);
+      const merchantId = job.data.merchantId || 'default';
+      const merchant = await db.getMerchant(merchantId);
+      const phoneId = merchant?.whatsappPhoneId || 'default';
+      await limiter.waitForSlot(merchantId, phoneId);
       return globalRecoveryQueue.executePrimaryRecovery(job.data.cartEventId);
     },
     { connection, concurrency: 10 }
