@@ -14,7 +14,7 @@ export default function TermsPage() {
   const lastUpdated = 'October 21, 2026';
 
   return (
-    <div className="min-h-screen bg-[#060c16] text-slate-100 selection:bg-emerald-500/30 selection:text-emerald-200">
+    <div className="min-h-screen bg-[#080b10] text-slate-100 selection:bg-emerald-500/30 selection:text-emerald-200">
       {/* Navigation Header */}
       <header className="mx-auto flex h-20 max-w-5xl items-center justify-between gap-4 px-6 border-b border-slate-800/80">
         <Link

@@ -3,7 +3,7 @@ import { Workflow, Home, LayoutDashboard, Sparkles } from 'lucide-react';
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen bg-[#060c16] text-slate-100 flex flex-col selection:bg-emerald-500/30 selection:text-emerald-200">
+    <div className="min-h-screen bg-[#080b10] text-slate-100 flex flex-col selection:bg-emerald-500/30 selection:text-emerald-200">
       {/* Brand Header */}
       <header className="mx-auto flex h-20 max-w-5xl items-center justify-between gap-4 px-6 border-b border-slate-800/80 w-full">
         <Link href="/" className="flex items-center gap-2.5 text-base font-semibold tracking-tight">
