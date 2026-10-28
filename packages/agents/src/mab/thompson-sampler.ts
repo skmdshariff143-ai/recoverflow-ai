@@ -20,6 +20,8 @@ export interface BanditContext {
   category: string;
   cartValue: number;
   cartTier: CartValueTier;
+  cartId?: string;
+  isHoldout?: boolean;
 }
 
 export interface BanditArmSelection {
@@ -28,6 +30,7 @@ export interface BanditArmSelection {
   cartTier: CartValueTier;
   strategyDescription: string;
   appliedDiscountPercentage: number;
+  isHoldout?: boolean;
 }
 
 export interface RewardCalculationParams {
@@ -157,6 +160,16 @@ export class ThompsonSamplerMarginGuardian {
    * Selects an optimal recovery arm using Thompson Sampling.
    */
   public selectArm(context: BanditContext, discountCeilingPercentage = 15.0): BanditArmSelection {
+    if (context.isHoldout || (context.cartId && this.isHoldoutAssignment(context.cartId))) {
+      return {
+        selectedArm: 'ARM_ZERO_DISCOUNT_URGENCY',
+        sampledValue: 0,
+        cartTier: context.cartTier,
+        strategyDescription: '10% Uncontacted Holdout Group (Zero Outreach Causal Control)',
+        appliedDiscountPercentage: 0,
+        isHoldout: true,
+      };
+    }
     const key = this.makeKey(context.merchantId, context.cartTier);
     let armMap = this.posteriors.get(key);
 
@@ -220,6 +233,45 @@ export class ThompsonSamplerMarginGuardian {
    * Calculates net margin reward:
    * Reward = (Recovered_GMV - Discount_Cost - Messaging_SLA_Fee) * Converted_Status
    */
+
+  /**
+   * Deterministically assigns a cart to the 10% uncontacted holdout control group.
+   */
+  public isHoldoutAssignment(cartId: string, holdoutPercentage = 10.0): boolean {
+    let hash = 0;
+    for (let i = 0; i < cartId.length; i++) {
+      hash = (hash * 31 + cartId.charCodeAt(i)) >>> 0;
+    }
+    return (hash % 100) < holdoutPercentage;
+  }
+
+  /**
+   * Computes true causal lift distinguishing AI recovery from organic customer return:
+   * Causal Lift (%) = ((Active_Rate - Holdout_Rate) / Holdout_Rate) * 100
+   */
+  public computeCausalLift(
+    activeRatePercent: number,
+    holdoutRatePercent = 11.2
+  ): number {
+    if (activeRatePercent <= 0 || holdoutRatePercent <= 0) return 0;
+    const lift = ((activeRatePercent - holdoutRatePercent) / holdoutRatePercent) * 100;
+    return parseFloat(lift.toFixed(1));
+  }
+
+  /**
+   * Computes incremental attributable GMV:
+   * Attributable_GMV = Total_Recovered_GMV * ((Active_Rate - Holdout_Rate) / Active_Rate)
+   */
+  public computeAttributableGmv(
+    recoveredGmv: number,
+    activeRatePercent: number,
+    holdoutRatePercent = 11.2
+  ): number {
+    if (activeRatePercent <= holdoutRatePercent || activeRatePercent <= 0) return 0;
+    const attributableRatio = (activeRatePercent - holdoutRatePercent) / activeRatePercent;
+    return parseFloat((recoveredGmv * attributableRatio).toFixed(2));
+  }
+
   public calculateReward(params: RewardCalculationParams): number {
     if (params.convertedStatus === 0) {
       return 0; // Lost opportunity
