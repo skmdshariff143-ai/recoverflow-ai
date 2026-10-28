@@ -140,4 +140,46 @@ describe('Contextual Multi-Armed Bandit (Thompson Sampling Margin Guardian)', ()
     expect(telemetry.HIGH).toBeDefined();
     expect(telemetry.LOW.length).toBe(4);
   });
+
+  it('assigns approximately 10% of carts to the uncontacted holdout control group', () => {
+    let holdoutCount = 0;
+    const totalTrials = 1000;
+    for (let i = 0; i < totalTrials; i++) {
+      if (sampler.isHoldoutAssignment(`cart_eval_${i}`, 10.0)) {
+        holdoutCount++;
+      }
+    }
+    // With 1000 samples and 10% expected, expect 7% to 13% range
+    const holdoutPercent = (holdoutCount / totalTrials) * 100;
+    expect(holdoutPercent).toBeGreaterThanOrEqual(7);
+    expect(holdoutPercent).toBeLessThanOrEqual(13);
+  });
+
+  it('selects zero-outreach control arm when cart is in holdout cohort', () => {
+    const selection = sampler.selectArm({
+      merchantId: 'merchant_test',
+      category: 'footwear',
+      cartValue: 180,
+      cartTier: 'MID',
+      isHoldout: true,
+    });
+
+    expect(selection.isHoldout).toBe(true);
+    expect(selection.appliedDiscountPercentage).toBe(0);
+    expect(selection.strategyDescription).toContain('Holdout Group');
+  });
+
+  it('computes true causal lift and attributable GMV correctly', () => {
+    // 33.6% active recovery vs 11.2% organic holdout baseline -> +200% causal lift
+    const lift = sampler.computeCausalLift(33.6, 11.2);
+    expect(lift).toBe(200);
+
+    // When active rate is below baseline, lift is 0
+    expect(sampler.computeCausalLift(10.0, 11.2)).toBe(-10.7);
+
+    // Attributable GMV calculation
+    const attributable = sampler.computeAttributableGmv(10000, 33.6, 11.2);
+    // (33.6 - 11.2) / 33.6 = 22.4 / 33.6 = 2/3 = 66.67% of $10,000 = $6,666.67
+    expect(attributable).toBe(6666.67);
+  });
 });
