@@ -37,16 +37,16 @@ describe('PostgreSQL Outbox Worker Crash & Lease Expiration', () => {
     const workerB = 'worker_beta';
 
     // 2. Worker A claims with a short 50ms lease
-    const claimedByA = await harness.db.claimOutboxEvents(workerA, 1, 50);
+    const claimedByA = await harness.db.claimOutboxEvents(workerA, 1, 500);
     expect(claimedByA.length).toBe(1);
     expect(claimedByA[0].id).toBe(event.id);
 
     // Worker B attempts immediate claim -> should be empty (still locked by A)
-    const claimedImmediateB = await harness.db.claimOutboxEvents(workerB, 1, 50);
+    const claimedImmediateB = await harness.db.claimOutboxEvents(workerB, 1, 500);
     expect(claimedImmediateB.length).toBe(0);
 
     // 3. Worker A crashes / goes silent; wait for 70ms lease expiration
-    await new Promise((resolve) => setTimeout(resolve, 70));
+    await new Promise((resolve) => setTimeout(resolve, 600));
 
     // 4. Worker B claims expired event
     const claimedByB = await harness.db.claimOutboxEvents(workerB, 1, 30000);

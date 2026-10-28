@@ -18,7 +18,7 @@ test.describe('PayBack AI — Sticky Mini-Summary Bar', () => {
 
     // Sticky bar should now appear
     await expect(stickyBar).toBeVisible();
-    await expect(stickyBar).toContainText('PayBack AI');
+    await expect(stickyBar).toContainText(/RecoverFlow AI|PayBack AI/);
     await expect(stickyBar).toContainText('At Risk:');
     await expect(stickyBar).toContainText('Recovered:');
 

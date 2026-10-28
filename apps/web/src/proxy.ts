@@ -8,7 +8,20 @@ export function proxy(request: NextRequest) {
   const durable = mode === 'LIVE' || mode === 'SANDBOX';
   if (!['DEMO', 'TEST', 'LIVE', 'SANDBOX'].includes(mode)) return NextResponse.json({ error: 'Invalid runtime configuration.' }, { status: 503 });
   if (durable && ['/demo', '/trigger', '/ecommerce'].some((prefix) => path === prefix || path.startsWith(prefix + '/'))) return NextResponse.redirect(new URL('/overview', request.url));
-  if (durable && path.startsWith('/api/') && !path.startsWith('/api/console') && !['/api/auth/session', '/api/health', '/api/ready'].includes(path)) {
+  const allowedDurableApiRoutes = [
+    '/api/auth/session',
+    '/api/health',
+    '/api/ready',
+    '/api/webhooks/razorpay',
+    '/api/webhooks/shopify/checkouts',
+    '/api/webhooks/shopify/orders',
+    '/api/webhooks/shopify/fulfillments',
+    '/api/webhooks/shopify/gdpr',
+    '/api/webhooks/whatsapp',
+    '/api/recovery/suppress',
+    '/api/recovery/events',
+  ];
+  if (durable && path.startsWith('/api/') && !path.startsWith('/api/console') && !allowedDurableApiRoutes.includes(path)) {
     return NextResponse.json({ error: 'This legacy integration endpoint is available only in the isolated demo. Live provider activation requires the tenant-scoped integration rollout.' }, { status: 503 });
   }
   if (!durable && (path === '/api/razorpay/subscriptions/halt' || path.startsWith('/api/auth/shopify'))) {

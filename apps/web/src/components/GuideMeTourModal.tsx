@@ -93,9 +93,9 @@ const TOUR_STEPS: TourStep[] = [
   {
     id: 'tour-replay',
     tab: 'dashboard',
-    title: 'Blind-Bot vs PayBack AI Replay Arena',
+    title: 'Blind-Bot vs RecoverFlow AI Replay Arena',
     badge: 'Head-to-Head Proof',
-    caption: 'Side-by-side animated simulator proving PayBack AI prevents 3 severe regulatory violations while recovering +₹65,000 extra cash.',
+    caption: 'Side-by-side animated simulator proving RecoverFlow AI prevents 3 severe regulatory violations while recovering +₹65,000 extra cash.',
     icon: <Swords className="w-5 h-5 text-purple-400" />,
     selector: '[data-testid="open-replay-arena-btn"]',
   },

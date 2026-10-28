@@ -490,7 +490,7 @@ export default function BenchmarkLab() {
       <footer className="bg-slate-900 border-t border-slate-800 text-slate-400 py-6 text-xs text-center">
         <div className="max-w-7xl mx-auto px-4 space-y-1">
           <p className="font-medium text-slate-300">
-            PayBack AI — Autonomous Bounded Revenue Recovery Engine
+            RecoverFlow AI — Autonomous Bounded Revenue Recovery Engine (PayBack Engine v2)
           </p>
           <p className="text-slate-400">
             Submission for Razorpay AI Buildathon · Track 3: AI Revenue Recovery · Deterministic Calibration &amp; Cryptographic Audit Ledger

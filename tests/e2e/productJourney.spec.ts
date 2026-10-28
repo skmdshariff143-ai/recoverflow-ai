@@ -4,7 +4,7 @@ async function signIn(page: Page) {
   await page.goto('/login');
   await page.getByRole('button', { name: 'Open demo workspace' }).click();
   await expect(page).toHaveURL(/\/overview$/);
-  await expect(page.getByRole('heading', { name: 'A clearer view of your revenue.' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('Control Console');
 }
 test.describe('RecoverFlow merchant console', () => {
   test('public landing and protected routes', async ({ page, request }) => {
@@ -52,30 +52,30 @@ test.describe('RecoverFlow merchant console', () => {
   test('two reviewers, duplicate prevention, persisted audit, and no fabricated payment success', async ({ page }) => {
     await signIn(page);
     await page.goto('/recovery/approvals');
-    await page.getByRole('button', { name: 'Add demo case' }).click();
-    await expect(page.getByRole('status')).toContainText('A new sample case');
+    await page.getByRole('button', { name: /Add demo/i }).click();
+    await expect(page.locator('div[role="status"]')).toContainText('A new sample case');
     const card = page.locator('article').first();
     const caseLabel = await card.getByRole('link').textContent();
-    await card.getByRole('button', { name: 'Review & approve' }).click();
-    await page.getByLabel('Reason for this decision').fill('Verified customer evidence in the demo workflow.');
-    await page.getByRole('button', { name: 'Confirm decision' }).click();
-    await expect(page.getByRole('status')).toContainText('First approval recorded');
-    await card.getByRole('button', { name: 'Review & approve' }).click();
-    await page.getByLabel('Reason for this decision').fill('Attempting the same review a second time.');
-    await page.getByRole('button', { name: 'Confirm decision' }).click();
+    await card.getByRole('button', { name: /Review & (Co-Sign|approve)/i }).click();
+    await page.locator('#review-reason').fill('Verified customer evidence in the demo workflow.');
+    await page.getByRole('button', { name: /Confirm decision|Sign & Approve/i }).click();
+    await expect(page.locator('div[role="status"]')).toContainText(/First (signature|approval) recorded/i);
+    await card.getByRole('button', { name: /Review & (Co-Sign|approve)/i }).click();
+    await page.locator('#review-reason').fill('Attempting the same review a second time.');
+    await page.getByRole('button', { name: /Confirm decision|Sign & Approve/i }).click();
     await expect(page.getByRole('dialog').getByRole('alert')).toContainText('already reviewed');
     await page.getByRole('button', { name: 'Cancel', exact: true }).click();
     await page.getByLabel('Demo role').selectOption('OWNER');
     await expect(page.getByLabel('Demo role')).toHaveValue('OWNER');
     const sameCard = page.locator('article').filter({ hasText: caseLabel! });
-    await sameCard.getByRole('button', { name: 'Review & approve' }).click();
-    await page.getByLabel('Reason for this decision').fill('Independent verification by a second demo operator.');
-    await page.getByRole('button', { name: 'Confirm decision' }).click();
-    await expect(page.getByRole('status')).toContainText('Both approvals recorded');
+    await sameCard.getByRole('button', { name: /Review & (Co-Sign|approve)/i }).click();
+    await page.locator('#review-reason').fill('Independent verification by a second demo operator.');
+    await page.getByRole('button', { name: /Confirm decision|Sign & Approve/i }).click();
+    await expect(page.locator('div[role="status"]')).toContainText(/Dual approval recorded|Both approvals recorded/i);
     await expect(sameCard).toHaveCount(0);
     await page.goto('/audit');
     await page.getByRole('button', { name: 'Verify ledger' }).click();
-    await expect(page.getByRole('status')).toContainText('All checked hashes link correctly');
+    await expect(page.locator('div[role="status"]')).toContainText('All checked hashes link correctly');
   });
   test('copilot answers from records and command palette navigates with keyboard', async ({ page }) => {
     await signIn(page);

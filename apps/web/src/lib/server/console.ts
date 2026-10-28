@@ -29,6 +29,8 @@ export async function consoleSnapshot(session: UserSession): Promise<ConsoleSnap
     messages: messages.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 100).map((m) => ({ id: m.id, channel: m.channel, direction: m.direction, status: m.deliveryStatus, content: m.content, createdAt: new Date(m.createdAt).toISOString() })),
     audit: audit.map((event) => ({ id: event.id, action: event.action, entityId: event.entityId, actor: event.userId || event.actorType, hash: event.currentHash, createdAt: new Date(event.createdAt).toISOString(), reason: typeof event.metadata?.reason === 'string' ? event.metadata.reason : '' })),
     integrations: [
+      { name: 'Razorpay', configured: !demo && Boolean(process.env.RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_SECRET), detail: 'Payment gateway webhooks and mandate sync' },
+      { name: 'Stripe', configured: !demo && Boolean(process.env.STRIPE_SECRET_KEY || process.env.STRIPE_WEBHOOK_SECRET), detail: 'Card payment failover and subscription recovery' },
       { name: 'Shopify', configured: !demo && Boolean(merchant.encryptedShopifyAccessToken), detail: 'Store connection credentials' },
       { name: 'WhatsApp', configured: !demo && Boolean(merchant.encryptedWhatsappToken && merchant.whatsappPhoneId), detail: 'Messaging credentials and phone ID' },
       { name: 'Email', configured: !demo && Boolean(merchant.encryptedResendApiKey), detail: 'Email provider credentials' },

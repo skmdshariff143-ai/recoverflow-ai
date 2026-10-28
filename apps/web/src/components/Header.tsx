@@ -66,14 +66,14 @@ export function Header({
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-lg font-bold tracking-tight text-white flex items-center gap-2">
-                  PayBack AI
-                  <span className="text-xs bg-indigo-500/20 text-indigo-300 font-semibold px-2 py-0.5 rounded-full border border-indigo-500/30">
-                    Track 3: Revenue Recovery
+                  RecoverFlow AI
+                  <span className="text-xs bg-emerald-500/20 text-emerald-300 font-semibold px-2 py-0.5 rounded-full border border-emerald-500/30">
+                    Benchmark &amp; Proof Lab
                   </span>
                 </h1>
               </div>
               <p className="text-xs text-slate-400">
-                Bounded, Explainable Recovery Orchestration for Failed Payments
+                Bounded, Explainable Recovery Orchestration · Powered by PayBack Engine
               </p>
             </div>
           </div>
@@ -156,7 +156,7 @@ export function Header({
               onClick={onOpenReplayArena}
               data-testid="open-replay-arena-btn"
               className="flex items-center gap-1.5 bg-gradient-to-r from-rose-600 to-indigo-600 hover:from-rose-500 hover:to-indigo-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm transition cursor-pointer border border-rose-400/40"
-              title="Launch Animated Blind-Bot vs PayBack AI Head-to-Head Comparison"
+              title="Launch Animated Blind-Bot vs RecoverFlow AI Head-to-Head Comparison"
             >
               <Swords className="w-3.5 h-3.5 text-amber-300" />
               <span>Replay Arena</span>
