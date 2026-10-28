@@ -143,8 +143,8 @@ export default function JudgeTriggerPage() {
               ⚡
             </div>
             <div>
-              <h1 className="text-base font-bold text-white tracking-tight">PayBack AI</h1>
-              <p className="text-[10px] text-slate-400 font-mono">Live Judge Injection</p>
+              <h1 className="text-base font-bold text-white tracking-tight">RecoverFlow AI</h1>
+              <p className="text-[10px] text-slate-400 font-mono">Live Failure Injection Simulator</p>
             </div>
           </div>
 
@@ -370,7 +370,7 @@ export default function JudgeTriggerPage() {
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
             <span>Rate-limited to 15 triggers/min · Razorpay Sandbox Mode</span>
           </p>
-          <p>PayBack AI Closed-Loop Autonomous Recovery Engine</p>
+          <p>RecoverFlow AI Closed-Loop Autonomous Recovery Engine</p>
         </div>
       </div>
     </div>

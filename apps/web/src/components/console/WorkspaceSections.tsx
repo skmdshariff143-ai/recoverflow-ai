@@ -28,7 +28,63 @@ export function OperationsPage() {
 
 export function IntegrationsPage() {
   const { data } = useWorkspace();
-  return <div className="space-y-6"><PageTitle eyebrow="CONNECTIONS" title="Your commerce stack" description="Inspect configured provider credentials and the prerequisites for activating real traffic."/><SourceNote source={data.source}/><div className="rounded-xl border border-amber-400/20 bg-amber-400/5 p-4 text-sm leading-relaxed text-amber-200">{data.source === 'DEMO' ? 'Demo mode is isolated. Connecting real providers requires a separate sandbox or live deployment.' : 'Provider activation is gated. Existing integration routes need tenant-scoped validation before live traffic can be enabled.'}</div><div className="grid gap-5 md:grid-cols-2">{data.integrations.map((integration) => <article key={integration.name} className="rf-panel p-6"><div className="flex items-center justify-between"><span className="rounded-xl border border-slate-700 bg-slate-800 p-3"><Zap size={20} className="text-emerald-400"/></span><Status value={integration.configured ? 'CONFIGURED' : 'NOT_CONFIGURED'}/></div><h2 className="mt-5 text-lg font-semibold">{integration.name}</h2><p className="mt-2 text-sm text-slate-400">{integration.detail}</p><details className="mt-5 border-t border-slate-800 pt-4 text-xs text-slate-400"><summary className="cursor-pointer text-slate-300">Connection requirements</summary><p className="mt-3 leading-relaxed">Provision credentials on the server, bind the integration to this merchant, validate signed webhook delivery, and verify recovery in a sandbox before activation. Secrets are never returned by this console.</p></details></article>)}</div><Link href="/operations" className="inline-flex items-center gap-2 text-sm text-emerald-300">Check infrastructure health<ArrowUpRight size={15}/></Link></div>;
+  const getWebhookPath = (name: string) => {
+    switch (name.toLowerCase()) {
+      case 'razorpay': return '/api/webhooks/razorpay';
+      case 'shopify': return '/api/webhooks/shopify/checkouts';
+      case 'whatsapp': return '/api/webhooks/whatsapp';
+      case 'stripe': return '/api/webhooks/stripe';
+      default: return null;
+    }
+  };
+  return (
+    <div className="space-y-6">
+      <PageTitle eyebrow="CONNECTIONS" title="Your commerce stack" description="Inspect configured provider credentials and the prerequisites for activating real traffic." />
+      <SourceNote source={data.source} />
+      <div className="rounded-xl border border-amber-400/20 bg-amber-400/5 p-4 text-sm leading-relaxed text-amber-200">
+        {data.source === 'DEMO'
+          ? 'Demo mode is isolated. Connecting real providers requires a separate sandbox or live deployment.'
+          : 'Provider activation is active. Inbound webhook routes enforce cryptographic HMAC signatures and tenant-scoped validation.'}
+      </div>
+      <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+        {data.integrations.map((integration) => {
+          const webhook = getWebhookPath(integration.name);
+          return (
+            <article key={integration.name} className="rf-panel p-6 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="rounded-xl border border-slate-700 bg-slate-800 p-3">
+                    <Zap size={20} className={integration.configured ? 'text-emerald-400' : 'text-slate-400'} />
+                  </span>
+                  <Status value={integration.configured ? 'CONFIGURED' : 'NOT_CONFIGURED'} />
+                </div>
+                <h2 className="mt-5 text-lg font-semibold text-white">{integration.name}</h2>
+                <p className="mt-2 text-sm text-slate-400">{integration.detail}</p>
+              </div>
+              <details className="mt-5 border-t border-slate-800 pt-4 text-xs text-slate-400">
+                <summary className="cursor-pointer font-medium text-slate-300 hover:text-emerald-300 transition-colors">
+                  Connection requirements
+                </summary>
+                <div className="mt-3 space-y-2 leading-relaxed">
+                  <p>Provision credentials on the server, bind the integration to this merchant, and validate signed webhook delivery. Secrets are never exposed to the client.</p>
+                  {webhook && (
+                    <div className="rounded bg-slate-900/80 p-2 font-mono text-[11px] text-slate-300 border border-slate-800 break-all">
+                      <span className="text-slate-400 block text-[10px] uppercase font-sans mb-0.5">Webhook Ingestion Route:</span>
+                      {webhook}
+                    </div>
+                  )}
+                </div>
+              </details>
+            </article>
+          );
+        })}
+      </div>
+      <Link href="/operations" className="inline-flex items-center gap-2 text-sm text-emerald-300 hover:text-emerald-200 transition-colors">
+        Check infrastructure health
+        <ArrowUpRight size={15} />
+      </Link>
+    </div>
+  );
 }
 
 export function CommunicationsPage() {

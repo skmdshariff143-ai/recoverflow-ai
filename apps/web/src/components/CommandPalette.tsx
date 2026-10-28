@@ -59,7 +59,7 @@ const ACTION_COMMANDS: CommandItem[] = [
   { id: 'act-guide-tour', label: 'Guide Me (Self-Playing Proof Tour)', keywords: ['guide', 'tour', 'me', 'autoplay', 'walkthrough', 'presentation'], category: 'action' },
   { id: 'act-resimulate', label: 'Re-Simulate Batch', keywords: ['resimulate', 'batch', 'seed', 'rerun'], category: 'action' },
   { id: 'act-verify-ledger', label: 'Verify Ledger Integrity', keywords: ['verify', 'ledger', 'integrity', 'hash', 'sha256'], category: 'action' },
-  { id: 'act-replay-arena', label: 'Blind-Bot vs PayBack AI Replay Arena', keywords: ['replay', 'arena', 'blind', 'bot', 'versus', 'side-by-side', 'comparison'], category: 'action' },
+  { id: 'act-replay-arena', label: 'Blind-Bot vs RecoverFlow AI Replay Arena', keywords: ['replay', 'arena', 'blind', 'bot', 'versus', 'side-by-side', 'comparison'], category: 'action' },
   { id: 'act-judge-mode', label: 'Toggle Judge Mode', keywords: ['judge', 'mode', 'evaluator', 'walkthrough'], category: 'action' },
   { id: 'act-judge-cheat-sheet', label: 'Judge Cheat Sheet (Printable Summary)', keywords: ['cheat', 'sheet', 'print', 'pdf', 'qr', 'script', 'summary'], category: 'action' },
   { id: 'act-reset-demo', label: 'Reset Demo State (Defaults)', keywords: ['reset', 'demo', 'state', 'defaults', 'restore', 'restart'], category: 'action' },

@@ -96,7 +96,7 @@ function BlindBotReplayContent({ onClose }: { onClose: () => void }) {
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-base font-bold text-white tracking-tight">
-                  Blind-Bot vs PayBack AI — Live Head-to-Head Arena
+                  Blind-Bot vs RecoverFlow AI — Live Head-to-Head Arena
                 </h2>
                 <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
                   Side-by-Side Replay
@@ -289,7 +289,7 @@ function BlindBotReplayContent({ onClose }: { onClose: () => void }) {
                 <div className="flex items-center gap-2">
                   <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
                   <h3 className="font-bold text-emerald-200 text-sm">
-                    PayBack AI Engine
+                    RecoverFlow AI Engine
                   </h3>
                 </div>
                 <span className="text-[10px] font-mono bg-emerald-900/40 text-emerald-300 px-2 py-0.5 rounded border border-emerald-800">
@@ -372,7 +372,7 @@ function BlindBotReplayContent({ onClose }: { onClose: () => void }) {
                   </h4>
                 </div>
                 <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-xs font-bold px-2.5 py-0.5 rounded-full">
-                  PayBack AI Outperforms Naive Bot by 7.3x Yield
+                  RecoverFlow AI Outperforms Naive Bot by 7.3x Yield
                 </span>
               </div>
 
@@ -382,7 +382,7 @@ function BlindBotReplayContent({ onClose }: { onClose: () => void }) {
                     <tr className="border-b border-slate-800 text-slate-400 font-semibold">
                       <th className="py-2 px-3">Evaluation Dimension</th>
                       <th className="py-2 px-3 text-rose-400">Naive &ldquo;Blind-Bot&rdquo;</th>
-                      <th className="py-2 px-3 text-emerald-400">PayBack AI</th>
+                      <th className="py-2 px-3 text-emerald-400">RecoverFlow AI</th>
                       <th className="py-2 px-3 text-indigo-300">Advantage / Impact</th>
                     </tr>
                   </thead>

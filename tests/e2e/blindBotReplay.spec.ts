@@ -15,7 +15,7 @@ test.describe('PayBack AI — Blind-Bot vs PayBack AI Replay Arena', () => {
 
     // 2. Verify Replay Arena Modal is visible
     await expect(page.getByRole('dialog')).toBeVisible();
-    await expect(page.getByText(/Blind-Bot vs PayBack AI/i)).toBeVisible();
+    await expect(page.getByText(/Blind-Bot vs (RecoverFlow|PayBack) AI/i)).toBeVisible();
 
     // 3. Verify naive violations are flagged on the left
     const violationBadge = page.locator('[data-testid="naive-violation-badge"]');

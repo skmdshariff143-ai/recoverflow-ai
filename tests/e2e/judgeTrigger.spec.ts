@@ -13,7 +13,7 @@ test.describe('PayBack AI — Judge-Triggered Live Failure Participation (Task 1
     await page.waitForLoadState('networkidle');
 
     // Verify trigger interface elements
-    await expect(page.getByRole('heading', { name: 'PayBack AI' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /RecoverFlow AI|PayBack AI/i })).toBeVisible();
     await expect(page.getByText('Audience Participation:')).toBeVisible();
     await expect(page.getByText('1. Failure Reason')).toBeVisible();
     await expect(page.getByText('2. Transaction Amount')).toBeVisible();

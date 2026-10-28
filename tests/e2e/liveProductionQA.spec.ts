@@ -126,7 +126,7 @@ test.describe('Live Production QA Rehearsal Walkthrough', () => {
     // Launch Replay Arena
     await page.getByTestId('open-replay-arena-btn').click();
     await expect(page.getByRole('dialog')).toBeVisible();
-    await expect(page.getByText(/Blind-Bot vs PayBack AI/i)).toBeVisible();
+    await expect(page.getByText(/Blind-Bot vs (RecoverFlow|PayBack) AI/i)).toBeVisible();
 
     const skipBtn = page.getByTestId('skip-replay-btn');
     await expect(skipBtn).toBeVisible();
